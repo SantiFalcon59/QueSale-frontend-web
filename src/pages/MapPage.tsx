@@ -183,79 +183,69 @@ const MapPage: React.FC = () => {
       <AnimatePresence>
         {selectedEvent && (
           <motion.div
-            initial={{ opacity: 0, y: 100 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 100 }}
-            className="absolute bottom-8 left-1/2 -translate-x-1/2 w-full max-w-4xl px-8 z-40"
+            initial={{ opacity: 0, y: 50, x: "-50%", scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, x: "-50%", scale: 1 }}
+            exit={{ opacity: 0, y: 50, x: "-50%", scale: 0.95 }}
+            className="absolute bottom-6 left-1/2 w-[90%] max-w-2xl z-50 pointer-events-auto"
           >
-            <div className="bg-white/85 backdrop-blur-3xl rounded-[3rem] overflow-hidden shadow-[0_40px_100px_-20px_rgba(99,14,212,0.3)] border border-white/60 flex h-[220px] ring-2 ring-primary/5">
-              {/* Left: Image Section */}
-              <div className="w-2/5 relative overflow-hidden group shrink-0">
+            <div className="bg-white/90 backdrop-blur-3xl rounded-[2.5rem] overflow-hidden shadow-[0_25px_60px_-15px_rgba(0,0,0,0.3)] border border-white/60 flex h-40 ring-1 ring-primary/5">
+              {/* Left: Image Section - More Compact */}
+              <div className="w-1/3 relative overflow-hidden group shrink-0">
                 <img className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" src={selectedEvent.image} alt={selectedEvent.title} />
-                <div className="absolute top-6 left-6">
-                  <span className="bg-primary/90 backdrop-blur-md text-white text-[9px] font-black px-4 py-1.5 rounded-full uppercase tracking-[0.15em] shadow-lg">
+                <div className="absolute top-3 left-3">
+                  <span className="bg-primary/90 backdrop-blur-md text-white text-[8px] font-black px-3 py-1 rounded-full uppercase tracking-wider">
                     {selectedEvent.category}
                   </span>
                 </div>
                 {selectedEvent.live && (
-                  <div className="absolute bottom-6 left-6 flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse shadow-[0_0_8px_#ef4444]" />
-                    <span className="text-white text-[9px] font-black tracking-widest uppercase text-shadow">En vivo ahora</span>
+                  <div className="absolute bottom-3 left-3 flex items-center gap-1.5">
+                    <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse shadow-[0_0_8px_#ef4444]" />
+                    <span className="text-white text-[8px] font-black tracking-widest uppercase">VIVO</span>
                   </div>
                 )}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent pointer-events-none" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent pointer-events-none" />
               </div>
 
-              {/* Right: Details Section */}
-              <div className="flex-1 flex flex-col p-8 lg:p-10 justify-between bg-white/20">
+              {/* Right: Details Section - Optimized Space */}
+              <div className="flex-1 flex flex-col p-5 lg:p-6 justify-between bg-white/20">
                 <div>
-                  <div className="flex justify-between items-start mb-4">
-                    <h2 className="text-2xl lg:text-3xl font-display font-black italic tracking-tighter text-on-surface leading-tight uppercase">{selectedEvent.title}</h2>
+                  <div className="flex justify-between items-start gap-2">
+                    <h2 className="text-lg lg:text-xl font-display font-black italic tracking-tighter text-on-surface leading-tight uppercase line-clamp-2">{selectedEvent.title}</h2>
                     <div className="flex flex-col items-end shrink-0">
-                      <span className="text-primary font-black text-2xl lg:text-3xl leading-none italic">{selectedEvent.match}</span>
-                      <span className="text-[8px] font-black text-outline uppercase tracking-widest mt-1 opacity-60">Match</span>
+                      <span className="text-primary font-black text-xl leading-none italic">{selectedEvent.match}</span>
+                      <span className="text-[7px] font-black text-outline uppercase tracking-widest opacity-60">Match</span>
                     </div>
                   </div>
                   
-                  <div className="flex gap-8 items-center mt-2">
-                    <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-2xl bg-primary/10 flex items-center justify-center text-primary border border-primary/5">
-                        <span className="material-symbols-outlined text-[18px]">calendar_today</span>
-                      </div>
-                      <div>
-                        <p className="text-[8px] font-black text-outline uppercase tracking-widest opacity-60 mb-0.5">Fecha</p>
-                        <p className="text-xs font-bold text-on-surface">{selectedEvent.date}</p>
-                      </div>
+                  <div className="flex gap-4 items-center mt-3">
+                    <div className="flex items-center gap-2">
+                      <span className="material-symbols-outlined text-primary text-[16px]">calendar_today</span>
+                      <p className="text-[10px] font-bold text-on-surface">{selectedEvent.date.split(',')[0]}</p>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-2xl bg-primary/10 flex items-center justify-center text-primary border border-primary/5">
-                        <span className="material-symbols-outlined text-[18px]">location_on</span>
-                      </div>
-                      <div>
-                        <p className="text-[8px] font-black text-outline uppercase tracking-widest opacity-60 mb-0.5">Lugar</p>
-                        <p className="text-xs font-bold text-on-surface">Buenos Aires</p>
-                      </div>
+                    <div className="flex items-center gap-2">
+                      <span className="material-symbols-outlined text-primary text-[16px]">location_on</span>
+                      <p className="text-[10px] font-bold text-on-surface">CABA</p>
                     </div>
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between mt-6 border-t border-outline-variant/30 pt-6">
+                <div className="flex items-center justify-between mt-auto">
                   <button 
                     onClick={() => navigate(`/events/${selectedEvent.id}`)}
-                    className="bg-primary text-white font-black px-10 py-3.5 rounded-2xl text-[10px] tracking-[0.2em] flex items-center gap-3 hover:bg-primary-container hover:shadow-2xl hover:shadow-primary/30 transition-all active:scale-95 group uppercase"
+                    className="bg-primary text-white font-black px-6 py-2.5 rounded-xl text-[9px] tracking-[0.15em] flex items-center gap-2 hover:bg-primary-container hover:shadow-xl hover:shadow-primary/30 transition-all active:scale-95 group uppercase"
                   >
-                    ENTRAR AL EVENTO
-                    <span className="material-symbols-outlined text-[18px] group-hover:translate-x-1 transition-transform">arrow_forward</span>
+                    VER DETALLES
+                    <span className="material-symbols-outlined text-[16px] group-hover:translate-x-1 transition-transform">arrow_forward</span>
                   </button>
-                  <div className="flex gap-3">
-                    <button className="w-12 h-12 rounded-2xl bg-surface-container-low flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-all border border-primary/10 shadow-sm">
-                      <span className="material-symbols-outlined text-[20px]">share</span>
+                  <div className="flex gap-2">
+                    <button className="w-9 h-9 rounded-xl bg-surface-container-low flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-all border border-primary/10">
+                      <span className="material-symbols-outlined text-[18px]">share</span>
                     </button>
                     <button 
                       onClick={() => setSelectedEventId(null)}
-                      className="w-12 h-12 rounded-2xl bg-surface-container-low flex items-center justify-center text-outline-variant hover:text-red-500 hover:bg-red-50 transition-all border border-outline-variant/30 shadow-sm"
+                      className="w-9 h-9 rounded-xl bg-surface-container-low flex items-center justify-center text-outline-variant hover:text-red-500 hover:bg-red-50 transition-all border border-outline-variant/30"
                     >
-                      <span className="material-symbols-outlined text-[20px]">close</span>
+                      <span className="material-symbols-outlined text-[18px]">close</span>
                     </button>
                   </div>
                 </div>
