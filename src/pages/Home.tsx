@@ -74,7 +74,7 @@ const Home: React.FC = () => {
           className="flex flex-col sm:flex-row items-center gap-6"
         >
           <Link 
-            to="/discovery"
+            to="/events"
             className="bg-primary text-on-primary font-display font-bold px-10 py-4 rounded-xl flex items-center gap-3 neon-glow transition-all shadow-lg hover:translate-y-[-2px] active:translate-y-[0px]"
           >
             DESCUBRIR EVENTOS

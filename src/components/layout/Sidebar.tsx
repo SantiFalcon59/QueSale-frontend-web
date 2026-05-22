@@ -11,7 +11,7 @@ export const Sidebar: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ is
   const navItems = [
     { name: 'Inicio', icon: 'home', path: '/' },
     { name: 'Feed', icon: 'dynamic_feed', path: '/feed' },
-    { name: 'Explorar', icon: 'explore', path: '/discovery' },
+    { name: 'Explorar', icon: 'explore', path: '/events' },
     { name: 'Mapa', icon: 'map', path: '/map' },
   ];
 

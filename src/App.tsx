@@ -112,7 +112,7 @@ export default function App() {
                     <Route path="/setup-profile" element={<AuthGuard><PageWrapper><SetupProfile /></PageWrapper></AuthGuard>} />
                     
                     <Route path="/feed" element={<PageWrapper><Feed /></PageWrapper>} />
-                    <Route path="/discovery" element={<PageWrapper><Discovery /></PageWrapper>} />
+                    <Route path="/events" element={<PageWrapper><Discovery /></PageWrapper>} />
                     <Route path="/map" element={<PageWrapper><MapPage /></PageWrapper>} />
                     <Route path="/communities" element={<PageWrapper><Communities /></PageWrapper>} />
                     <Route path="/tos" element={<PageWrapper><TermsOfService /></PageWrapper>} />
