@@ -1,0 +1,195 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "App user profile information",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string" },
+        "username": { "type": "string" },
+        "displayName": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "interests": { "type": "array", "items": { "type": "string" } },
+        "savedEvents": { "type": "array", "items": { "type": "string" } },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "Organizer": {
+      "title": "Organizer",
+      "description": "Event organizing entity",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "logo": { "type": "string" },
+        "banner": { "type": "string" },
+        "ownerId": { "type": "string" },
+        "admins": { "type": "object" },
+        "followersCount": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "Event": {
+      "title": "Event",
+      "description": "Event details and ticketing info",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "date": { "type": "string", "format": "date-time" },
+        "location": {
+          "type": "object",
+          "properties": {
+            "address": { "type": "string" },
+            "lat": { "type": "number" },
+            "lng": { "type": "number" }
+          }
+        },
+        "organizerId": { "type": "string" },
+        "price": { "type": "number" },
+        "capacity": { "type": "number" },
+        "attendeesCount": { "type": "number" },
+        "category": { "type": "string" },
+        "media": { "type": "array", "items": { "type": "string" } },
+        "featuredLevel": { "type": "number" },
+        "status": { "type": "string", "enum": ["draft", "published", "cancelled", "completed"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "Ticket": {
+      "title": "Ticket",
+      "description": "A purchased ticket for an event",
+      "type": "object",
+      "properties": {
+        "eventId": { "type": "string" },
+        "userId": { "type": "string" },
+        "qrCode": { "type": "string" },
+        "state": { "type": "string", "enum": ["active", "used", "cancelled"] },
+        "purchasedAt": { "type": "string", "format": "date-time" },
+        "validatedAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "Post": {
+      "title": "Post",
+      "description": "A post on an event wall",
+      "type": "object",
+      "properties": {
+        "eventId": { "type": "string" },
+        "userId": { "type": "string" },
+        "type": { "type": "string", "enum": ["query", "comment", "poll", "feedback"] },
+        "content": { "type": "string" },
+        "media": { "type": "array", "items": { "type": "string" } },
+        "poll": {
+          "type": "object",
+          "properties": {
+            "options": { "type": "array", "items": { "type": "string" } },
+            "votes": { "type": "object" }
+          }
+        },
+        "likes": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "Announcement": {
+      "title": "Announcement",
+      "description": "An official announcement from an organizer",
+      "type": "object",
+      "properties": {
+        "eventId": { "type": "string" },
+        "organizerId": { "type": "string" },
+        "title": { "type": "string" },
+        "content": { "type": "string" },
+        "media": { "type": "array", "items": { "type": "string" } },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "ChatMessage": {
+      "title": "ChatMessage",
+      "description": "A message in the event's live chat",
+      "type": "object",
+      "properties": {
+        "eventId": { "type": "string" },
+        "userId": { "type": "string" },
+        "content": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    }
+    "UserWallPost": {
+      "title": "UserWallPost",
+      "description": "A post on a user's personal wall",
+      "type": "object",
+      "properties": {
+        "authorId": { "type": "string" },
+        "authorName": { "type": "string" },
+        "authorPhoto": { "type": "string" },
+        "content": { "type": "string" },
+        "media": { "type": "array", "items": { "type": "string" } },
+        "likes": { "type": "object" },
+        "likesCount": { "type": "number" },
+        "commentsCount": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "UserWallComment": {
+      "title": "UserWallComment",
+      "description": "A comment on a user's wall post",
+      "type": "object",
+      "properties": {
+        "postId": { "type": "string" },
+        "authorId": { "type": "string" },
+        "authorName": { "type": "string" },
+        "authorPhoto": { "type": "string" },
+        "content": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    }
+  },
+  "firestore": {
+    "users/{userId}": {
+      "schema": "User",
+      "description": "User profiles"
+    },
+    "users/{userId}/wall/{postId}": {
+      "schema": "UserWallPost",
+      "description": "Personal wall posts for a user"
+    },
+    "users/{userId}/wall/{postId}/comments/{commentId}": {
+      "schema": "UserWallComment",
+      "description": "Comments on wall posts"
+    },
+    "usernames/{username}": {
+      "schema": {
+        "type": "object",
+        "properties": {
+          "userId": { "type": "string" }
+        }
+      },
+      "description": "Mapping of usernames to user IDs for uniqueness enforcement"
+    },
+    "organizers/{organizerId}": {
+      "schema": "Organizer",
+      "description": "Organizers managing events"
+    },
+    "events/{eventId}": {
+      "schema": "Event",
+      "description": "Events data"
+    },
+    "tickets/{ticketId}": {
+      "schema": "Ticket",
+      "description": "Purchased tickets"
+    },
+    "events/{eventId}/posts/{postId}": {
+      "schema": "Post",
+      "description": "Wall posts for an event"
+    },
+    "events/{eventId}/announcements/{announcementId}": {
+      "schema": "Announcement",
+      "description": "Official announcements for an event"
+    },
+    "events/{eventId}/chat/{messageId}": {
+      "schema": "ChatMessage",
+      "description": "Live chat messages for an event"
+    }
+  }
+}

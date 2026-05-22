@@ -1,0 +1,6 @@
+{
+  "name": "QueSale Geek",
+  "description": "Tu portal de eventos para la comunidad geek: Anime, K-Pop, torneos de Gaming y convenciones. Descubre tu próximo encuentro favorito.",
+  "requestFramePermissions": ["camera", "geolocation"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API", "real-time chat", "event mapping", "ticketing"]
+}

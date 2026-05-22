@@ -1,0 +1,141 @@
+import React, { useState, useEffect } from 'react';
+import { motion } from 'motion/react';
+import { ShieldCheck, CheckCircle2, AlertCircle, Building, Search, ExternalLink } from 'lucide-react';
+import { cn } from '../../lib/utils';
+import { api } from '../../services/apiClient';
+
+const AdminOrganizations: React.FC = () => {
+  const [orgs, setOrgs] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
+
+  useEffect(() => {
+    const fetchOrgs = async () => {
+      try {
+            const data: any = await api.getOrganizers(1, 50);
+            const mapped = (data || []).map((org: any) => ({
+               id: org.id_organizer,
+               name: org.name,
+               description: org.description,
+               logo: org.logo_url || `https://api.dicebear.com/7.x/initials/svg?seed=${org.name}`,
+               handle: org.name?.toLowerCase().replace(/\s+/g, '_') || 'organizer',
+               ownerId: org.id_creator,
+               verificationLevel: org.verified ? 2 : 1,
+               status: org.verified ? 'verified' : 'pending_verification',
+               instagram: '',
+               verificationInfo: null,
+            }));
+            setOrgs(mapped);
+      } catch (err) {
+        console.error("Error fetching orgs:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchOrgs();
+  }, []);
+
+  const handleVerify = async (orgId: string, level: number) => {
+      return;
+  };
+
+  const filteredOrgs = orgs.filter(o => 
+    o.name.toLowerCase().includes(search.toLowerCase()) || 
+    o.handle.toLowerCase().includes(search.toLowerCase())
+  );
+
+  if (loading) return <div className="p-20 text-center font-bold">Cargando Bóveda de Organizaciones...</div>;
+
+  return (
+    <div className="space-y-10 pb-20">
+      <header className="space-y-2">
+         <div className="flex items-center gap-3">
+            <ShieldCheck className="text-primary" size={32} />
+            <h1 className="text-5xl font-black italic tracking-tighter">BÓVEDA DE <span className="text-primary">ADMIN</span></h1>
+         </div>
+         <p className="text-on-surface-variant font-medium ml-1">Gestión y Verificación de Entidades</p>
+      </header>
+
+      <div className="relative max-w-md">
+         <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-on-surface-variant" size={20} />
+         <input 
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Buscar organización..."
+            className="w-full bg-surface-container-low border border-outline-variant h-14 pl-14 pr-6 rounded-2xl outline-none focus:border-primary transition-all font-bold"
+         />
+      </div>
+
+      <div className="grid gap-6">
+         {filteredOrgs.map((org) => (
+           <motion.div 
+            key={org.id}
+            layout
+            className="p-8 rounded-[2.5rem] bg-surface-container-low border border-outline-variant grid grid-cols-12 gap-8 items-center"
+           >
+              <div className="col-span-1 border-r border-outline-variant/30 pr-4">
+                 <img src={org.logo} alt={org.name} className="w-16 h-16 rounded-2xl bg-white shadow-sm object-cover" />
+              </div>
+
+              <div className="col-span-4 space-y-1">
+                 <div className="flex items-center gap-2">
+                    <h3 className="text-xl font-bold">{org.name}</h3>
+                    {org.verificationLevel >= 2 && <CheckCircle2 className="text-green-500" size={16} />}
+                 </div>
+                 <p className="text-xs text-on-surface-variant font-bold uppercase tracking-widest">@{org.handle}</p>
+                 <div className="flex items-center gap-2 text-[10px] text-on-surface-variant font-medium mt-2">
+                    <Building size={12} />
+                    <span>Propiedad de: {org.ownerId}</span>
+                 </div>
+              </div>
+
+              <div className="col-span-3 space-y-3">
+                 <div className="space-y-1">
+                    <p className="text-[9px] uppercase font-black tracking-widest text-on-surface-variant">Info Real</p>
+                    <p className="text-xs font-bold">{org.verificationInfo?.realName || 'N/A'}</p>
+                    <p className="text-[10px] text-on-surface-variant">DNI: {org.verificationInfo?.dni || 'N/A'}</p>
+                 </div>
+                 <div className="space-y-1">
+                    <p className="text-[9px] uppercase font-black tracking-widest text-on-surface-variant">Social</p>
+                    <a href={`https://instagram.com/${org.instagram?.replace('@', '')}`} target="_blank" className="text-xs font-black text-primary flex items-center gap-1">
+                       {org.instagram} <ExternalLink size={10} />
+                    </a>
+                 </div>
+              </div>
+
+              <div className="col-span-4 flex items-center justify-end gap-3">
+                 <div className="text-right mr-4">
+                    <p className="text-[9px] uppercase font-black tracking-widest text-on-surface-variant">Nivel Actual</p>
+                    <p className={cn(
+                       "text-xs font-black mt-1",
+                       org.verificationLevel >= 2 ? "text-green-600" : "text-primary"
+                    )}>
+                       {org.verificationLevel >= 2 ? 'VERIFICADA (PRO)' : 'CUENTA REAL (L1)'}
+                    </p>
+                 </div>
+
+                         {org.verificationLevel < 2 && (
+                   <button 
+                              disabled
+                    className="btn-primary h-12 px-6 text-[10px] font-black tracking-widest uppercase"
+                   >
+                     Verificar Nivel 2
+                   </button>
+                 )}
+                 {org.verificationLevel >= 2 && (
+                    <button 
+                                 disabled
+                      className="btn-secondary h-12 px-6 text-[10px] font-black tracking-widest uppercase"
+                    >
+                      Degradar a L1
+                    </button>
+                 )}
+              </div>
+           </motion.div>
+         ))}
+      </div>
+    </div>
+  );
+};
+
+export default AdminOrganizations;

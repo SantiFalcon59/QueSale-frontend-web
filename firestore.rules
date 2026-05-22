@@ -1,0 +1,128 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Phase 3: Primitives
+    function isSignedIn() { return request.auth != null; }
+    function isOwner(userId) { return isSignedIn() && request.auth.uid == userId; }
+    function isAdmin() {
+      return isSignedIn() && 
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) && (
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.username == 'santipingui58'
+        );
+    }
+    function isModerator() {
+      return isSignedIn() && 
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) && (
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin', 'moderator'] ||
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.username == 'santipingui58'
+        );
+    }
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+    function isValidId(id) { return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); }
+
+    // User Validation
+    function isValidUser(data) {
+      return data.keys().hasAll(['email', 'username', 'displayName', 'photoURL', 'createdAt', 'updatedAt'])
+        && data.email is string && data.email.size() <= 200
+        && data.username is string && data.username.size() >= 3 && data.username.size() <= 30
+        && data.displayName is string && data.displayName.size() <= 100
+        && (data.photoURL is string || data.photoURL == null)
+        && data.createdAt == request.time
+        && data.updatedAt == request.time;
+    }
+
+    match /users/{userId} {
+      allow get, list: if isSignedIn();
+      allow create: if isOwner(userId) && isValidUser(incoming());
+      allow update: if isOwner(userId) && (
+        incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'photoURL', 'interests', 'savedEvents', 'updatedAt', 'username', 'role'])
+        && incoming().updatedAt == request.time
+        && (incoming().role == existing().role || incoming().role == 'user' || existing().username == 'santipingui58' || isAdmin())
+      );
+
+      match /wall/{postId} {
+        allow read: if true;
+        allow create: if isSignedIn();
+        allow update: if isSignedIn();
+        allow delete: if isSignedIn() && (isOwner(userId) || isOwner(existing().userId) || isModerator());
+        
+        match /comments/{commentId} {
+          allow read: if true;
+          allow create: if isSignedIn();
+        }
+      }
+
+      match /notifications/{notifId} {
+        allow read: if isOwner(userId);
+        allow update: if isOwner(userId) && incoming().diff(existing()).affectedKeys().hasOnly(['isRead']);
+        allow create: if isSignedIn();
+        allow delete: if isOwner(userId);
+      }
+    }
+
+    match /usernames/{username} {
+      allow read: if true;
+      allow create: if isSignedIn() && isValidId(username) && incoming().userId == request.auth.uid;
+    }
+
+    // Organizers
+    function isOrganizerAdmin(orgId) {
+      return isSignedIn() && (
+        (exists(/databases/$(database)/documents/organizers/$(orgId)) && get(/databases/$(database)/documents/organizers/$(orgId)).data.admins[request.auth.uid] != null) ||
+        isAdmin()
+      );
+    }
+
+    match /organizers/{orgId} {
+      allow read: if true;
+      allow create: if isSignedIn() && (incoming().ownerId == request.auth.uid || isAdmin());
+      allow update: if isOrganizerAdmin(orgId) || isAdmin();
+    }
+
+    // Events
+    function isValidEvent(data) {
+      return data.title is string && data.title.size() <= 200
+        && data.description is string && data.description.size() <= 5000
+        && data.organizerId is string
+        && data.status in ['active', 'published', 'draft', 'cancelled', 'completed'];
+    }
+
+    match /events/{eventId} {
+      allow read: if true;
+      allow create: if isSignedIn() && (isOrganizerAdmin(incoming().organizerId) || isAdmin()) && isValidEvent(incoming());
+      allow update: if (isOrganizerAdmin(existing().organizerId) || isAdmin()) && isValidEvent(incoming());
+      
+      match /posts/{postId} {
+        allow read: if true;
+        allow create: if isSignedIn() && incoming().userId == request.auth.uid;
+        allow delete: if isSignedIn() && (existing().userId == request.auth.uid || isOrganizerAdmin(get(/databases/$(database)/documents/events/$(eventId)).data.organizerId) || isModerator());
+      }
+
+      match /announcements/{annId} {
+        allow read: if true;
+        allow create, update, delete: if isOrganizerAdmin(get(/databases/$(database)/documents/events/$(eventId)).data.organizerId) || isAdmin();
+      }
+
+      match /chat/{chatId} {
+        allow read: if true;
+        allow create: if isSignedIn() && incoming().userId == request.auth.uid;
+        allow delete: if isModerator();
+      }
+    }
+
+    // Tickets
+    match /tickets/{ticketId} {
+      allow read: if isSignedIn() && (resource.data.userId == request.auth.uid || isOrganizerAdmin(get(/databases/$(database)/documents/events/$(resource.data.eventId)).data.organizerId));
+      allow create: if isSignedIn() && incoming().userId == request.auth.uid;
+      // Tickets are mostly immutable after creation except for validation state
+      allow update: if isOrganizerAdmin(existing().eventId) && incoming().diff(existing()).affectedKeys().hasOnly(['state', 'validatedAt']);
+    }
+  }
+}

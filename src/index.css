@@ -1,0 +1,158 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #732ee4;
+  --color-on-primary: #ffffff;
+  --color-primary-container: #7c3aed;
+  --color-on-primary-container: #ffffff;
+  
+  --color-secondary: #00dbe7;
+  --color-on-secondary: #002022;
+  --color-secondary-container: #b4f0f4;
+  --color-on-secondary-container: #002022;
+
+  --color-tertiary: #fface8;
+  --color-on-tertiary: #3a0033;
+  --color-tertiary-container: #ffdcf1;
+  --color-on-tertiary-container: #3a0033;
+
+  /* Dark Contrast Surfaces */
+  --color-surface-dark: #0f0a1a;
+  --color-on-surface-dark: #fdf8ff;
+  --color-surface-dark-variant: #1b1529;
+
+  --color-background: #fdf8ff;
+  --color-on-background: #1b1b1e;
+  
+  --color-surface: #fdf8ff;
+  --color-on-surface: #1b1b1e;
+  --color-surface-variant: #eaddff;
+  --color-on-surface-variant: #4a4455;
+  
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-low: #f6f2f7;
+  --color-surface-container: #f0edf1;
+  --color-surface-container-high: #eae7ec;
+  --color-surface-container-highest: #e4e1e6;
+  
+  --color-outline: #7a7585;
+  --color-outline-variant: #ccc3d8;
+
+  --font-sora: "Sora", sans-serif;
+  --font-hanken: "Hanken Grotesk", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+
+  --font-sans: "Hanken Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Sora", sans-serif;
+}
+
+@layer base {
+  body {
+    @apply bg-background text-on-background font-sans selection:bg-primary/20 antialiased;
+    background: #fdf8ff;
+    background-image: 
+      radial-gradient(circle at 0% 0%, rgba(115, 46, 228, 0.15) 0%, transparent 50%),
+      radial-gradient(circle at 100% 0%, rgba(0, 219, 231, 0.12) 0%, transparent 50%),
+      radial-gradient(circle at 100% 100%, rgba(255, 172, 232, 0.15) 0%, transparent 50%),
+      radial-gradient(circle at 0% 100%, rgba(124, 58, 237, 0.12) 0%, transparent 50%);
+    background-attachment: fixed;
+    scroll-behavior: smooth;
+  }
+
+  /* Animated Mesh Overlay */
+  body::before {
+    content: "";
+    position: fixed;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: 
+      radial-gradient(circle at 50% 50%, rgba(115, 46, 228, 0.08) 0%, transparent 50%),
+      radial-gradient(circle at 80% 20%, rgba(132, 0, 118, 0.08) 0%, transparent 40%),
+      radial-gradient(circle at 20% 80%, rgba(0, 106, 112, 0.08) 0%, transparent 40%);
+    animation: mesh-flow 20s ease-in-out infinite alternate;
+    pointer-events: none;
+    z-index: -2;
+  }
+
+  /* Grid & Noise Overlay */
+  body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background-image: 
+      linear-gradient(rgba(115, 46, 228, 0.08) 1.5px, transparent 1.5px),
+      linear-gradient(90deg, rgba(115, 46, 228, 0.08) 1.5px, transparent 1.5px),
+      url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.08'/%3E%3C/svg%3E");
+    background-size: 60px 60px, 60px 60px, auto;
+    pointer-events: none;
+    z-index: -1;
+    mask-image: radial-gradient(circle at center, black, transparent 85%);
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display tracking-tight font-bold;
+  }
+}
+
+@keyframes mesh-flow {
+  0% { transform: translate(0, 0) rotate(0deg); }
+  100% { transform: translate(-10%, -10%) rotate(5deg); }
+}
+
+@layer utilities {
+  .glass-card {
+    background: rgba(255, 255, 255, 0.5);
+    backdrop-filter: blur(24px) saturate(200%);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    box-shadow: 0 20px 50px -15px rgba(115, 46, 228, 0.15);
+  }
+
+  .hero-gradient-text {
+    background: linear-gradient(135deg, #25005a 0%, #732ee4 50%, #00dbe7 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-size: 200% auto;
+    animation: gradient-text 5s linear infinite;
+  }
+
+  @keyframes gradient-text {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 200% 50%; }
+  }
+
+  .neon-glow:hover {
+    box-shadow: 
+      0 0 40px rgba(115, 46, 228, 0.4),
+      0 0 80px rgba(115, 46, 228, 0.2);
+    transform: translateY(-4px) scale(1.02);
+  }
+
+  .label-caps {
+    @apply font-mono text-[12px] uppercase font-black tracking-[0.25em] leading-none text-primary;
+  }
+
+  .sidebar-gradient {
+    background: linear-gradient(180deg, #0f0a1a 0%, #1a1529 100%);
+  }
+
+  .navbar-glass {
+    background: rgba(15, 10, 26, 0.85);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(115, 46, 228, 0.2);
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+}
+::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(to bottom, #732ee4, #00dbe7);
+  border-radius: 20px;
+  border: 3px solid #fdf8ff;
+}
