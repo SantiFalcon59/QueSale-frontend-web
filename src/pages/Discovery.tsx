@@ -7,6 +7,8 @@ import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
+import { MOCK_EVENTS_DATA } from '../lib/mockData';
+
 const Discovery: React.FC = () => {
   const [view, setView] = useState<'grid' | 'list'>('grid');
   const [showFilters, setShowFilters] = useState(true);
@@ -32,9 +34,54 @@ const Discovery: React.FC = () => {
     setLoading(true);
     try {
       const result: any = await api.getEvents(1, 50);
-      setEvents(result.data || []);
+      const apiEvents = result.data || [];
+      
+      // Normalize API events and merge with Mock events for visibility
+      const normalizedApi = apiEvents.map((e: any) => ({
+        id_event: e.id_event || e.id,
+        title: e.title,
+        description: e.description,
+        date: e.date,
+        ubication: e.ubication || e.location,
+        organizer: e.organizer,
+        thumbnail_url: e.thumbnail_url || e.image,
+        category: e.category,
+        price: e.price,
+        match: e.match || '90%',
+        live: e.live || false
+      }));
+
+      const normalizedMock = MOCK_EVENTS_DATA.map(e => ({
+        id_event: e.id,
+        title: e.title,
+        description: e.description,
+        date: e.date,
+        ubication: e.location,
+        organizer: e.organizer,
+        thumbnail_url: e.image,
+        category: e.category,
+        price: e.price,
+        match: e.match,
+        live: e.live
+      }));
+
+      // If API returns events, prepend them, otherwise just use mock
+      setEvents(normalizedApi.length > 0 ? [...normalizedApi, ...normalizedMock] : normalizedMock);
     } catch (err) {
-      console.error('Error fetching events:', err);
+      console.error('Error fetching events, falling back to mock data:', err);
+      setEvents(MOCK_EVENTS_DATA.map(e => ({
+        id_event: e.id,
+        title: e.title,
+        description: e.description,
+        date: e.date,
+        ubication: e.location,
+        organizer: e.organizer,
+        thumbnail_url: e.image,
+        category: e.category,
+        price: e.price,
+        match: e.match,
+        live: e.live
+      })));
     } finally {
       setLoading(false);
     }
