@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { User, createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
+import { User, signInWithEmailAndPassword } from 'firebase/auth';
 import { auth, onAuthStateChanged, signInWithPopup, googleProvider, signOut } from '../lib/firebase';
-import { api } from '../services/apiClient';
+import { api, resolveAssetUrl } from '../services/apiClient';
 
 interface UserProfile {
   uid: string;
@@ -10,7 +10,6 @@ interface UserProfile {
   photoURL: string | null;
   username?: string;
   role?: 'admin' | 'user' | 'moderator';
-  isNewUser?: boolean;
 }
 
 interface AuthContextType {
@@ -19,7 +18,6 @@ interface AuthContextType {
   loading: boolean;
   loginWithGoogle: () => Promise<void>;
   loginWithEmail: (email: string, pass: string) => Promise<void>;
-  registerWithEmail: (email: string, pass: string) => Promise<void>;
   logout: () => Promise<void>;
   refreshProfile: () => Promise<void>;
 }
@@ -33,13 +31,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const mapProfile = (uid: string, backendProfile: any): UserProfile => {
     const username = backendProfile?.username;
+    const firebasePhoto = auth.currentUser?.photoURL || null;
+    const backendPhoto = resolveAssetUrl(backendProfile?.photo_url) || firebasePhoto;
     return {
       uid,
       email: backendProfile?.email || auth.currentUser?.email || null,
-      displayName: auth.currentUser?.displayName || username || null,
-      photoURL: backendProfile?.photo_url || auth.currentUser?.photoURL || null,
+      displayName: username || null,
+      photoURL: backendPhoto,
       username,
-      role: username === 'santipingui58' ? 'admin' : 'user',
+      role: username?.toLowerCase() === 'santipingui58' ? 'admin' : 'user',
     };
   };
 
@@ -49,12 +49,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setProfile(mapProfile(uid, backendProfile));
     } catch (err) {
       console.error('Error fetching profile:', err);
+      const firebaseUser = auth.currentUser;
+      const usernameFromDisplayName = firebaseUser?.displayName
+        ? firebaseUser.displayName.toLowerCase().replace(/[^a-z0-9_]/g, '_').replace(/_+/g, '_').slice(0, 20)
+        : undefined;
       setProfile({
         uid,
-        email: auth.currentUser?.email || null,
-        displayName: auth.currentUser?.displayName || null,
-        photoURL: auth.currentUser?.photoURL || null,
-        isNewUser: true,
+        email: firebaseUser?.email || null,
+        displayName: usernameFromDisplayName || null,
+        photoURL: firebaseUser?.photoURL || null,
+        username: usernameFromDisplayName,
+        role: usernameFromDisplayName?.toLowerCase() === 'santipingui58' ? 'admin' : 'user',
       });
     }
   };
@@ -69,7 +74,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         } catch (error) {
           console.error('Backend login failed', error);
         }
-        await fetchProfile(newUser.uid);
+        try {
+          const backendProfile = await api.getProfile();
+          setProfile(mapProfile(newUser.uid, backendProfile));
+        } catch (err) {
+          console.error('Error fetching profile:', err);
+          const firebaseUser = auth.currentUser;
+          const usernameFromDisplayName = firebaseUser?.displayName
+            ? firebaseUser.displayName.toLowerCase().replace(/[^a-z0-9_]/g, '_').replace(/_+/g, '_').slice(0, 20)
+            : undefined;
+          setProfile({
+            uid: newUser.uid,
+            email: firebaseUser?.email || null,
+            displayName: usernameFromDisplayName || null,
+            photoURL: firebaseUser?.photoURL || null,
+            username: usernameFromDisplayName,
+            role: usernameFromDisplayName?.toLowerCase() === 'santipingui58' ? 'admin' : 'user',
+          });
+        }
       } else {
         setProfile(null);
       }
@@ -96,15 +118,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const registerWithEmail = async (email: string, pass: string) => {
-    try {
-      await createUserWithEmailAndPassword(auth, email, pass);
-    } catch (error) {
-      console.error("Email registration failed", error);
-      throw error;
-    }
-  };
-
   const logout = async () => {
     try {
       await signOut(auth);
@@ -124,7 +137,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       loading, 
       loginWithGoogle, 
       loginWithEmail, 
-      registerWithEmail, 
       logout,
       refreshProfile 
     }}>

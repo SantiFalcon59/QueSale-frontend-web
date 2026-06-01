@@ -2,6 +2,13 @@ import { auth } from '../lib/firebase';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
+export const resolveAssetUrl = (url: string | null | undefined): string | null => {
+  if (!url) return null;
+  if (url.startsWith('http://') || url.startsWith('https://')) return url;
+  if (url.startsWith('/')) return `${API_URL}${url}`;
+  return url;
+};
+
 const buildHeaders = async (useAuth: boolean) => {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -58,14 +65,72 @@ export const api = {
       body: { idToken, photoURL },
     }),
 
+  registerWithEmail: (email: string, password: string, username: string, photoURL?: string) =>
+    apiRequest('/api/auth/register', {
+      method: 'POST',
+      body: { email, password, confirmPassword: password, username, photoURL },
+    }),
+
   getProfile: () => apiRequest('/api/users/profile', { auth: true }),
 
-  updateProfile: (payload: { username?: string; email?: string; description?: string }) =>
+  createNotification: (userId: string, data: { type: string; fromId: string; fromName: string; fromPhoto?: string; targetId: string; targetType: string; targetLink?: string; message: string }) =>
+    apiRequest(`/api/notifications/${encodeURIComponent(userId)}`, {
+      method: 'POST',
+      body: data,
+      auth: true,
+    }),
+
+  updateProfile: (payload: { username?: string; email?: string; description?: string; instagram?: string; photo_url?: string }) =>
     apiRequest('/api/users/profile', {
       method: 'PUT',
       body: payload,
       auth: true,
     }),
+
+  uploadProfilePhoto: async (file: File): Promise<string> => {
+    const formData = new FormData();
+    formData.append('photo', file);
+
+    const token = await auth.currentUser?.getIdToken();
+    const headers: Record<string, string> = {};
+    if (token) headers.Authorization = `Bearer ${token}`;
+
+    const response = await fetch(`${API_URL}/api/upload`, {
+      method: 'POST',
+      headers,
+      body: formData,
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to upload photo');
+    }
+
+    const result = await response.json();
+    return resolveAssetUrl(result.data?.photo_url) || '';
+  },
+
+  uploadOrganizerLogo: async (file: File, organizerId: string): Promise<string> => {
+    const formData = new FormData();
+    formData.append('logo', file);
+    formData.append('organizerId', organizerId);
+
+    const token = await auth.currentUser?.getIdToken();
+    const headers: Record<string, string> = {};
+    if (token) headers.Authorization = `Bearer ${token}`;
+
+    const response = await fetch(`${API_URL}/api/upload/organizer-logo`, {
+      method: 'POST',
+      headers,
+      body: formData,
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to upload logo');
+    }
+
+    const result = await response.json();
+    return resolveAssetUrl(result.data?.logo_url) || '';
+  },
 
   getPublicProfileByUsername: (username: string) =>
     apiRequest(`/api/users/username/${encodeURIComponent(username)}/profile`),
@@ -100,6 +165,25 @@ export const api = {
 
   getOrganizerEvents: (organizerId: string, page = 1, limit = 50) =>
     apiRequest(`/api/organizers/${encodeURIComponent(organizerId)}/events?page=${page}&limit=${limit}`),
+
+  updateOrganizer: (organizerId: string, payload: { name?: string; description?: string; logo_url?: string }) =>
+    apiRequest(`/api/organizers/${encodeURIComponent(organizerId)}`, {
+      method: 'PUT',
+      body: payload,
+      auth: true,
+    }),
+
+  getOrganizerAdmins: (organizerId: string) =>
+    apiRequest(`/api/organizers/${encodeURIComponent(organizerId)}/admins`, { auth: true }),
+
+  removeOrganizerAdmin: (organizerId: string, adminId: string) =>
+    apiRequest(`/api/organizers/${encodeURIComponent(organizerId)}/admins/${encodeURIComponent(adminId)}`, {
+      method: 'DELETE',
+      auth: true,
+    }),
+
+  getOrganizerDashboard: (organizerId: string) =>
+    apiRequest(`/api/organizers/${encodeURIComponent(organizerId)}/dashboard`, { auth: true }),
 
   createEvent: (payload: {
     title: string;
@@ -214,6 +298,39 @@ export const api = {
   toggleEventCommentLike: (commentId: string) =>
     apiRequest(`/api/events/posts/comments/${encodeURIComponent(commentId)}/like`, {
       method: 'POST',
+      auth: true,
+    }),
+
+  uploadEventMedia: async (file: File, eventId: string): Promise<string> => {
+    const formData = new FormData();
+    formData.append('media', file);
+    formData.append('eventId', eventId);
+
+    const token = await auth.currentUser?.getIdToken();
+    const headers: Record<string, string> = {};
+    if (token) headers.Authorization = `Bearer ${token}`;
+
+    const response = await fetch(`${API_URL}/api/upload/event-media`, {
+      method: 'POST',
+      headers,
+      body: formData,
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to upload event media');
+    }
+
+    const result = await response.json();
+    return resolveAssetUrl(result.data?.media_url) || '';
+  },
+
+  getOrganizerFollowers: (organizerId: string, page = 1, limit = 50) =>
+    apiRequest(`/api/organizers/${encodeURIComponent(organizerId)}/followers?page=${page}&limit=${limit}`),
+
+  addOrganizerAdmin: (organizerId: string, adminId: string, role?: string) =>
+    apiRequest(`/api/organizers/${encodeURIComponent(organizerId)}/admins`, {
+      method: 'POST',
+      body: { adminId, role: role || 'admin' },
       auth: true,
     }),
 };

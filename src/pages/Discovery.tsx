@@ -1,13 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { SlidersHorizontal, Grid as GridIcon, List, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { SlidersHorizontal, Grid as GridIcon, List, X, ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { api } from '../services/apiClient';
 import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-
-import { MOCK_EVENTS_DATA } from '../lib/mockData';
 
 const Discovery: React.FC = () => {
   const [view, setView] = useState<'grid' | 'list'>('grid');
@@ -35,9 +33,7 @@ const Discovery: React.FC = () => {
     try {
       const result: any = await api.getEvents(1, 50);
       const apiEvents = result.data || [];
-      
-      // Normalize API events and merge with Mock events for visibility
-      const normalizedApi = apiEvents.map((e: any) => ({
+      setEvents(apiEvents.map((e: any) => ({
         id_event: e.id_event || e.id,
         title: e.title,
         description: e.description,
@@ -49,39 +45,10 @@ const Discovery: React.FC = () => {
         price: e.price,
         match: e.match || '90%',
         live: e.live || false
-      }));
-
-      const normalizedMock = MOCK_EVENTS_DATA.map(e => ({
-        id_event: e.id,
-        title: e.title,
-        description: e.description,
-        date: e.date,
-        ubication: e.location,
-        organizer: e.organizer,
-        thumbnail_url: e.image,
-        category: e.category,
-        price: e.price,
-        match: e.match,
-        live: e.live
-      }));
-
-      // If API returns events, prepend them, otherwise just use mock
-      setEvents(normalizedApi.length > 0 ? [...normalizedApi, ...normalizedMock] : normalizedMock);
-    } catch (err) {
-      console.error('Error fetching events, falling back to mock data:', err);
-      setEvents(MOCK_EVENTS_DATA.map(e => ({
-        id_event: e.id,
-        title: e.title,
-        description: e.description,
-        date: e.date,
-        ubication: e.location,
-        organizer: e.organizer,
-        thumbnail_url: e.image,
-        category: e.category,
-        price: e.price,
-        match: e.match,
-        live: e.live
       })));
+    } catch (err) {
+      console.error('Error fetching events:', err);
+      setEvents([]);
     } finally {
       setLoading(false);
     }

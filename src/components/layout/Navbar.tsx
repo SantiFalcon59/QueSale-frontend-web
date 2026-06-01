@@ -1,12 +1,34 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Menu } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { cn } from '../../lib/utils';
 import { NotificationsPopover } from './NotificationsPopover';
+import { motion, AnimatePresence } from 'motion/react';
 
 export const Navbar: React.FC<{ onMenuClick: () => void }> = ({ onMenuClick }) => {
-  const { user } = useAuth();
+  const { user, profile, logout } = useAuth();
+  const navigate = useNavigate();
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setDropdownOpen(false);
+      }
+    };
+    if (dropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [dropdownOpen]);
+
+  const handleLogout = async () => {
+    await logout();
+    setDropdownOpen(false);
+    navigate('/');
+  };
 
   return (
     <header className="fixed top-0 right-0 w-full lg:w-[calc(100%-16rem)] h-16 z-50 navbar-glass flex justify-between items-center px-8 transition-all duration-300">
@@ -31,24 +53,94 @@ export const Navbar: React.FC<{ onMenuClick: () => void }> = ({ onMenuClick }) =
       <div className="flex items-center gap-6">
         <div className="flex items-center gap-3">
           {user && <NotificationsPopover />}
-          <button className="p-2 text-white/60 hover:text-secondary transition-colors hidden sm:block">
-            <span className="material-symbols-outlined text-[24px]">settings</span>
-          </button>
         </div>
 
         {user ? (
-          <Link 
-            to="/profile"
-            className="flex items-center gap-3 pl-6 border-l border-white/10"
-          >
-            <div className="w-9 h-9 rounded-xl bg-primary/20 flex items-center justify-center overflow-hidden border border-primary/40 shadow-[0_0_15px_rgba(115,46,228,0.3)]">
-              <span className="material-symbols-outlined text-secondary text-[22px]">person</span>
-            </div>
-            <div className="hidden sm:flex flex-col">
-              <span className="text-xs font-bold text-white leading-none">Mi Perfil</span>
-              <span className="text-[10px] text-secondary font-black uppercase tracking-widest mt-1">Nivel 5</span>
-            </div>
-          </Link>
+          <div className="relative" ref={dropdownRef}>
+            <button
+              onClick={() => setDropdownOpen(!dropdownOpen)}
+              className="flex items-center gap-3 pl-6 border-l border-white/10"
+            >
+              <div className="w-9 h-9 rounded-xl bg-primary/20 flex items-center justify-center overflow-hidden border border-primary/40 shadow-[0_0_15px_rgba(115,46,228,0.3)]">
+                {profile?.photoURL ? (
+                  <img src={profile.photoURL} alt={profile.displayName || ''} className="w-full h-full object-cover" />
+                ) : (
+                  <span className="material-symbols-outlined text-secondary text-[22px]">person</span>
+                )}
+              </div>
+              <div className="hidden sm:flex flex-col">
+                <span className="text-xs font-bold text-white leading-none">{profile?.displayName || profile?.username || 'Mi Perfil'}</span>
+              </div>
+            </button>
+
+            <AnimatePresence>
+              {dropdownOpen && (
+                <motion.div
+                  initial={{ opacity: 0, y: -8, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -8, scale: 0.95 }}
+                  transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
+                  className="absolute top-full right-0 mt-2 w-64 rounded-2xl bg-[#1a1a2e] border border-white/10 shadow-xl overflow-hidden z-50"
+                >
+                  <div className="p-4 border-b border-white/10">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center overflow-hidden border border-primary/40">
+                        {profile?.photoURL ? (
+                          <img src={profile.photoURL} alt={profile.displayName || ''} className="w-full h-full object-cover" />
+                        ) : (
+                          <span className="material-symbols-outlined text-secondary text-[20px]">person</span>
+                        )}
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-sm font-bold text-white">{profile?.displayName || profile?.username}</span>
+                        <span className="text-xs text-white/50">@{profile?.username}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="py-2">
+                    <motion.button
+                      whileHover={{ x: 4, backgroundColor: 'rgba(255,255,255,0.05)' }}
+                      onClick={() => { setDropdownOpen(false); navigate(profile?.username ? `/@${profile.username}` : '/'); }}
+                      className="w-full px-4 py-2.5 text-left text-sm text-white flex items-center gap-3 transition-colors cursor-pointer"
+                    >
+                      <span className="material-symbols-outlined text-[20px] text-white/60">person</span>
+                      Mi Perfil
+                    </motion.button>
+                    <motion.button
+                      whileHover={{ x: 4, backgroundColor: 'rgba(255,255,255,0.05)' }}
+                      onClick={() => { setDropdownOpen(false); navigate('/organizer'); }}
+                      className="w-full px-4 py-2.5 text-left text-sm text-white flex items-center gap-3 transition-colors cursor-pointer"
+                    >
+                      <span className="material-symbols-outlined text-[20px] text-white/60">groups</span>
+                      Mis Organizaciones
+                    </motion.button>
+                    {profile?.role === 'admin' && (
+                      <motion.button
+                        whileHover={{ x: 4, backgroundColor: 'rgba(255,255,255,0.05)' }}
+                        onClick={() => { setDropdownOpen(false); navigate('/admin'); }}
+                        className="w-full px-4 py-2.5 text-left text-sm text-white flex items-center gap-3 transition-colors cursor-pointer"
+                      >
+                        <span className="material-symbols-outlined text-[20px] text-white/60">admin_panel_settings</span>
+                        Admin Dashboard
+                      </motion.button>
+                    )}
+                  </div>
+
+                  <div className="border-t border-white/10 py-2">
+                    <motion.button
+                      whileHover={{ x: 4, backgroundColor: 'rgba(255,255,255,0.05)' }}
+                      onClick={handleLogout}
+                      className="w-full px-4 py-2.5 text-left text-sm text-red-400 flex items-center gap-3 transition-colors cursor-pointer"
+                    >
+                      <span className="material-symbols-outlined text-[20px]">logout</span>
+                      Cerrar Sesión
+                    </motion.button>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         ) : (
           <Link 
             to="/login"

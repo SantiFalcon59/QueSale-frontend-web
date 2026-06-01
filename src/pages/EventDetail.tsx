@@ -94,6 +94,7 @@ const EventDetail: React.FC = () => {
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [isSaved, setIsSaved] = useState(false);
+  const [organizerEvents, setOrganizerEvents] = useState<any[]>([]);
 
   const handleInteraction = (e?: React.MouseEvent) => {
     if (!user) {
@@ -150,6 +151,14 @@ const EventDetail: React.FC = () => {
             ownerId: organizerData.id_creator,
             socials: {},
           });
+
+          try {
+            const orgEvents: any = await api.getOrganizerEvents(organizerData.id_organizer, 1, 50);
+            const eventsList = orgEvents?.data || orgEvents || [];
+            setOrganizerEvents(eventsList.filter((e: any) => e.id_event !== id));
+          } catch {
+            setOrganizerEvents([]);
+          }
         }
         setLoading(false);
       } catch (err) {
@@ -443,7 +452,36 @@ const EventDetail: React.FC = () => {
                             </div>
                           </div>
                           <p className="text-xs lg:text-sm text-on-surface-variant leading-relaxed">{organizer.description}</p>
-                          <button className="w-full h-10 lg:h-12 rounded-xl lg:rounded-2xl bg-white border border-outline-variant font-bold text-[10px] lg:text-xs uppercase tracking-widest hover:bg-primary hover:text-white hover:border-primary transition-all">Ver Perfil Completo</button>
+                          <button onClick={() => navigate('/organizer')} className="w-full h-10 lg:h-12 rounded-xl lg:rounded-2xl bg-white border border-outline-variant font-bold text-[10px] lg:text-xs uppercase tracking-widest hover:bg-primary hover:text-white hover:border-primary transition-all">Ver Perfil Completo</button>
+                        </div>
+                      </div>
+                    )}
+
+                    {organizerEvents.length > 0 && (
+                      <div className="space-y-4">
+                        <h3 className="text-xl font-bold uppercase tracking-widest opacity-60">Otros Eventos de {organizer?.name}</h3>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          {organizerEvents.slice(0, 4).map(orgEvent => {
+                            const isPast = new Date(orgEvent.date) < new Date();
+                            return (
+                              <button
+                                key={orgEvent.id_event}
+                                onClick={() => window.location.href = `/events/${orgEvent.id_event}`}
+                                className="flex items-center gap-3 p-3 rounded-xl bg-surface-container-low border border-outline-variant hover:border-primary/30 transition-all text-left group"
+                              >
+                                <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
+                                  <Calendar size={18} />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-bold truncate group-hover:text-primary transition-colors">{orgEvent.title}</p>
+                                  <p className="text-[10px] text-on-surface-variant">
+                                    {new Date(orgEvent.date).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}
+                                    {isPast ? ' · Pasado' : ' · Próximo'}
+                                  </p>
+                                </div>
+                              </button>
+                            );
+                          })}
                         </div>
                       </div>
                     )}

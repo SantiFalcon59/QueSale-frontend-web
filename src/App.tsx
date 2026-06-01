@@ -26,17 +26,31 @@ const Communities = React.lazy(() => import('./pages/Communities'));
 const Profile = React.lazy(() => import('./pages/Profile'));
 const Login = React.lazy(() => import('./pages/Auth/Login'));
 const Register = React.lazy(() => import('./pages/Auth/Register'));
-const SetupProfile = React.lazy(() => import('./pages/Auth/SetupProfile'));
 const OrganizerDashboard = React.lazy(() => import('./pages/Organizer/Dashboard'));
 const CreateEvent = React.lazy(() => import('./pages/Organizer/CreateEvent'));
 const AdminOrganizations = React.lazy(() => import('./pages/Admin/AdminOrganizations'));
 const AdminPanel = React.lazy(() => import('./pages/Admin/AdminPanel'));
 
 import { useAuth } from './context/AuthContext';
-import { Navigate, useLocation } from 'react-router-dom';
+import { Navigate, useLocation, useParams } from 'react-router-dom';
+
+const ProfileRoute: React.FC = () => {
+  const { pathname } = useLocation();
+  const username = pathname.slice(2);
+  if (!username) return <Navigate to="/" replace />;
+  return <Profile usernameFromUrl={username} />;
+};
+
+const CatchAllRouter: React.FC = () => {
+  const { pathname } = useLocation();
+  if (pathname.startsWith('/@')) {
+    return <AuthGuard><PageWrapper><ProfileRoute /></PageWrapper></AuthGuard>;
+  }
+  return <PageWrapper><Home /></PageWrapper>;
+};
 
 const AuthGuard: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user, loading, profile } = useAuth();
+  const { user, loading } = useAuth();
   const location = useLocation();
 
   if (loading) return (
@@ -46,10 +60,6 @@ const AuthGuard: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   );
 
   if (!user) return <Navigate to="/login" state={{ from: location }} replace />;
-  
-  if (user && !profile?.username && location.pathname !== '/setup-profile') {
-    return <Navigate to="/setup-profile" replace />;
-  }
 
   return <>{children}</>;
 };
@@ -109,7 +119,6 @@ export default function App() {
                     <Route path="/" element={<PageWrapper><Home /></PageWrapper>} />
                     <Route path="/login" element={<PageWrapper><Login /></PageWrapper>} />
                     <Route path="/register" element={<PageWrapper><Register /></PageWrapper>} />
-                    <Route path="/setup-profile" element={<AuthGuard><PageWrapper><SetupProfile /></PageWrapper></AuthGuard>} />
                     
                     <Route path="/feed" element={<PageWrapper><Feed /></PageWrapper>} />
                     <Route path="/events" element={<PageWrapper><Discovery /></PageWrapper>} />
@@ -120,13 +129,11 @@ export default function App() {
                     <Route path="/favorites" element={<AuthGuard><PageWrapper><Favorites /></PageWrapper></AuthGuard>} />
                     <Route path="/tickets" element={<AuthGuard><PageWrapper><MyTickets /></PageWrapper></AuthGuard>} />
                     <Route path="/saved" element={<Navigate to="/favorites" replace />} />
-                    <Route path="/u/:username" element={<AuthGuard><PageWrapper><Profile /></PageWrapper></AuthGuard>} />
                     <Route path="/events/:id" element={<PageWrapper><EventDetail /></PageWrapper>} />
                     <Route path="/organizer" element={<AuthGuard><PageWrapper><OrganizerDashboard /></PageWrapper></AuthGuard>} />
                     <Route path="/organizer/new" element={<AuthGuard><PageWrapper><CreateEvent /></PageWrapper></AuthGuard>} />
                     <Route path="/admin" element={<AuthGuard><AdminGuard><PageWrapper><AdminPanel /></PageWrapper></AdminGuard></AuthGuard>} />
-                    
-                    <Route path="*" element={<PageWrapper><Home /></PageWrapper>} />
+                    <Route path="/*" element={<CatchAllRouter />} />
                   </Routes>
                 </AnimatePresence>
               </Suspense>

@@ -34,12 +34,12 @@ export const Sidebar: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ is
         isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
       )}>
         <div className="flex items-center justify-between mb-10">
-          <div>
+          <Link to="/" className="cursor-pointer">
             <h1 className="text-3xl font-display font-extrabold text-white leading-tight tracking-tighter">
               QueSale<span className="text-secondary">.</span>
             </h1>
             <p className="font-mono text-[10px] text-secondary font-bold uppercase tracking-[0.2em] opacity-80">Eventos & Cultura</p>
-          </div>
+          </Link>
           <button onClick={onClose} className="lg:hidden p-2 hover:bg-white/10 rounded-xl transition-all text-white">
             <X size={20} />
           </button>
@@ -63,17 +63,6 @@ export const Sidebar: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ is
                 "transition-transform group-hover:scale-110 duration-300"
               )}>{item.icon}</span>
               <span className="font-display text-sm uppercase tracking-wider">{item.name}</span>
-              
-              <AnimatePresence>
-                {/* Active indicator dot */}
-                <NavLink
-                  to={item.path}
-                  className={({ isActive }) => cn(
-                    "absolute right-4 w-1.5 h-1.5 rounded-full bg-secondary shadow-[0_0_10px_#00dbe7]",
-                    !isActive && "hidden"
-                  )}
-                />
-              </AnimatePresence>
             </NavLink>
           ))}
         </nav>

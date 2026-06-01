@@ -133,6 +133,22 @@
     @apply font-mono text-[12px] uppercase font-black tracking-[0.25em] leading-none text-primary;
   }
 
+  .btn-primary {
+    @apply cursor-pointer bg-primary text-on-primary font-display font-black uppercase tracking-widest text-[10px] px-6 py-3 rounded-xl
+           hover:bg-primary/90 hover:shadow-lg hover:shadow-primary/25 hover:scale-[1.02] hover:-translate-y-0.5
+           active:scale-[0.97] active:translate-y-0
+           disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-none
+           transition-all duration-200 ease-out;
+  }
+
+  .btn-secondary {
+    @apply cursor-pointer bg-surface-container-high text-on-surface font-display font-black uppercase tracking-widest text-[10px] px-6 py-3 rounded-xl border border-outline-variant
+           hover:bg-surface-container-highest hover:border-primary/30 hover:text-primary hover:shadow-md hover:scale-[1.02] hover:-translate-y-0.5
+           active:scale-[0.97] active:translate-y-0
+           disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-none
+           transition-all duration-200 ease-out;
+  }
+
   .sidebar-gradient {
     background: linear-gradient(180deg, #0f0a1a 0%, #1a1529 100%);
   }
@@ -142,6 +158,16 @@
     backdrop-filter: blur(20px);
     border-bottom: 1px solid rgba(115, 46, 228, 0.2);
   }
+}
+
+/* Emoji rendering support */
+textarea, input, [contenteditable] {
+  font-family: "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", "Android Emoji", "Twemoji Mozilla", system-ui, sans-serif;
+}
+
+/* Global cursor for interactive elements */
+button, a, [role="button"], label[for], .cursor-click {
+  cursor: pointer;
 }
 
 /* Custom Scrollbar */

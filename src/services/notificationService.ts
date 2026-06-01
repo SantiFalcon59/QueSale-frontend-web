@@ -1,5 +1,4 @@
-import { db } from '../lib/firebase';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { api } from './apiClient';
 
 export type NotificationType = 'like' | 'comment' | 'mention' | 'event_update' | 'new_follower';
 
@@ -8,24 +7,17 @@ export interface NotificationData {
   fromId: string;
   fromName: string;
   fromPhoto?: string;
-  targetId: string; // The ID of the post, event, etc.
+  targetId: string;
   targetType: 'post' | 'event' | 'user';
-  targetLink?: string; // Deep link to the target
+  targetLink?: string;
   message: string;
-  isRead: boolean;
-  createdAt: any;
 }
 
 export const createNotification = async (toUserId: string, data: Omit<NotificationData, 'isRead' | 'createdAt'>) => {
-  if (toUserId === data.fromId) return; // Don't notify yourself
+  if (toUserId === data.fromId) return;
 
   try {
-    const notifsRef = collection(db, 'users', toUserId, 'notifications');
-    await addDoc(notifsRef, {
-      ...data,
-      isRead: false,
-      createdAt: serverTimestamp(),
-    });
+    await api.createNotification(toUserId, data);
   } catch (err) {
     console.error('Error creating notification:', err);
   }
