@@ -11,8 +11,6 @@ const GOOGLE_MAPS_KEY = process.env.GOOGLE_MAPS_PLATFORM_KEY || '';
 
 const POPULAR_TAGS = ['Anime', 'Manga', 'K-Pop', 'Gaming', 'Cosplay', 'Torneo', 'Feria', 'Convención', 'Taller', 'Karaoke', 'RPG', 'Indie', 'Art', 'Música', 'Tech'];
 
-const CATEGORIES = ['Anime', 'Videojuegos', 'K-Pop', 'Feria', 'Convención', 'Taller', 'Torneo', 'Música', 'Gaming', 'Cosplay', 'Arte', 'Tech', 'Otro'];
-
 const STEPS = [
   { id: 'basic', label: 'Básico' },
   { id: 'media', label: 'Multimedia' },
@@ -96,7 +94,7 @@ const CreateEvent: React.FC = () => {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    category: 'Anime',
+    category: '',
     date: '',
     time: '',
     address: '',
@@ -110,6 +108,7 @@ const CreateEvent: React.FC = () => {
     customTag: '',
   });
 
+  const [categories, setCategories] = useState<{ id: number; name: string }[]>([]);
   const [mediaFiles, setMediaFiles] = useState<File[]>([]);
   const [mediaPreviews, setMediaPreviews] = useState<string[]>([]);
   const [isDragOver, setIsDragOver] = useState(false);
@@ -125,6 +124,13 @@ const CreateEvent: React.FC = () => {
           setOrganization({ id: org.id_organizer, name: org.name, verified: org.verified });
         } else {
           navigate('/organizer');
+        }
+
+        const catsData: any = await api.getCategories();
+        const cats = catsData?.data || catsData || [];
+        setCategories(cats);
+        if (cats.length > 0 && !formData.category) {
+          setFormData(prev => ({ ...prev, category: cats[0].name }));
         }
       } catch (err) {
         console.error("Error fetching org:", err);
@@ -325,7 +331,7 @@ const CreateEvent: React.FC = () => {
                   onChange={e => setFormData({ ...formData, category: e.target.value })}
                   className="w-full bg-white border border-outline-variant rounded-xl h-14 px-5 focus:border-primary outline-none font-bold appearance-none cursor-pointer"
                 >
-                  {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                  {categories.length > 0 ? categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>) : <option value="">Cargando...</option>}
                 </select>
               </div>
 

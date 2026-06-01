@@ -202,6 +202,9 @@ export const api = {
   getEvents: (page = 1, limit = 50) =>
     apiRequest(`/api/events?page=${page}&limit=${limit}`),
 
+  getEventsWithFilters: (queryString: string) =>
+    apiRequest(`/api/events?${queryString}`),
+
   deleteEvent: (eventId: string) =>
     apiRequest(`/api/events/${encodeURIComponent(eventId)}`, {
       method: 'DELETE',
@@ -333,4 +336,7 @@ export const api = {
       body: { adminId, role: role || 'admin' },
       auth: true,
     }),
+
+  getCategories: () =>
+    apiRequest('/api/categories'),
 };

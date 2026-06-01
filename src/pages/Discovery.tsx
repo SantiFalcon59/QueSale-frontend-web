@@ -1,204 +1,324 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { SlidersHorizontal, Grid as GridIcon, List, X, ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
+import { SlidersHorizontal, Grid as GridIcon, List, X, Search, MapPin, CalendarDays, Sparkles, RotateCcw, ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { api } from '../services/apiClient';
 import { Link } from 'react-router-dom';
-import { format } from 'date-fns';
+import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths } from 'date-fns';
 import { es } from 'date-fns/locale';
+
+const QUICK_FILTERS = [
+  { id: 'today', label: 'Hoy' },
+  { id: 'tomorrow', label: 'Mañana' },
+  { id: 'weekend', label: 'Fin de Semana' },
+  { id: 'next-week', label: 'Próxima Semana' },
+  { id: 'next-month', label: 'Próximo Mes' },
+];
+
+const ITEMS_PER_PAGE = 50;
+
+const CalendarPicker: React.FC<{ selectedDate: Date | null; onSelect: (date: Date | null) => void }> = ({ selectedDate, onSelect }) => {
+  const [currentMonth, setCurrentMonth] = useState(new Date());
+
+  const monthStart = startOfMonth(currentMonth);
+  const monthEnd = endOfMonth(currentMonth);
+  const calStart = startOfWeek(monthStart, { weekStartsOn: 1 });
+  const calEnd = endOfWeek(monthEnd, { weekStartsOn: 1 });
+  const days = eachDayOfInterval({ start: calStart, end: calEnd });
+
+  const weekDays = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
+
+  return (
+    <div className="bg-surface-container-low rounded-2xl p-3 border border-outline-variant select-none">
+      <div className="flex items-center justify-between mb-3">
+        <button
+          type="button"
+          onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
+          className="p-1 hover:bg-white rounded-lg transition-colors"
+        >
+          <ChevronLeft size={16} className="text-primary" />
+        </button>
+        <span className="text-xs font-black text-primary uppercase tracking-widest">
+          {format(currentMonth, 'MMMM yyyy', { locale: es })}
+        </span>
+        <button
+          type="button"
+          onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
+          className="p-1 hover:bg-white rounded-lg transition-colors"
+        >
+          <ChevronRight size={16} className="text-primary" />
+        </button>
+      </div>
+
+      <div className="grid grid-cols-7 gap-0.5 text-center mb-1">
+        {weekDays.map(d => (
+          <span key={d} className="text-[9px] font-black text-on-surface-variant/40 py-1">{d}</span>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-7 gap-0.5 text-center">
+        {days.map((day, i) => {
+          const inMonth = isSameMonth(day, currentMonth);
+          const isSelected = selectedDate && isSameDay(day, selectedDate);
+          const isToday = isSameDay(day, new Date());
+          return (
+            <button
+              key={i}
+              type="button"
+              onClick={() => {
+                if (!inMonth) return;
+                if (isSelected) {
+                  onSelect(null);
+                } else {
+                  onSelect(day);
+                }
+              }}
+              className={cn(
+                "py-1.5 text-[10px] font-bold rounded-lg transition-all",
+                !inMonth ? "text-transparent pointer-events-none" :
+                isSelected ? "bg-primary text-white shadow-md shadow-primary/20 scale-105" :
+                isToday ? "bg-primary/10 text-primary" :
+                "hover:bg-white text-on-surface"
+              )}
+            >
+              {format(day, 'd')}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
 
 const Discovery: React.FC = () => {
   const [view, setView] = useState<'grid' | 'list'>('grid');
   const [showFilters, setShowFilters] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('ALL');
-  const [proximity, setProximity] = useState(25);
   const [priceType, setPriceType] = useState<'all' | 'free' | 'paid'>('all');
-  const [exactDate, setExactDate] = useState('');
+  const [priceMin, setPriceMin] = useState(0);
+  const [priceMax, setPriceMax] = useState(50000);
+  const [priceFilterVersion, setPriceFilterVersion] = useState(0);
+  const [activeQuickFilter, setActiveQuickFilter] = useState<string | null>(null);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [events, setEvents] = useState<any[]>([]);
+  const [categories, setCategories] = useState<{ id: number; name: string; color?: string; icon_url?: string; events_count?: number }[]>([]);
   const [loading, setLoading] = useState(true);
+  const [total, setTotal] = useState(0);
 
-  const categories = [
-    { id: 'ALL', name: 'Todos' },
-    { id: 'ANIME', name: 'Anime' },
-    { id: 'K-POP', name: 'K-Pop' },
-    { id: 'GAMING', name: 'Gaming' },
-    { id: 'COSPLAY', name: 'Cosplay' },
-    { id: 'TCG', name: 'TCG' },
-    { id: 'ROL', name: 'Rol' },
-  ];
+  const buildQueryString = useCallback(() => {
+    const params = new URLSearchParams();
+    params.set('page', '1');
+    params.set('limit', String(ITEMS_PER_PAGE));
 
-  const fetchEvents = async () => {
+    if (searchQuery) params.set('search', searchQuery);
+    if (selectedCategory !== 'ALL') params.set('category', selectedCategory);
+    if (priceType !== 'all') params.set('price', priceType);
+    if (priceType === 'paid') {
+      params.set('priceMin', String(priceMin));
+      params.set('priceMax', String(priceMax));
+    }
+    if (activeQuickFilter) params.set('quickDate', activeQuickFilter);
+    if (selectedDate) {
+      const start = new Date(selectedDate);
+      start.setHours(0, 0, 0, 0);
+      const end = new Date(selectedDate);
+      end.setHours(23, 59, 59, 999);
+      params.set('dateFrom', start.toISOString());
+      params.set('dateTo', end.toISOString());
+    }
+
+    return params.toString();
+  }, [searchQuery, selectedCategory, priceType, priceMin, priceMax, priceFilterVersion, activeQuickFilter, selectedDate]);
+
+  const fetchEvents = useCallback(async () => {
     setLoading(true);
     try {
-      const result: any = await api.getEvents(1, 50);
-      const apiEvents = result.data || [];
+      const result: any = await api.getEventsWithFilters(buildQueryString());
+      const apiEvents = Array.isArray(result) ? result : (result?.data || []);
       setEvents(apiEvents.map((e: any) => ({
         id_event: e.id_event || e.id,
         title: e.title,
         description: e.description,
         date: e.date,
         ubication: e.ubication || e.location,
-        organizer: e.organizer,
         thumbnail_url: e.thumbnail_url || e.image,
-        category: e.category,
+        category: e.interests?.[0]?.name || e.category,
         price: e.price,
-        match: e.match || '90%',
-        live: e.live || false
+        tags: e.tags || [],
+        ticket_type: e.ticket_type || 'free',
       })));
+      setTotal(Array.isArray(result) ? result.length : (result?.pagination?.total || 0));
     } catch (err) {
       console.error('Error fetching events:', err);
       setEvents([]);
     } finally {
       setLoading(false);
     }
+  }, [buildQueryString]);
+
+  const fetchCategories = async () => {
+    try {
+      const data: any = await api.getCategories();
+      const cats = data?.data || data || [];
+      setCategories(cats);
+    } catch {
+      setCategories([]);
+    }
   };
 
   useEffect(() => {
-    fetchEvents();
+    fetchCategories();
   }, []);
 
-  const filteredEvents = events.filter(event => {
-    const matchesSearch = event.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          (event.description || '').toLowerCase().includes(searchQuery.toLowerCase());
-    
-    const matchesPrice = priceType === 'all' || 
-                         (priceType === 'free' && (Number(event.price) === 0 || !event.price)) ||
-                         (priceType === 'paid' && Number(event.price) > 0);
+  useEffect(() => {
+    fetchEvents();
+  }, [fetchEvents]);
 
-    const matchesCategory = selectedCategory === 'ALL' || event.category?.toUpperCase() === selectedCategory;
+  const handleQuickFilter = (id: string) => {
+    setActiveQuickFilter(activeQuickFilter === id ? null : id);
+    setSelectedDate(null);
+  };
 
-    return matchesSearch && matchesPrice && matchesCategory;
-  });
+  const handleDateSelect = (date: Date | null) => {
+    setSelectedDate(date);
+    setActiveQuickFilter(null);
+  };
+
+  const handleReset = () => {
+    setSearchQuery('');
+    setSelectedCategory('ALL');
+    setPriceType('all');
+    setPriceMin(0);
+    setPriceMax(50000);
+    setPriceFilterVersion(v => v + 1);
+    setActiveQuickFilter(null);
+    setSelectedDate(null);
+  };
+
+  const hasActiveFilters = searchQuery || selectedCategory !== 'ALL' || priceType !== 'all' || activeQuickFilter || selectedDate || priceMin > 0 || priceMax < 50000;
+
+  const safeDate = (d: string) => { const parsed = new Date(d); return isNaN(parsed.getTime()) ? new Date() : parsed; };
+  const isFree = (p: any) => Number(p) === 0 || !p;
 
   return (
     <div className="min-h-screen bg-background text-on-surface">
       <main className="max-w-[1600px] mx-auto pt-8 pb-20 px-6 lg:px-10 grid grid-cols-12 gap-8">
-        
+
         {/* Filter Sidebar */}
         <aside className={cn(
           "col-span-12 lg:col-span-3 space-y-6 transition-all",
           !showFilters && "lg:hidden"
         )}>
-          <div className="bg-white/70 backdrop-blur-xl border border-outline-variant/50 p-6 rounded-3xl shadow-sm sticky top-24">
-            <div className="flex items-center justify-between mb-8">
-              <h3 className="text-xl font-display font-black italic text-primary flex items-center gap-2 uppercase tracking-tighter">
-                <span className="material-symbols-outlined">tune</span> Filtros
+          <div className="bg-white/70 backdrop-blur-xl border border-outline-variant/50 p-6 rounded-3xl shadow-sm sticky top-24 space-y-6">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-black italic text-primary flex items-center gap-2 uppercase tracking-tighter">
+                <Sparkles size={18} /> Filtros
               </h3>
-              <button 
-                onClick={() => {
-                  setSearchQuery('');
-                  setSelectedCategory('ALL');
-                  setProximity(25);
-                  setPriceType('all');
-                  setExactDate('');
-                }}
-                className="text-xs font-bold text-on-surface-variant hover:text-primary underline uppercase tracking-widest transition-colors"
-              >
-                Limpiar
-              </button>
+              {hasActiveFilters && (
+                <button onClick={handleReset} className="text-[10px] font-bold text-primary underline uppercase tracking-widest transition-colors flex items-center gap-1">
+                  <RotateCcw size={12} /> Limpiar
+                </button>
+              )}
             </div>
 
             {/* Keyword Search */}
-            <div className="mb-8 space-y-3">
-              <label className="text-[10px] font-black uppercase tracking-[0.2em] text-on-surface-variant ml-1">Palabras Clave</label>
-              <div className="bg-surface-container-low rounded-2xl p-1 border border-outline-variant focus-within:border-primary transition-all group">
-                <div className="relative">
-                  <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant group-focus-within:text-primary transition-colors">search</span>
-                  <input 
-                    className="bg-transparent border-none w-full focus:ring-0 text-sm font-semibold p-3 pl-10 placeholder:text-on-surface-variant/50" 
-                    placeholder="Ej: Torneo Smash" 
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Proximity Slider */}
-            <div className="mb-8 space-y-4">
-              <div className="flex justify-between items-center ml-1">
-                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-on-surface-variant">Proximidad</label>
-                <span className="text-xs font-black text-primary bg-primary/10 px-2 py-1 rounded-lg">{proximity} km</span>
-              </div>
-              <div className="px-1">
-                <input 
-                  className="w-full h-1.5 bg-surface-variant rounded-lg appearance-none cursor-pointer accent-primary" 
-                  max="100" 
-                  min="1" 
-                  type="range" 
-                  value={proximity}
-                  onChange={(e) => setProximity(parseInt(e.target.value))}
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant ml-1">Buscar</label>
+              <div className="relative">
+                <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant" />
+                <input
+                  className="w-full bg-surface-container-low border border-outline-variant rounded-2xl py-3 pl-10 pr-4 text-sm font-semibold focus:border-primary outline-none transition-all placeholder:text-on-surface-variant/50"
+                  placeholder="Ej: Torneo Smash"
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
                 />
-                <div className="flex justify-between mt-2 text-[9px] text-on-surface-variant font-black uppercase tracking-widest">
-                  <span>1km</span>
-                  <span>100km</span>
-                </div>
               </div>
             </div>
 
-            {/* Categories Chips */}
-            <div className="mb-8 space-y-3">
-              <label className="text-[10px] font-black uppercase tracking-[0.2em] text-on-surface-variant ml-1">Categorías</label>
-              <div className="flex flex-wrap gap-2">
+            {/* Categories */}
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant ml-1">Categorías</label>
+              <div className="flex flex-wrap gap-1.5">
+                <button
+                  onClick={() => setSelectedCategory('ALL')}
+                  className={cn(
+                    "px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all",
+                    selectedCategory === 'ALL'
+                      ? "bg-primary text-white shadow-lg shadow-primary/20"
+                      : "bg-surface-container-high text-on-surface-variant hover:bg-primary/10 hover:text-primary"
+                  )}
+                >
+                  Todas
+                </button>
                 {categories.map(cat => (
-                  <button 
+                  <button
                     key={cat.id}
-                    onClick={() => setSelectedCategory(cat.id)}
+                    onClick={() => setSelectedCategory(cat.name)}
                     className={cn(
-                      "px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all",
-                      selectedCategory === cat.id 
-                        ? "bg-primary text-white shadow-lg shadow-primary/20 scale-105" 
-                        : "bg-surface-container-highest text-on-surface-variant hover:bg-primary/10 hover:text-primary"
+                      "px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2",
+                      selectedCategory === cat.name
+                        ? "text-white shadow-lg"
+                        : "bg-surface-container-high text-on-surface-variant hover:bg-primary/10 hover:text-primary"
                     )}
+                    style={selectedCategory === cat.name ? { backgroundColor: cat.color || '#732ee4', boxShadow: `0 4px 14px ${cat.color || '#732ee4'}40` } : {}}
                   >
+                    <span
+                      className="w-3 h-3 rounded-sm shrink-0"
+                      style={{ backgroundColor: cat.color || '#732ee4' }}
+                    />
                     {cat.name}
+                    {cat.events_count != null && <span className="ml-0.5 opacity-60">({cat.events_count})</span>}
                   </button>
                 ))}
               </div>
             </div>
 
-            {/* Date Selection (Simplified Calendar for now) */}
-            <div className="mb-8 space-y-3">
-              <label className="text-[10px] font-black uppercase tracking-[0.2em] text-on-surface-variant ml-1">Fecha del Evento</label>
-              <div className="bg-surface-container-low rounded-2xl p-4 border border-outline-variant">
-                <div className="flex justify-between items-center mb-4">
-                  <span className="text-xs font-black text-primary uppercase tracking-widest">{format(new Date(), 'MMMM yyyy', { locale: es })}</span>
-                  <div className="flex gap-1">
-                    <button className="p-1 hover:bg-white rounded-lg transition-colors"><ChevronLeft size={16} className="text-primary" /></button>
-                    <button className="p-1 hover:bg-white rounded-lg transition-colors"><ChevronRight size={16} className="text-primary" /></button>
-                  </div>
-                </div>
-                <div className="grid grid-cols-7 gap-1 text-center">
-                  {['L', 'M', 'X', 'J', 'V', 'S', 'D'].map(d => (
-                    <span key={d} className="text-[9px] font-black text-on-surface-variant/40">{d}</span>
-                  ))}
-                  {Array.from({ length: 31 }, (_, i) => i + 1).slice(0, 14).map(day => (
-                    <div 
-                      key={day} 
-                      className={cn(
-                        "py-1.5 text-[10px] font-bold rounded-lg cursor-pointer transition-all",
-                        day === new Date().getDate() ? "bg-primary text-white shadow-md shadow-primary/20" : "hover:bg-white text-on-surface"
-                      )}
-                    >
-                      {day}
-                    </div>
-                  ))}
-                </div>
+            {/* Quick Date Filters */}
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant ml-1 flex items-center gap-1.5">
+                <CalendarDays size={14} /> Fecha
+              </label>
+              <div className="flex flex-wrap gap-1.5">
+                {QUICK_FILTERS.map(qf => (
+                  <button
+                    key={qf.id}
+                    onClick={() => handleQuickFilter(qf.id)}
+                    className={cn(
+                      "px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all",
+                      activeQuickFilter === qf.id
+                        ? "bg-primary text-white shadow-lg shadow-primary/20"
+                        : "bg-surface-container-high text-on-surface-variant hover:bg-primary/10 hover:text-primary"
+                    )}
+                  >
+                    {qf.label}
+                  </button>
+                ))}
               </div>
             </div>
 
-            {/* Price Segmented Control */}
-            <div className="mb-8 space-y-3">
-              <label className="text-[10px] font-black uppercase tracking-[0.2em] text-on-surface-variant ml-1">Inversión</label>
+            {/* Calendar */}
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant ml-1">Calendario</label>
+              <CalendarPicker selectedDate={selectedDate} onSelect={handleDateSelect} />
+              {selectedDate && (
+                <p className="text-[10px] text-primary font-bold text-center">
+                  {format(selectedDate, "d 'de' MMMM", { locale: es })}
+                </p>
+              )}
+            </div>
+
+            {/* Price */}
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant ml-1">Precio</label>
               <div className="flex p-1 bg-surface-container-low rounded-2xl border border-outline-variant">
                 {[
                   { id: 'all', label: 'Todos' },
                   { id: 'free', label: 'Gratis' },
                   { id: 'paid', label: 'Pagos' }
                 ].map(p => (
-                  <button 
+                  <button
                     key={p.id}
                     onClick={() => setPriceType(p.id as any)}
                     className={cn(
@@ -212,16 +332,57 @@ const Discovery: React.FC = () => {
               </div>
             </div>
 
-            {/* Tip of the Day */}
-            <div className="p-5 bg-gradient-to-br from-primary/10 to-secondary/10 rounded-2xl border border-primary/10 relative overflow-hidden group">
-              <span className="material-symbols-outlined absolute -right-4 -bottom-4 text-primary opacity-5 text-[100px] transition-transform group-hover:scale-110 group-hover:rotate-12 duration-700">lightbulb</span>
-              <h4 className="text-[10px] font-black text-primary mb-2 flex items-center gap-1.5 uppercase tracking-widest">
-                <span className="material-symbols-outlined text-[16px]">auto_awesome</span> Tip de Usuario
-              </h4>
-              <p className="text-[11px] text-on-surface-variant leading-relaxed relative z-10 font-medium italic">
-                "Revisa el mapa para encontrar eventos cerca de tu ubicación actual."
-              </p>
-            </div>
+            {/* Price Range Sliders (only when paid) */}
+            {priceType === 'paid' && (
+              <div className="space-y-3 animate-fadeIn">
+                <div className="flex justify-between items-center ml-1">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Rango de precio</label>
+                  <span className="text-xs font-black text-primary bg-primary/10 px-2 py-0.5 rounded-lg">
+                    ${priceMin.toLocaleString('es-AR')} - ${priceMax.toLocaleString('es-AR')}
+                  </span>
+                </div>
+                <div className="space-y-3">
+                  <div>
+                    <label className="text-[9px] font-bold text-on-surface-variant uppercase tracking-wider">Mínimo</label>
+                    <input
+                      type="range"
+                      min="0"
+                      max="50000"
+                      step="500"
+                      value={priceMin}
+                      onChange={(e) => {
+                        const val = parseInt(e.target.value);
+                        if (val <= priceMax) setPriceMin(val);
+                      }}
+                      onMouseUp={() => setPriceFilterVersion(v => v + 1)}
+                      onTouchEnd={() => setPriceFilterVersion(v => v + 1)}
+                      className="w-full h-1.5 bg-surface-variant rounded-lg appearance-none cursor-pointer accent-primary"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[9px] font-bold text-on-surface-variant uppercase tracking-wider">Máximo</label>
+                    <input
+                      type="range"
+                      min="0"
+                      max="50000"
+                      step="500"
+                      value={priceMax}
+                      onChange={(e) => {
+                        const val = parseInt(e.target.value);
+                        if (val >= priceMin) setPriceMax(val);
+                      }}
+                      onMouseUp={() => setPriceFilterVersion(v => v + 1)}
+                      onTouchEnd={() => setPriceFilterVersion(v => v + 1)}
+                      className="w-full h-1.5 bg-surface-variant rounded-lg appearance-none cursor-pointer accent-primary"
+                    />
+                  </div>
+                </div>
+                <div className="flex justify-between text-[9px] text-on-surface-variant font-black uppercase tracking-widest">
+                  <span>$0</span>
+                  <span>$50k</span>
+                </div>
+              </div>
+            )}
           </div>
         </aside>
 
@@ -231,58 +392,46 @@ const Discovery: React.FC = () => {
           showFilters ? "lg:col-span-9" : "lg:col-span-12"
         )}>
           {/* Section Header */}
-          <div className="flex flex-col gap-6 mb-10">
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-              <div className="space-y-1">
-                <div className="flex items-center gap-3">
-                  <div className="w-1.5 h-10 bg-primary rounded-full shadow-[0_0_15px_rgba(115,46,228,0.4)]" />
-                  <h2 className="text-4xl lg:text-5xl font-display font-black italic tracking-tighter uppercase text-on-surface">
-                    RESULTADOS <span className="text-primary">/ EXPLORAR</span>
-                  </h2>
-                </div>
-                <p className="text-sm font-bold text-on-surface-variant ml-4 uppercase tracking-widest opacity-60">
-                  {filteredEvents.length} eventos encontrados
-                </p>
-              </div>
-              
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
+            <div className="space-y-1">
               <div className="flex items-center gap-3">
-                <button 
-                  onClick={() => setShowFilters(!showFilters)}
-                  className={cn(
-                    "flex items-center gap-2 h-12 px-6 rounded-2xl transition-all border text-[10px] font-black uppercase tracking-widest",
-                    showFilters ? "bg-primary text-white border-primary shadow-lg shadow-primary/20" : "bg-white text-on-surface-variant border-outline-variant hover:border-primary"
-                  )}
-                >
-                  <SlidersHorizontal size={16} />
-                  {showFilters ? 'Ocultar Filtros' : 'Filtros'}
-                </button>
-                <div className="h-12 bg-surface-container-low rounded-2xl p-1 flex gap-1 border border-outline-variant shadow-sm">
-                  <button 
-                    onClick={() => setView('grid')}
-                    className={cn("w-10 h-10 flex items-center justify-center rounded-xl transition-all", view === 'grid' ? "bg-white text-primary shadow-sm" : "text-on-surface-variant hover:bg-white/50")}
-                  >
-                    <GridIcon size={18} />
-                  </button>
-                  <button 
-                    onClick={() => setView('list')}
-                    className={cn("w-10 h-10 flex items-center justify-center rounded-xl transition-all", view === 'list' ? "bg-white text-primary shadow-sm" : "text-on-surface-variant hover:bg-white/50")}
-                  >
-                    <List size={18} />
-                  </button>
-                </div>
+                <div className="w-1.5 h-10 bg-primary rounded-full shadow-[0_0_15px_rgba(115,46,228,0.4)]" />
+                <h2 className="text-4xl font-black italic tracking-tighter uppercase text-on-surface">
+                  RESULTADOS <span className="text-primary">/ EXPLORAR</span>
+                </h2>
               </div>
+              {hasActiveFilters && (
+                <p className="text-sm font-bold text-on-surface-variant ml-4 uppercase tracking-widest opacity-60">
+                  {total} eventos encontrados
+                </p>
+              )}
             </div>
 
-            {/* Quick Filters Scroll */}
-            <div className="flex gap-2 overflow-x-auto pb-2 hide-scrollbar">
-              {['Todo hoy', 'Mañana', 'Entrada Gratis', 'Más cercanos', 'Favoritos'].map(filter => (
-                <button 
-                  key={filter}
-                  className="px-6 py-2.5 bg-white border border-outline-variant rounded-full text-[10px] font-black uppercase tracking-widest whitespace-nowrap hover:border-primary hover:text-primary transition-all shadow-sm active:scale-95"
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setShowFilters(!showFilters)}
+                className={cn(
+                  "flex items-center gap-2 h-12 px-6 rounded-2xl transition-all border text-[10px] font-black uppercase tracking-widest",
+                  showFilters ? "bg-primary text-white border-primary shadow-lg shadow-primary/20" : "bg-white text-on-surface-variant border-outline-variant hover:border-primary"
+                )}
+              >
+                <SlidersHorizontal size={16} />
+                {showFilters ? 'Ocultar Filtros' : 'Filtros'}
+              </button>
+              <div className="h-12 bg-surface-container-low rounded-2xl p-1 flex gap-1 border border-outline-variant shadow-sm">
+                <button
+                  onClick={() => setView('grid')}
+                  className={cn("w-10 h-10 flex items-center justify-center rounded-xl transition-all", view === 'grid' ? "bg-white text-primary shadow-sm" : "text-on-surface-variant hover:bg-white/50")}
                 >
-                  {filter}
+                  <GridIcon size={18} />
                 </button>
-              ))}
+                <button
+                  onClick={() => setView('list')}
+                  className={cn("w-10 h-10 flex items-center justify-center rounded-xl transition-all", view === 'list' ? "bg-white text-primary shadow-sm" : "text-on-surface-variant hover:bg-white/50")}
+                >
+                  <List size={18} />
+                </button>
+              </div>
             </div>
           </div>
 
@@ -296,12 +445,12 @@ const Discovery: React.FC = () => {
           ) : (
             <div className={cn(
               "grid gap-8 transition-all duration-500",
-              view === 'grid' 
-                ? (showFilters ? "grid-cols-1 md:grid-cols-2 xl:grid-cols-3" : "grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4") 
+              view === 'grid'
+                ? (showFilters ? "grid-cols-1 md:grid-cols-2 xl:grid-cols-3" : "grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4")
                 : "grid-cols-1"
             )}>
-              {filteredEvents.length > 0 ? filteredEvents.map((event) => (
-                <article 
+              {events.length > 0 ? events.map((event) => (
+                <article
                   key={event.id_event}
                   className={cn(
                     "group bg-white rounded-[2.5rem] overflow-hidden border border-outline-variant/50 flex flex-col transition-all duration-500 hover:translate-y-[-8px] hover:shadow-[0_20px_40px_rgba(0,0,0,0.08)]",
@@ -312,114 +461,91 @@ const Discovery: React.FC = () => {
                     "relative overflow-hidden",
                     view === 'grid' ? "aspect-[4/3]" : "aspect-[16/9] md:w-80 md:h-full shrink-0"
                   )}>
-                    <img 
-                      src={event.thumbnail_url || 'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=800'} 
-                      alt={event.title} 
-                      className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" 
+                    <img
+                      src={event.thumbnail_url || 'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=800'}
+                      alt={event.title}
+                      className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                    
-                    <div className="absolute top-4 left-4 flex flex-col gap-2">
-                      <div className="px-3 py-1.5 rounded-xl bg-primary text-white text-[9px] font-black tracking-widest uppercase shadow-lg shadow-primary/20 backdrop-blur-md">
-                        {event.match || '95%'} Match
-                      </div>
-                      {event.live && (
-                        <div className="px-3 py-1.5 rounded-xl bg-red-500 text-white text-[9px] font-black tracking-widest uppercase flex items-center gap-1.5 animate-pulse shadow-lg shadow-red-500/20">
-                          <span className="w-1.5 h-1.5 bg-white rounded-full"></span> VIVO
-                        </div>
-                      )}
-                    </div>
 
-                    <button className="absolute bottom-4 right-4 w-11 h-11 bg-white/90 backdrop-blur-md rounded-2xl flex items-center justify-center text-primary shadow-xl opacity-0 translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-500 hover:bg-primary hover:text-white">
-                      <span className="material-symbols-outlined text-[24px]">calendar_add_on</span>
-                    </button>
+                    {isFree(event.price) && (
+                      <div className="absolute top-4 left-4 px-3 py-1.5 rounded-xl bg-green-500 text-white text-[9px] font-black tracking-widest uppercase shadow-lg shadow-green-500/20">
+                        Gratis
+                      </div>
+                    )}
                   </Link>
 
                   <div className="p-8 flex flex-col flex-grow">
                     <div className="flex justify-between items-start mb-3">
-                      <span className="text-[10px] font-black text-primary uppercase tracking-[0.15em]">{event.category || 'EVENTO'}</span>
-                      <span className="text-xs font-black text-on-surface-variant/60 uppercase tracking-widest">
-                        {Number(event.price) === 0 || !event.price ? 'Gratis' : `$${Number(event.price).toLocaleString('es-AR')}`}
-                      </span>
+                      {(() => {
+                        const catColor = categories.find(c => c.name === event.category)?.color;
+                        return (
+                          <span
+                            className="px-2.5 py-1 rounded-md text-[9px] font-black uppercase tracking-wider text-white"
+                            style={{ backgroundColor: catColor || '#732ee4' }}
+                          >
+                            {event.category || 'EVENTO'}
+                          </span>
+                        );
+                      })()}
+                      {!isFree(event.price) && (
+                        <span className="text-xs font-black text-on-surface-variant/60 uppercase tracking-widest">
+                          ${Number(event.price).toLocaleString('es-AR')}
+                        </span>
+                      )}
                     </div>
                     <Link to={`/events/${event.id_event}`}>
-                      <h3 className="text-xl font-display font-extrabold text-on-surface leading-tight mb-6 group-hover:text-primary transition-colors line-clamp-2 uppercase italic tracking-tighter">
+                      <h3 className="text-xl font-black text-on-surface leading-tight mb-6 group-hover:text-primary transition-colors line-clamp-2 uppercase italic tracking-tighter">
                         {event.title}
                       </h3>
                     </Link>
                     <div className="mt-auto pt-6 border-t border-outline-variant/30 space-y-3">
                       <div className="flex items-center gap-3 text-on-surface-variant">
-                        <span className="material-symbols-outlined text-primary text-[18px]">event</span>
-                        <span className="text-xs font-bold tracking-wide uppercase opacity-80">
-                          {format(new Date(event.date), "d MMM • HH:mm", { locale: es })}
+                        <CalendarDays size={16} className="text-primary shrink-0" />
+                        <span className="text-xs font-bold tracking-wide uppercase">
+                          {format(safeDate(event.date), "d MMM • HH:mm", { locale: es })}
                         </span>
                       </div>
                       <div className="flex items-center gap-3 text-on-surface-variant">
-                        <span className="material-symbols-outlined text-primary text-[18px]">location_on</span>
-                        <span className="text-xs font-bold tracking-wide uppercase opacity-80 truncate">
-                          {event.ubication || event.location || 'Consultar ubicación'}
+                        <MapPin size={16} className="text-primary shrink-0" />
+                        <span className="text-xs font-bold tracking-wide uppercase truncate">
+                          {event.ubication || 'Consultar ubicación'}
                         </span>
                       </div>
+                      {event.tags && event.tags.length > 0 && (
+                        <div className="flex gap-1.5 flex-wrap pt-1">
+                          {event.tags.slice(0, 3).map((t: string) => (
+                            <span key={t} className="px-2 py-0.5 rounded bg-primary/5 text-primary text-[8px] font-bold uppercase tracking-wider">#{t}</span>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </article>
               )) : (
                 <div className="col-span-full py-32 text-center space-y-8 bg-white/50 backdrop-blur-sm rounded-[3rem] border-2 border-dashed border-outline-variant/50">
-                   <div className="w-24 h-24 rounded-[2rem] bg-white shadow-xl flex items-center justify-center mx-auto transform -rotate-6 border border-outline-variant/30">
-                     <X size={40} className="text-primary/40" />
-                   </div>
-                   <div className="space-y-3 px-6">
-                     <h3 className="text-3xl font-display font-black italic tracking-tighter uppercase text-on-surface">Sin resultados</h3>
-                     <p className="text-on-surface-variant max-w-sm mx-auto font-medium leading-relaxed opacity-70">No encontramos eventos que coincidan con tu búsqueda actual. ¡Intenta ajustar los filtros!</p>
-                   </div>
-                   <button 
-                    onClick={() => { setSearchQuery(''); setSelectedCategory('ALL'); setPriceType('all'); }} 
-                    className="bg-primary text-white font-display font-black h-14 px-10 rounded-2xl text-[10px] uppercase tracking-[0.2em] shadow-xl shadow-primary/30 hover:scale-105 active:scale-95 transition-all"
-                   >
-                     Reiniciar Exploración
-                   </button>
+                  <div className="w-24 h-24 rounded-[2rem] bg-white shadow-xl flex items-center justify-center mx-auto transform -rotate-6 border border-outline-variant/30">
+                    <X size={40} className="text-primary/40" />
+                  </div>
+                  <div className="space-y-3 px-6">
+                    <h3 className="text-3xl font-black italic tracking-tighter uppercase text-on-surface">Sin resultados</h3>
+                    <p className="text-on-surface-variant max-w-sm mx-auto font-medium leading-relaxed opacity-70">No encontramos eventos que coincidan con tu búsqueda actual. ¡Intenta ajustar los filtros!</p>
+                  </div>
+                  <button onClick={handleReset} className="bg-primary text-white font-black h-14 px-10 rounded-2xl text-[10px] uppercase tracking-[0.2em] shadow-xl shadow-primary/30 hover:scale-105 active:scale-95 transition-all">
+                    Reiniciar Exploración
+                  </button>
                 </div>
               )}
-            </div>
-          )}
-
-          {/* Expanding Horizons Section */}
-          {!loading && filteredEvents.length > 0 && (
-            <div className="mt-20 pt-20 border-t border-outline-variant/30">
-              <div className="flex items-center gap-4 mb-10">
-                <span className="material-symbols-outlined text-primary text-[40px] shadow-sm">hub</span>
-                <h2 className="text-3xl font-display font-black italic tracking-tighter uppercase text-on-surface">Ampliando tu horizonte</h2>
-              </div>
-              <p className="text-base text-on-surface-variant mb-8 max-w-2xl font-medium leading-relaxed opacity-70">
-                ¿Buscas algo diferente? Explora estas categorías populares en la comunidad:
-              </p>
-              <div className="flex flex-wrap gap-3">
-                {[
-                  { icon: 'book', label: 'Manga Seinen' },
-                  { icon: 'joystick', label: 'Retro Gaming' },
-                  { icon: 'casino', label: 'D&D Campañas' },
-                  { icon: 'robot', label: 'Robótica DIY' },
-                  { icon: 'palette', label: 'Fan Art Digital' }
-                ].map(item => (
-                  <button key={item.label} className="px-8 py-3 bg-white border border-outline-variant/50 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:border-primary hover:text-primary hover:shadow-lg hover:translate-y-[-2px] transition-all flex items-center gap-2 group shadow-sm">
-                    <span className="material-symbols-outlined text-[20px] group-hover:scale-110 transition-transform">{item.icon}</span>
-                    {item.label}
-                  </button>
-                ))}
-              </div>
             </div>
           )}
         </section>
       </main>
 
       <style>{`
-        .hide-scrollbar::-webkit-scrollbar {
-          display: none;
-        }
-        .hide-scrollbar {
-          -ms-overflow-style: none;
-          scrollbar-width: none;
-        }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-fadeIn { animation: fadeIn 0.2s ease-out; }
       `}</style>
     </div>
   );

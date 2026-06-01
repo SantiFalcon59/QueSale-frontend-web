@@ -21,7 +21,7 @@ const Feed: React.FC = () => {
       setLoading(true);
       try {
         const result: any = await api.getEvents(1, 20);
-        const apiEvents = result.data || [];
+        const apiEvents = Array.isArray(result) ? result : (result?.data || []);
         setEvents(apiEvents);
       } catch (err) {
         console.error('Error fetching events:', err);

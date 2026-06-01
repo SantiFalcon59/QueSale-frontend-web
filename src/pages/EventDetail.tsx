@@ -13,7 +13,6 @@ import { APIProvider, Map, Marker } from '@vis.gl/react-google-maps';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { LoginPromptModal } from '../components/ui/LoginPromptModal';
-import { MOCK_EVENTS_DATA } from '../lib/mockData';
 import { createNotification } from '../services/notificationService';
 import { api } from '../services/apiClient';
 
@@ -162,31 +161,7 @@ const EventDetail: React.FC = () => {
         }
         setLoading(false);
       } catch (err) {
-        console.error("Error fetching event, using mock data:", err);
-        const mockEvent = MOCK_EVENTS_DATA.find(e => e.id === id);
-        if (mockEvent) {
-          setEvent({
-            ...mockEvent,
-            organizerId: 'mock-org',
-            price: mockEvent.price || 0,
-            capacity: 500,
-            attendeesCount: 120,
-            location: {
-              address: mockEvent.location,
-              lat: -34.6037,
-              lng: -58.3816,
-            },
-            status: 'active',
-            media: [mockEvent.image],
-            image: mockEvent.image,
-          } as any);
-          setOrganizer({
-            id: 'mock-org',
-            name: mockEvent.organizer,
-            description: 'Organizador verificado por QueSale Geek.',
-            logo: 'https://api.dicebear.com/7.x/initials/svg?seed=' + mockEvent.organizer,
-          });
-        }
+        console.error("Error fetching event:", err);
         setLoading(false);
       }
     };

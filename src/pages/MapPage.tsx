@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { APIProvider, Map, AdvancedMarker, useAdvancedMarkerRef, useMap } from '@vis.gl/react-google-maps';
 import { motion, AnimatePresence } from 'motion/react';
-import { MapPin, Search, Filter, X, Navigation, Calendar, Plus, Minus, Target, ChevronRight } from 'lucide-react';
+import { MapPin, Calendar, Plus, Minus, Target, ChevronRight, X, Share2, Loader2 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useNavigate } from 'react-router-dom';
+import { api } from '../services/apiClient';
 
 const API_KEY =
   process.env.GOOGLE_MAPS_PLATFORM_KEY ||
@@ -11,20 +12,7 @@ const API_KEY =
   (globalThis as any).GOOGLE_MAPS_PLATFORM_KEY ||
   '';
 
-const MOCK_MAP_EVENTS = [
-  { id: '1', title: 'Anime Expo Baires', lat: -34.6037, lng: -58.3816, category: 'Anime', date: '24 Oct, 2024', image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBv2ngcnCNOI_nkiE_cO3acduvaCc27Ifu6NCzO4PzJebFZAy5yCNScL4eIlTDJFKh9KOH8vlKfLFXqZyG-FNKIj-_7i1YYhLe5m9DL0gvQSuGIBV9VTr31kzZIqqMWiSFWDFTY8MdDC3Ji0SKeB6ekH7nwRON9MYy187ZAqHfhcMOHCWSp5hUgrvezaLBR947OfYGPiqqA8udolPddZxDazcEt9EUzcmUDqVmRu9-TmHwrjZpKaEOfdpFziYYdjEiuCl6k9h1LeMda', match: '94%', live: true },
-  { id: '2', title: 'Torneo Gamer Central', lat: -34.5800, lng: -58.4200, category: 'Gamer', date: '25 Oct, 2024', image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuApMXv3w2T2EQdRuxZYnvWcKpGKOfVboaP8qkiKzOmNNOALBXl4SkIPbFbNtUbCIZM6w4VZj3YUdAPetUht29WiTpuHpEL5Xnd3ZCp1_ku7BQHsJpn2cOIszhzlJb8I4Xhu9Asj7Z_PYwRA79BnK2ENFsTnOK17MO3HWWXm4ho-slh-eyXwzmxZGrF2wHXJfBO34WUGxBnNN3PASkX2QdVCtEVYiKzj7txJ58tTiTFtVSrR39CCFSnCnyI_gyhsc8JQVjIuMUnc104V', match: '88%', live: false },
-  { id: '3', title: 'K-Pop Night Stage', lat: -34.6100, lng: -58.3700, category: 'K-Pop', date: '27 Oct, 2024', image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDwfiSai0PDW9rXMvCCYBAzLtXTnH1kUcTJcDW-oe4P1NojB3BgleQveo2VrqaupGmQujTGjywBQrtP2UMKNKTBMNvGg7hozqcKYS4FFfsSTYvfq2ZCI7gtCrZ7C4mN22Cdt6J6a0T5MyUfFeoHH34TtHemwIG4hRreHyO3JPoxSS5LOFtCpz0ERgzfzBHU1omgtwBvOcn9NrMWB6-NVkZ2fswbcJOp06YadtjqygXQx6to6xZrgZ14FKX-AvmL-Zt3VgsU2v6nOB3s', match: '98%', live: true },
-  { id: '4', title: 'Workshop TCG Masters', lat: -34.5900, lng: -58.4000, category: 'TCG', date: '26 Oct, 2024', image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuD55fF0ZgM2x5X8sKbzTCLuXzKfVcqbAhNQVVf9GaYvKmTy9kQxPyjseBu4N2SoD1C573Z_3AS1Qby6RJMKlaYeaezMBeLnYVQWrrt8GoJ7_0zCRkHdhH2BttajNH0gKqthjL_fUdr3nGabF4HDWdjUGdm2YldhZPBa3KS-1k0leP_FlM93kYQWyVRVCz39LJsUfplmY120Nm-uxlrsG14hHbAu-vNRJcln8dFU4lx3Au5C__YP-QFAHg7DR4_U5xCst2yOWNXmw0RK', match: '82%', live: false },
-];
 
-const CATEGORIES = [
-  { id: 'Todos', name: 'Todos', icon: 'dashboard', color: 'primary' },
-  { id: 'Anime', name: 'Anime', icon: 'auto_awesome', color: 'tertiary' },
-  { id: 'Gamer', name: 'Gamer', icon: 'sports_esports', color: 'primary' },
-  { id: 'K-Pop', name: 'K-Pop', icon: 'star', color: 'secondary' },
-  { id: 'Feria', name: 'Feria', icon: 'festival', color: 'secondary-fixed-variant' },
-];
 
 const MapControls = ({ onZoomIn, onZoomOut, onRecenter }: { onZoomIn: () => void, onZoomOut: () => void, onRecenter: () => void }) => {
   return (
@@ -59,6 +47,9 @@ const MapPage: React.FC = () => {
   const [activeCategory, setActiveCategory] = useState('Todos');
   const [proximity, setProximity] = useState(25);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [events, setEvents] = useState<any[]>([]);
+  const [categories, setCategories] = useState<{ id: number | string; name: string; color?: string }[]>([]);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -77,7 +68,27 @@ const MapPage: React.FC = () => {
     }
   }, []);
 
-  const selectedEvent = MOCK_MAP_EVENTS.find(e => e.id === selectedEventId);
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [eventsRes, catsRes]: any = await Promise.all([
+          api.getEvents(1, 100),
+          api.getCategories(),
+        ]);
+        const apiEvents = Array.isArray(eventsRes) ? eventsRes : (eventsRes?.data || []);
+        const apiCats = Array.isArray(catsRes) ? catsRes : (catsRes?.data || []);
+        setEvents(apiEvents);
+        setCategories([{ id: 'Todos', name: 'Todos' }, ...apiCats]);
+      } catch (err) {
+        console.error('Error fetching map data:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  const selectedEvent = events.find(e => e.id_event === selectedEventId);
 
   return (
     <div className="h-[calc(100vh-64px)] -mt-16 relative overflow-hidden bg-[#0b0e14]">
@@ -88,13 +99,21 @@ const MapPage: React.FC = () => {
         }
       `}</style>
 
-      {API_KEY && API_KEY !== 'YOUR_API_KEY' ? (
+      {loading ? (
+        <div className="absolute inset-0 flex items-center justify-center z-0">
+          <div className="flex flex-col items-center gap-4">
+            <Loader2 size={40} className="text-primary animate-spin" />
+            <p className="text-white/60 text-sm font-bold tracking-widest uppercase">Cargando eventos...</p>
+          </div>
+        </div>
+      ) : API_KEY && API_KEY !== 'YOUR_API_KEY' ? (
         <APIProvider apiKey={API_KEY} version="weekly">
           <MapWrapper 
-            userLocation={userLocation} 
+            userLocation={userLocation}
             selectedEventId={selectedEventId}
             onSelectEvent={setSelectedEventId}
             activeCategory={activeCategory}
+            events={events}
           />
         </APIProvider>
       ) : (
@@ -125,34 +144,33 @@ const MapPage: React.FC = () => {
           </div>
           
           <div className="flex flex-col gap-2 mb-8">
-            {CATEGORIES.map(cat => (
-              <button 
-                key={cat.id}
-                onClick={() => setActiveCategory(cat.id)}
-                className={cn(
-                  "flex items-center justify-between w-full px-5 py-3 rounded-2xl transition-all group",
-                  activeCategory === cat.id 
-                    ? "bg-primary text-white shadow-lg shadow-primary/30 border border-primary-container" 
-                    : "hover:bg-surface-variant/50 border border-transparent"
-                )}
-              >
-                <div className="flex items-center gap-3">
-                  <span className={cn(
-                    "material-symbols-outlined text-[20px] transition-transform group-hover:scale-110",
-                    activeCategory === cat.id ? "text-white" : `text-${cat.color}`
-                  )} style={{ fontVariationSettings: activeCategory === cat.id ? "'FILL' 1" : "'FILL' 0" }}>
-                    {cat.icon}
-                  </span>
-                  <span className={cn(
-                    "text-xs font-bold",
-                    activeCategory === cat.id ? "text-white" : "text-on-surface-variant"
-                  )}>{cat.name}</span>
-                </div>
-                {MOCK_MAP_EVENTS.some(e => e.category === cat.id && e.live) && (
-                  <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
-                )}
-              </button>
-            ))}
+            {categories.map(cat => {
+              const isActive = cat.id === 'Todos' ? activeCategory === 'Todos' : activeCategory === cat.name;
+              return (
+                <button 
+                  key={cat.id}
+                  onClick={() => setActiveCategory(cat.id === 'Todos' ? 'Todos' : cat.name)}
+                  className={cn(
+                    "flex items-center justify-between w-full px-5 py-3 rounded-2xl transition-all group",
+                    isActive
+                      ? "text-white shadow-lg border border-white/20" 
+                      : "hover:bg-surface-variant/50 border border-transparent"
+                  )}
+                  style={isActive ? { backgroundColor: cat.color || '#732ee4', boxShadow: `0 4px 14px ${cat.color || '#732ee4'}40` } : {}}
+                >
+                  <div className="flex items-center gap-3">
+                    <span
+                      className="w-3 h-3 rounded-sm shrink-0"
+                      style={{ backgroundColor: cat.color || '#732ee4' }}
+                    />
+                    <span className={cn(
+                      "text-xs font-bold",
+                      isActive ? "text-white" : "text-on-surface-variant"
+                    )}>{cat.name}</span>
+                  </div>
+                </button>
+              );
+            })}
           </div>
 
           <div className="space-y-6 border-t border-outline-variant/30 pt-6">
@@ -189,63 +207,67 @@ const MapPage: React.FC = () => {
             className="absolute bottom-6 left-1/2 w-[90%] max-w-2xl z-50 pointer-events-auto"
           >
             <div className="bg-white/90 backdrop-blur-3xl rounded-[2.5rem] overflow-hidden shadow-[0_25px_60px_-15px_rgba(0,0,0,0.3)] border border-white/60 flex h-40 ring-1 ring-primary/5">
-              {/* Left: Image Section - More Compact */}
+              {/* Left: Image Section */}
               <div className="w-1/3 relative overflow-hidden group shrink-0">
-                <img className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" src={selectedEvent.image} alt={selectedEvent.title} />
+                <img className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" src={selectedEvent.thumbnail_url || 'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=800'} alt={selectedEvent.title} />
                 <div className="absolute top-3 left-3">
-                  <span className="bg-primary/90 backdrop-blur-md text-white text-[8px] font-black px-3 py-1 rounded-full uppercase tracking-wider">
-                    {selectedEvent.category}
+                  <span
+                    className="text-white text-[8px] font-black px-3 py-1 rounded-md uppercase tracking-wider"
+                    style={{ backgroundColor: categories.find((c: any) => c.name === (selectedEvent.interests?.[0]?.name))?.color || '#732ee4' }}
+                  >
+                    {selectedEvent.interests?.[0]?.name || 'EVENTO'}
                   </span>
                 </div>
-                {selectedEvent.live && (
-                  <div className="absolute bottom-3 left-3 flex items-center gap-1.5">
-                    <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse shadow-[0_0_8px_#ef4444]" />
-                    <span className="text-white text-[8px] font-black tracking-widest uppercase">VIVO</span>
-                  </div>
-                )}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent pointer-events-none" />
               </div>
 
-              {/* Right: Details Section - Optimized Space */}
+              {/* Right: Details Section */}
               <div className="flex-1 flex flex-col p-5 lg:p-6 justify-between bg-white/20">
                 <div>
                   <div className="flex justify-between items-start gap-2">
                     <h2 className="text-lg lg:text-xl font-display font-black italic tracking-tighter text-on-surface leading-tight uppercase line-clamp-2">{selectedEvent.title}</h2>
-                    <div className="flex flex-col items-end shrink-0">
-                      <span className="text-primary font-black text-xl leading-none italic">{selectedEvent.match}</span>
-                      <span className="text-[7px] font-black text-outline uppercase tracking-widest opacity-60">Match</span>
-                    </div>
+                    {!isNaN(Number(selectedEvent.price)) && Number(selectedEvent.price) > 0 && (
+                      <span className="text-primary font-black text-xl leading-none italic shrink-0">
+                        ${Number(selectedEvent.price).toLocaleString('es-AR')}
+                      </span>
+                    )}
                   </div>
                   
                   <div className="flex gap-4 items-center mt-3">
-                    <div className="flex items-center gap-2">
-                      <span className="material-symbols-outlined text-primary text-[16px]">calendar_today</span>
-                      <p className="text-[10px] font-bold text-on-surface">{selectedEvent.date.split(',')[0]}</p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="material-symbols-outlined text-primary text-[16px]">location_on</span>
-                      <p className="text-[10px] font-bold text-on-surface">CABA</p>
-                    </div>
+                    {selectedEvent.date && (
+                      <div className="flex items-center gap-2">
+                        <Calendar size={14} className="text-primary shrink-0" />
+                        <p className="text-[10px] font-bold text-on-surface">
+                          {new Date(selectedEvent.date).toLocaleDateString('es-AR', { day: 'numeric', month: 'short' })}
+                        </p>
+                      </div>
+                    )}
+                    {selectedEvent.ubication && (
+                      <div className="flex items-center gap-2">
+                        <MapPin size={14} className="text-primary shrink-0" />
+                        <p className="text-[10px] font-bold text-on-surface truncate max-w-[120px]">{selectedEvent.ubication}</p>
+                      </div>
+                    )}
                   </div>
                 </div>
 
                 <div className="flex items-center justify-between mt-auto">
                   <button 
-                    onClick={() => navigate(`/events/${selectedEvent.id}`)}
+                    onClick={() => navigate(`/events/${selectedEvent.id_event}`)}
                     className="bg-primary text-white font-black px-6 py-2.5 rounded-xl text-[9px] tracking-[0.15em] flex items-center gap-2 hover:bg-primary-container hover:shadow-xl hover:shadow-primary/30 transition-all active:scale-95 group uppercase"
                   >
                     VER DETALLES
-                    <span className="material-symbols-outlined text-[16px] group-hover:translate-x-1 transition-transform">arrow_forward</span>
+                    <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform" />
                   </button>
                   <div className="flex gap-2">
                     <button className="w-9 h-9 rounded-xl bg-surface-container-low flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-all border border-primary/10">
-                      <span className="material-symbols-outlined text-[18px]">share</span>
+                      <Share2 size={14} />
                     </button>
                     <button 
                       onClick={() => setSelectedEventId(null)}
                       className="w-9 h-9 rounded-xl bg-surface-container-low flex items-center justify-center text-outline-variant hover:text-red-500 hover:bg-red-50 transition-all border border-outline-variant/30"
                     >
-                      <span className="material-symbols-outlined text-[18px]">close</span>
+                      <X size={14} />
                     </button>
                   </div>
                 </div>
@@ -258,7 +280,7 @@ const MapPage: React.FC = () => {
   );
 };
 
-const MapWrapper = ({ userLocation, selectedEventId, onSelectEvent, activeCategory }: any) => {
+const MapWrapper = ({ userLocation, selectedEventId, onSelectEvent, activeCategory, events }: any) => {
   const map = useMap();
   
   const handleZoomIn = useCallback(() => {
@@ -279,9 +301,11 @@ const MapWrapper = ({ userLocation, selectedEventId, onSelectEvent, activeCatego
     }
   }, [map, userLocation]);
 
-  const filteredEvents = MOCK_MAP_EVENTS.filter(e => 
-    activeCategory === 'Todos' || e.category === activeCategory
-  );
+  const filteredEvents = events.filter(e => {
+    if (activeCategory === 'Todos') return true;
+    const catName = e.interests?.[0]?.name;
+    return catName === activeCategory;
+  });
 
   return (
     <>
@@ -296,10 +320,10 @@ const MapWrapper = ({ userLocation, selectedEventId, onSelectEvent, activeCatego
       >
         {filteredEvents.map((event) => (
           <CustomMarker 
-            key={event.id}
+            key={event.id_event}
             event={event}
-            isSelected={selectedEventId === event.id}
-            onSelect={() => onSelectEvent(event.id)}
+            isSelected={selectedEventId === event.id_event}
+            onSelect={() => onSelectEvent(event.id_event)}
           />
         ))}
 
@@ -324,12 +348,14 @@ const MapWrapper = ({ userLocation, selectedEventId, onSelectEvent, activeCatego
 
 const CustomMarker = ({ event, isSelected, onSelect }: any) => {
   const [markerRef] = useAdvancedMarkerRef();
-  const categoryColor = CATEGORIES.find(c => c.id === event.category)?.color || 'primary';
+  const category = event.interests?.[0]?.name;
+  const categoryColor = '#732ee4'; // fallback
+  const match = event.interests?.[0]?.name || 'NUEVO';
 
   return (
     <AdvancedMarker
       ref={markerRef}
-      position={{ lat: event.lat, lng: event.lng }}
+      position={{ lat: Number(event.latitude), lng: Number(event.longitude) }}
       onClick={onSelect}
     >
       <motion.div 
@@ -339,28 +365,25 @@ const CustomMarker = ({ event, isSelected, onSelect }: any) => {
         }}
         className="relative cursor-pointer group"
       >
-        {/* Animated pulse for selected */}
         {isSelected && (
           <div className="absolute inset-[-12px] bg-primary/20 animate-pulse rounded-full" />
         )}
         
-        {/* Marker Body */}
         <div className={cn(
-          "relative flex items-center bg-white p-1 rounded-full shadow-2xl transition-all duration-500",
-          "border-[3px]",
+          "relative flex items-center bg-white p-1 rounded-full shadow-2xl transition-all duration-500 border-[3px]",
           isSelected 
             ? "border-primary scale-110 z-50 ring-4 ring-primary/10" 
-            : `border-${categoryColor}/40 hover:border-primary hover:scale-110`
+            : "border-outline-variant/40 hover:border-primary hover:scale-110"
         )}>
           <div className="w-12 h-12 rounded-full overflow-hidden border border-outline-variant/30">
-            <img src={event.image} className={cn("w-full h-full object-cover", event.live && "animate-pulse")} alt={event.title} />
+            <img src={event.thumbnail_url || 'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=800'} className="w-full h-full object-cover" alt={event.title} />
           </div>
           
           <div className={cn(
             "absolute -top-3 -right-3 px-2 py-1 rounded-lg border-2 border-white shadow-lg text-[9px] font-black tracking-tighter transition-colors",
-            isSelected ? "bg-primary text-white" : `bg-${categoryColor} text-white`
+            isSelected ? "bg-primary text-white" : "bg-primary text-white"
           )}>
-            {event.match}
+            {match}
           </div>
 
           <AnimatePresence>
@@ -371,7 +394,7 @@ const CustomMarker = ({ event, isSelected, onSelect }: any) => {
                 className="ml-3 pr-4 whitespace-nowrap"
               >
                 <p className="text-[8px] font-black text-primary uppercase tracking-[0.15em] leading-none mb-1">
-                  {event.live ? 'VIVO AHORA' : event.category.toUpperCase()}
+                  {category?.toUpperCase() || 'EVENTO'}
                 </p>
                 <p className="text-[11px] font-black text-on-surface leading-none uppercase tracking-tighter">
                   {event.title}
@@ -381,10 +404,9 @@ const CustomMarker = ({ event, isSelected, onSelect }: any) => {
           </AnimatePresence>
         </div>
 
-        {/* Stem */}
         <div className={cn(
           "w-1 h-5 mx-auto mt-1 rounded-full shadow-lg transition-colors",
-          isSelected ? "bg-primary" : `bg-${categoryColor}/40`
+          isSelected ? "bg-primary" : "bg-outline-variant/40"
         )} />
       </motion.div>
     </AdvancedMarker>
