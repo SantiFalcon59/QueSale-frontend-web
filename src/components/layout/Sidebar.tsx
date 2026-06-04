@@ -13,6 +13,7 @@ export const Sidebar: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ is
     { name: 'Feed', icon: 'dynamic_feed', path: '/feed' },
     { name: 'Explorar', icon: 'explore', path: '/events' },
     { name: 'Mapa', icon: 'map', path: '/map' },
+    { name: 'Comunidad', icon: 'groups', path: '/communities' },
   ];
 
   return (
