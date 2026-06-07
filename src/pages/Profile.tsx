@@ -8,7 +8,7 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Send, MessageCircle, ThumbsUp, Share2, MoreHorizontal, Trash2, Gavel } from 'lucide-react';
 import { createNotification } from '../services/notificationService';
-import { api } from '../services/apiClient';
+import { api, resolveAssetUrl } from '../services/apiClient';
 import EmojiPicker, { EmojiClickData } from 'emoji-picker-react';
 import { GifPicker } from '../components/post/GifPicker';
 
@@ -57,7 +57,7 @@ const Profile: React.FC<{ usernameFromUrl?: string }> = ({ usernameFromUrl }) =>
           id: data.id,
           username: data.username,
           displayName: data.username,
-          photoURL: data.photo_url,
+          photoURL: resolveAssetUrl(data.photo_url),
           description: data.description,
           instagram: data.instagram,
           instagramVerified: data.instagramVerified,

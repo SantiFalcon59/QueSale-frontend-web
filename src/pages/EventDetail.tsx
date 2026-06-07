@@ -15,7 +15,6 @@ import { APIProvider, Map, Marker, useMap } from '@vis.gl/react-google-maps';
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, isSameDay, isToday } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { LoginPromptModal } from '../components/ui/LoginPromptModal';
-import { createNotification } from '../services/notificationService';
 import { api, resolveAssetUrl } from '../services/apiClient';
 import { db } from '../lib/firebase';
 import { collection, query, orderBy, limit, onSnapshot, doc, deleteDoc, addDoc, serverTimestamp } from 'firebase/firestore';
@@ -122,7 +121,11 @@ const EventDetail: React.FC = () => {
     const fetchEvent = async () => {
       try {
         const data: any = await api.getEventById(id);
-        const media = data.thumbnail_url ? [data.thumbnail_url] : [];
+        const galleryImages = data.images && Array.isArray(data.images)
+          ? data.images.map((img: string) => resolveAssetUrl(img)).filter(Boolean) as string[]
+          : [];
+        const thumbnail = resolveAssetUrl(data.thumbnail_url);
+        const media = [thumbnail, ...galleryImages].filter(Boolean) as string[];
         const category = data.interests?.[0]?.name || 'General';
         const mappedEvent: Event = {
           id: data.id_event,
@@ -140,7 +143,7 @@ const EventDetail: React.FC = () => {
           attendeesCount: data.attendeesCount || 0,
           category,
           media,
-          image: data.thumbnail_url || media[0] || '',
+          image: thumbnail || media[0] || '',
           status: data.status || 'active',
         };
         setEvent(mappedEvent);
@@ -195,7 +198,6 @@ const EventDetail: React.FC = () => {
       } else {
         await api.saveEvent(id);
         setIsSaved(true);
-        createNotification('like', 'Evento Guardado', `Has guardado "${event?.title}" en tus favoritos.`);
       }
     } catch (err) {
       console.error("Error toggling save:", err);
@@ -378,7 +380,6 @@ const EventDetail: React.FC = () => {
                     </div>
 
                     <div className="space-y-4">
-                      <h3 className="text-xl font-bold uppercase tracking-widest opacity-60">Ubicación</h3>
                       <EventMapControls event={event} GOOGLE_MAPS_KEY={GOOGLE_MAPS_KEY} />
                     </div>
                   </div>
@@ -479,7 +480,7 @@ const EventDetail: React.FC = () => {
         </div>
 
         {/* Right Column: Interaction & Tickets */}
-        <div className="col-span-12 lg:col-span-4 space-y-6 lg:space-y-8 relative lg:sticky lg:top-28 self-start">
+        <div className="col-span-12 lg:col-span-4 space-y-6 lg:space-y-8 relative lg:sticky lg:top-28 self-start lg:pl-8">
            <section className="p-6 lg:p-10 rounded-[2rem] lg:rounded-[3.5rem] bg-linear-to-br from-primary-container/20 to-surface border border-primary/20 shadow-2xl shadow-primary/10 space-y-8 lg:space-y-10">
               <div className="space-y-4">
                  <p className="text-[10px] text-primary uppercase tracking-[0.3em] font-black">ENTRADAS DESDE</p>
@@ -1021,9 +1022,12 @@ const LiveChat: React.FC<{ eventId: string; isModerator: boolean; organizerId: s
 
   useEffect(() => {
     const q = query(collection(db, `events/${eventId}/chat`), orderBy('createdAt', 'desc'), limit(50));
-    return onSnapshot(q, (snapshot) => {
+    const unsub = onSnapshot(q, (snapshot) => {
       setMessages(snapshot.docs.map(d => ({ ...d.data(), id: d.id } as ChatMessage)).reverse());
+    }, (err) => {
+      console.warn('Firestore chat listener error (likely adblocker):', err);
     });
+    return unsub;
   }, [eventId]);
 
   const handleDelete = async (msgId: string) => {

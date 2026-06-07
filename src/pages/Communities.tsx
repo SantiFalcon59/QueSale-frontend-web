@@ -6,6 +6,13 @@ import { cn } from '../lib/utils';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
+function resolveImgUrl(url: string | null | undefined): string | null {
+  if (!url) return null;
+  if (url.startsWith('http://') || url.startsWith('https://')) return url;
+  if (url.startsWith('/')) return `${API_URL}${url}`;
+  return url;
+}
+
 async function apiGet(path: string) {
   const res = await fetch(`${API_URL}${path}`);
   const payload = await res.json();
@@ -251,7 +258,7 @@ function UserCard({ user }: { user: any }) {
       onClick={() => navigate(`/@${user.username}`)}
     >
       <img
-        src={user.photo_url || 'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=96'}
+        src={resolveImgUrl(user.photo_url) || 'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=96'}
         alt={user.username}
         className="w-12 h-12 rounded-full object-cover bg-surface-container-high"
       />
