@@ -339,4 +339,23 @@ export const api = {
 
   getCategories: () =>
     apiRequest('/api/categories'),
+
+  getModeratorStatus: (eventId: string) =>
+    apiRequest(`/api/events/${encodeURIComponent(eventId)}/moderator-status`, { auth: true }),
+
+  blockUserFromEvent: (eventId: string, userId: string, reason?: string) =>
+    apiRequest(`/api/events/${encodeURIComponent(eventId)}/block`, {
+      method: 'POST',
+      body: { userId, reason },
+      auth: true,
+    }),
+
+  unblockUserFromEvent: (eventId: string, userId: string) =>
+    apiRequest(`/api/events/${encodeURIComponent(eventId)}/block/${encodeURIComponent(userId)}`, {
+      method: 'DELETE',
+      auth: true,
+    }),
+
+  getBlockedUsers: (eventId: string) =>
+    apiRequest(`/api/events/${encodeURIComponent(eventId)}/blocked-users`, { auth: true }),
 };

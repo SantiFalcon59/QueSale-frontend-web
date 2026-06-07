@@ -68,14 +68,6 @@ export const Sidebar: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ is
           ))}
         </nav>
 
-        <div className="mt-auto pt-6 border-t border-white/5">
-          <div className="bg-primary/10 rounded-2xl p-4 border border-primary/20">
-            <p className="text-[9px] font-black text-secondary uppercase tracking-[0.2em] mb-2">Comunidad</p>
-            <p className="text-[11px] text-white/70 leading-relaxed font-medium">
-              Conecta con más de <span className="text-white font-bold">5,000</span> personas en tu zona.
-            </p>
-          </div>
-        </div>
       </aside>
     </>
   );

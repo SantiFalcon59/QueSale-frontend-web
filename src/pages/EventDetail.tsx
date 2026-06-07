@@ -1,20 +1,24 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Calendar, MapPin, Users, Heart, Share2, Send, MessageSquare, 
   ShieldCheck, Ticket as TicketIcon, ThumbsUp, Reply, 
   Instagram, Twitter, Globe, Info, Megaphone, Users2,
-  X, Image as ImageIcon, Plus, CheckCircle2, Trash2, Gavel
+  X, Image as ImageIcon, Plus, CheckCircle2, Trash2, Gavel,
+  ZoomIn, ZoomOut, Crosshair, ChevronLeft, ChevronRight
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { cn } from '../lib/utils';
-import { APIProvider, Map, Marker } from '@vis.gl/react-google-maps';
-import { format } from 'date-fns';
+import { APIProvider, Map, Marker, useMap } from '@vis.gl/react-google-maps';
+import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, isSameDay, isToday } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { LoginPromptModal } from '../components/ui/LoginPromptModal';
 import { createNotification } from '../services/notificationService';
-import { api } from '../services/apiClient';
+import { api, resolveAssetUrl } from '../services/apiClient';
+import { db } from '../lib/firebase';
+import { collection, query, orderBy, limit, onSnapshot, doc, deleteDoc, addDoc, serverTimestamp } from 'firebase/firestore';
 
 const GOOGLE_MAPS_KEY = process.env.GOOGLE_MAPS_PLATFORM_KEY || '';
 
@@ -94,6 +98,8 @@ const EventDetail: React.FC = () => {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [isSaved, setIsSaved] = useState(false);
   const [organizerEvents, setOrganizerEvents] = useState<any[]>([]);
+  const [isModerator, setIsModerator] = useState(false);
+  const [isOrganizer, setIsOrganizer] = useState(false);
 
   const handleInteraction = (e?: React.MouseEvent) => {
     if (!user) {
@@ -146,10 +152,19 @@ const EventDetail: React.FC = () => {
             id: organizerData.id_organizer,
             name: organizerData.name,
             description: organizerData.description || '',
-            logo: organizerData.logo_url || `https://api.dicebear.com/7.x/initials/svg?seed=${organizerData.name}`,
+            logo: resolveAssetUrl(organizerData.logo_url) || `https://api.dicebear.com/7.x/initials/svg?seed=${organizerData.name}`,
             ownerId: organizerData.id_creator,
             socials: {},
           });
+
+          try {
+            const status: any = await api.getModeratorStatus(id!);
+            setIsModerator(status?.isModerator || false);
+            setIsOrganizer(status?.isOrganizer || false);
+          } catch {
+            setIsModerator(false);
+            setIsOrganizer(false);
+          }
 
           try {
             const orgEvents: any = await api.getOrganizerEvents(organizerData.id_organizer, 1, 50);
@@ -243,7 +258,7 @@ const EventDetail: React.FC = () => {
         )}
       </AnimatePresence>
 
-      <div className="grid grid-cols-12 gap-6 lg:gap-10">
+      <div className="grid grid-cols-12 gap-6 lg:gap-16">
         {/* Left Column: Event Core & Community */}
         <div className="col-span-12 lg:col-span-8 space-y-8 lg:space-y-12 min-w-0">
           {/* Gallery Header */}
@@ -364,40 +379,12 @@ const EventDetail: React.FC = () => {
 
                     <div className="space-y-4">
                       <h3 className="text-xl font-bold uppercase tracking-widest opacity-60">Ubicación</h3>
-                      <div className="h-64 rounded-[1.5rem] lg:rounded-[2.5rem] overflow-hidden border border-outline-variant bg-surface-container-low group">
-                        <APIProvider apiKey={GOOGLE_MAPS_KEY}>
-                          <Map
-                            defaultCenter={{ lat: event.location.lat, lng: event.location.lng }}
-                            defaultZoom={15}
-                            gestureHandling={'greedy'}
-                            disableDefaultUI={true}
-                            mapId="9s8d7f6g5h4j3k2l1" // Fake Map ID for internalUsageAttributionIds compliance
-                          >
-                             <Marker position={{ lat: event.location.lat, lng: event.location.lng }} />
-                          </Map>
-                        </APIProvider>
-                        <div className="p-3 lg:p-4 flex items-center gap-3 bg-surface-container-low">
-                          <MapPin size={18} className="text-primary" />
-                          <span className="text-xs lg:text-sm font-medium">{event.location.address}</span>
-                        </div>
-                      </div>
+                      <EventMapControls event={event} GOOGLE_MAPS_KEY={GOOGLE_MAPS_KEY} />
                     </div>
                   </div>
 
                   <div className="space-y-8 lg:space-y-10">
-                    <div className="space-y-4">
-                      <h3 className="text-xl font-bold uppercase tracking-widest opacity-60">Calendario</h3>
-                      <div className="p-6 lg:p-8 rounded-[1.5rem] lg:rounded-[2.5rem] bg-surface-container-low border border-outline-variant flex items-center gap-6 lg:gap-8">
-                         <div className="w-16 h-16 lg:w-20 lg:h-20 bg-primary/10 rounded-2xl lg:rounded-3xl flex flex-col items-center justify-center text-primary">
-                            <span className="text-2xl lg:text-3xl font-black">{format(eventDate, 'dd')}</span>
-                            <span className="text-[8px] lg:text-[10px] font-black uppercase tracking-widest">{format(eventDate, 'MMM', { locale: es })}</span>
-                         </div>
-                         <div>
-                            <h4 className="text-xl lg:text-2xl font-black italic">{format(eventDate, 'EEEE', { locale: es })}</h4>
-                            <p className="text-sm lg:text-on-surface-variant font-medium">{format(eventDate, 'HH:mm')} HS</p>
-                         </div>
-                      </div>
-                    </div>
+                    <CalendarWidget eventDate={eventDate} />
 
                     {organizer && (
                       <div className="space-y-6">
@@ -472,7 +459,7 @@ const EventDetail: React.FC = () => {
                   exit={{ opacity: 0, y: -10 }}
                   className="space-y-8"
                 >
-                  <EventAnnouncements eventId={id!} organizerId={event.organizerId} />
+                  <EventAnnouncements eventId={id!} organizerId={event.organizerId} isOrganizer={isOrganizer} />
                 </motion.div>
               )}
 
@@ -484,7 +471,7 @@ const EventDetail: React.FC = () => {
                   exit={{ opacity: 0, y: -10 }}
                   className="space-y-8"
                 >
-                  <EventWall eventId={id!} organizerOwnerId={organizer?.ownerId} eventTitle={event.title} />
+                  <EventWall eventId={id!} organizerOwnerId={organizer?.ownerId} eventTitle={event.title} isModerator={isModerator} />
                 </motion.div>
               )}
             </AnimatePresence>
@@ -526,19 +513,7 @@ const EventDetail: React.FC = () => {
                     style={{ width: `${(event.attendeesCount / event.capacity) * 100}%` }}
                   />
                 </div>
-                <div className="flex items-center gap-3 py-3 lg:py-4 px-4 lg:px-6 rounded-2xl lg:rounded-3xl bg-surface-container-low border border-outline-variant">
-                   <div className="flex items-center -space-x-3">
-                      {[1, 2, 3, 4].map(n => (
-                        <img 
-                          key={n} 
-                          src={`https://api.dicebear.com/7.x/avataaars/svg?seed=user${n+12}`} 
-                          className="w-8 h-8 lg:w-10 lg:h-10 rounded-full border-2 border-surface bg-surface-container-high" 
-                          alt="Attendee"
-                        />
-                      ))}
-                   </div>
-                   <p className="text-[9px] lg:text-[11px] text-on-surface-variant font-bold uppercase tracking-wide">Y otros se han unido</p>
-                </div>
+
               </div>
            </section>
 
@@ -594,7 +569,7 @@ const EventDetail: React.FC = () => {
               </div>
 
               <div className="flex-1 overflow-y-auto p-8 space-y-6 no-scrollbar">
-                <LiveChat eventId={event.id} />
+                <LiveChat eventId={event.id} isModerator={isModerator} organizerId={event.organizerId} />
               </div>
 
               <div className="p-8 border-t border-outline-variant bg-surface-container-low/50">
@@ -610,76 +585,242 @@ const EventDetail: React.FC = () => {
 
 // --- Subcomponents ---
 
-const EventAnnouncements: React.FC<{ eventId: string; organizerId: string }> = ({ eventId, organizerId }) => {
-  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchAnnouncements = async () => {
-      try {
-        const data: any = await api.getEventPosts(eventId, 'announcement', 1, 50);
-        const mapped = (data || []).map((item: any) => ({
-          id: String(item.id_post || item.id),
-          title: 'Anuncio',
-          content: item.content,
-          createdAt: item.created_at,
-          media: [],
-        }));
-        setAnnouncements(mapped);
-      } catch (err) {
-        console.error('Error fetching announcements:', err);
-        setAnnouncements([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchAnnouncements();
-  }, [eventId]);
-
-  if (loading) return <div className="py-10 text-center opacity-50">Cargando anuncios...</div>;
-
-  if (announcements.length === 0) {
-    return (
-      <div className="py-20 text-center space-y-4 glass rounded-[3rem]">
-        <Megaphone size={40} className="mx-auto text-on-surface-variant/30" />
-        <p className="text-on-surface-variant font-medium">No hay anuncios oficiales todavía.</p>
-      </div>
-    );
-  }
-
+const EventMapControls: React.FC<{ event: Event; GOOGLE_MAPS_KEY: string }> = ({ event, GOOGLE_MAPS_KEY }) => {
   return (
-    <div className="space-y-6">
-      {announcements.map(ann => (
-        <div key={ann.id} className="p-6 lg:p-10 rounded-[2rem] lg:rounded-[3rem] bg-indigo-50/20 border border-indigo-100 space-y-6 relative overflow-hidden group">
-          <div className="flex flex-col sm:flex-row justify-between items-start gap-4 relative z-10">
-             <div className="space-y-1">
-                <span className="text-[9px] lg:text-[10px] font-black italic text-indigo-500 uppercase tracking-widest">COMUNICADO OFICIAL</span>
-                <h3 className="text-2xl lg:text-3xl font-black italic tracking-tight uppercase leading-none">{ann.title}</h3>
-                <p className="text-[9px] lg:text-[10px] text-on-surface-variant font-bold uppercase tracking-widest">
-                  {ann.createdAt ? format(new Date(ann.createdAt), 'PPP', { locale: es }) : 'N/A'}
-                </p>
-             </div>
-             <div className="w-10 h-10 lg:w-12 lg:h-12 bg-white rounded-xl lg:rounded-2xl flex items-center justify-center text-indigo-600 shadow-sm shrink-0">
-                <Megaphone size={20} />
-             </div>
-          </div>
-          <p className="text-base lg:text-lg text-on-surface-variant leading-relaxed relative z-10">{ann.content}</p>
-          {ann.media && ann.media.length > 0 && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 relative z-10">
-              {ann.media.map((m, i) => (
-                <img key={i} src={m} className="w-full h-40 lg:h-48 object-cover rounded-2xl lg:rounded-3xl" alt="Ann photo" />
-              ))}
-            </div>
-          )}
-          <div className="absolute bottom-0 right-0 w-64 h-64 bg-indigo-500/5 blur-3xl rounded-full translate-x-20 translate-y-20 group-hover:scale-110 transition-transform" />
+    <div className="space-y-4">
+      <h3 className="text-xl font-bold uppercase tracking-widest opacity-60">Ubicacion</h3>
+      <div className="h-64 rounded-[1.5rem] lg:rounded-[2.5rem] overflow-hidden border border-outline-variant bg-surface-container-low group relative">
+        <APIProvider apiKey={GOOGLE_MAPS_KEY}>
+          <Map
+            defaultCenter={{ lat: event.location.lat, lng: event.location.lng }}
+            defaultZoom={15}
+            gestureHandling={'greedy'}
+            disableDefaultUI={true}
+            mapId="9s8d7f6g5h4j3k2l1"
+          >
+            <Marker position={{ lat: event.location.lat, lng: event.location.lng }} />
+            <MapZoomControls center={{ lat: event.location.lat, lng: event.location.lng }} />
+          </Map>
+        </APIProvider>
+        <div className="p-3 lg:p-4 flex items-center gap-3 bg-surface-container-low border-t border-outline-variant">
+          <MapPin size={18} className="text-primary" />
+          <span className="text-xs lg:text-sm font-medium">{event.location.address}</span>
         </div>
-      ))}
+      </div>
     </div>
   );
 };
 
-const EventWall: React.FC<{ eventId: string; organizerOwnerId?: string; eventTitle: string }> = ({ eventId, organizerOwnerId, eventTitle }) => {
+const MapZoomControls: React.FC<{ center: { lat: number; lng: number } }> = ({ center }) => {
+  const map = useMap();
+  const handleZoomIn = () => map?.setZoom((map.getZoom() || 15) + 1);
+  const handleZoomOut = () => map?.setZoom((map.getZoom() || 15) - 1);
+  const handleRecenter = () => map?.setCenter(center);
+
+  return (
+    <div className="absolute top-4 right-4 flex flex-col gap-1 z-10">
+      <button onClick={handleZoomIn} className="w-10 h-10 rounded-xl bg-white shadow-lg border border-outline-variant flex items-center justify-center text-on-surface hover:bg-primary hover:text-white hover:border-primary transition-all">
+        <ZoomIn size={18} />
+      </button>
+      <button onClick={handleZoomOut} className="w-10 h-10 rounded-xl bg-white shadow-lg border border-outline-variant flex items-center justify-center text-on-surface hover:bg-primary hover:text-white hover:border-primary transition-all">
+        <ZoomOut size={18} />
+      </button>
+      <button onClick={handleRecenter} className="w-10 h-10 rounded-xl bg-white shadow-lg border border-outline-variant flex items-center justify-center text-on-surface hover:bg-primary hover:text-white hover:border-primary transition-all">
+        <Crosshair size={18} />
+      </button>
+    </div>
+  );
+};
+
+const CalendarWidget: React.FC<{ eventDate: Date }> = ({ eventDate }) => {
+  const today = new Date();
+  const [viewMonth, setViewMonth] = useState(() => new Date(eventDate.getFullYear(), eventDate.getMonth(), 1));
+  const monthStart = startOfMonth(viewMonth);
+  const monthEnd = endOfMonth(viewMonth);
+  const calStart = startOfWeek(monthStart, { weekStartsOn: 1 });
+  const calEnd = endOfWeek(monthEnd, { weekStartsOn: 1 });
+  const days = eachDayOfInterval({ start: calStart, end: calEnd });
+
+  const weekDays = ['LUN', 'MAR', 'MIE', 'JUE', 'VIE', 'SAB', 'DOM'];
+
+  return (
+    <div className="space-y-4">
+      <h3 className="text-xl font-bold uppercase tracking-widest opacity-60">Calendario</h3>
+      <div className="p-6 lg:p-8 rounded-[1.5rem] lg:rounded-[2.5rem] bg-surface-container-low border border-outline-variant space-y-6">
+        <div className="flex items-center justify-between">
+          <button onClick={() => setViewMonth(new Date(viewMonth.getFullYear(), viewMonth.getMonth() - 1, 1))} className="p-2 rounded-xl hover:bg-surface-container-high transition-all">
+            <ChevronLeft size={18} />
+          </button>
+          <h4 className="text-base lg:text-lg font-black italic capitalize">{format(viewMonth, 'MMMM yyyy', { locale: es })}</h4>
+          <button onClick={() => setViewMonth(new Date(viewMonth.getFullYear(), viewMonth.getMonth() + 1, 1))} className="p-2 rounded-xl hover:bg-surface-container-high transition-all">
+            <ChevronRight size={18} />
+          </button>
+        </div>
+        <div className="grid grid-cols-7 gap-1 text-center">
+          {weekDays.map(d => (
+            <span key={d} className="text-[9px] lg:text-[10px] font-black uppercase tracking-widest text-on-surface-variant/60 py-2">{d}</span>
+          ))}
+          {days.map((day, i) => {
+            const isEventDay = isSameDay(day, eventDate);
+            const isTodayDay = isToday(day);
+            const isCurrentMonth = isSameMonth(day, viewMonth);
+            return (
+              <div
+                key={i}
+                className={cn(
+                  "py-2 lg:py-3 text-xs lg:text-sm font-bold rounded-xl transition-all",
+                  !isCurrentMonth && "text-on-surface-variant/20",
+                  isTodayDay && !isEventDay && "bg-primary/10 text-primary",
+                  isEventDay && "bg-primary text-white shadow-lg shadow-primary/30 scale-110",
+                  !isEventDay && isCurrentMonth && "text-on-surface-variant hover:bg-surface-container-high"
+                )}
+              >
+                {format(day, 'd')}
+              </div>
+            );
+          })}
+        </div>
+        <div className="flex items-center justify-center gap-6 pt-2 border-t border-outline-variant/30 text-xs lg:text-sm font-medium text-on-surface-variant">
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded bg-primary shadow-sm" />
+            <span>Evento</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded bg-primary/20" />
+            <span>Hoy</span>
+          </div>
+          <div className="flex items-center gap-2 font-bold text-on-surface">
+            <Calendar size={14} />
+            <span>{format(eventDate, "HH:mm")} HS</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const EventAnnouncements: React.FC<{ eventId: string; organizerId: string; isOrganizer: boolean }> = ({ eventId, organizerId, isOrganizer }) => {
+  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [newAnnouncement, setNewAnnouncement] = useState('');
+  const [showCreate, setShowCreate] = useState(false);
+
+  const fetchAnnouncements = async () => {
+    try {
+      const data: any = await api.getEventPosts(eventId, 'announcement', 1, 50);
+      const mapped = (data || []).map((item: any) => ({
+        id: String(item.id_post || item.id),
+        title: 'Anuncio',
+        content: item.content,
+        createdAt: item.created_at,
+        media: [],
+      }));
+      setAnnouncements(mapped);
+    } catch (err) {
+      console.error('Error fetching announcements:', err);
+      setAnnouncements([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAnnouncements();
+  }, [eventId]);
+
+  const handleCreate = async () => {
+    if (!newAnnouncement.trim()) return;
+    try {
+      await api.createEventPost(eventId, { content: newAnnouncement, type: 'announcement' });
+      setNewAnnouncement('');
+      setShowCreate(false);
+      fetchAnnouncements();
+    } catch (err) {
+      console.error('Error creating announcement:', err);
+    }
+  };
+
+  const handleDelete = async (postId: string) => {
+    if (!window.confirm('¿Eliminar este anuncio?')) return;
+    try {
+      await api.deleteEventPost(postId);
+      setAnnouncements(prev => prev.filter(a => a.id !== postId));
+    } catch (err) {
+      console.error('Error deleting announcement:', err);
+    }
+  };
+
+  if (loading) return <div className="py-10 text-center opacity-50">Cargando anuncios...</div>;
+
+  return (
+    <div className="space-y-6">
+      {isOrganizer && (
+        <div className="space-y-4">
+          {showCreate ? (
+            <div className="p-6 lg:p-8 rounded-[2rem] lg:rounded-[3rem] bg-surface-container-low border border-outline-variant space-y-4">
+              <textarea
+                value={newAnnouncement}
+                onChange={(e) => setNewAnnouncement(e.target.value)}
+                placeholder="Escribe un anuncio oficial..."
+                className="w-full bg-transparent border-none outline-none text-base lg:text-lg font-medium placeholder:text-on-surface-variant/40 resize-none min-h-[80px]"
+              />
+              <div className="flex justify-end gap-3">
+                <button onClick={() => { setShowCreate(false); setNewAnnouncement(''); }} className="px-6 py-3 rounded-xl bg-surface-container-high text-on-surface-variant font-bold text-xs uppercase tracking-widest hover:bg-red-50 hover:text-red-500 transition-all">Cancelar</button>
+                <button onClick={handleCreate} disabled={!newAnnouncement.trim()} className="px-6 py-3 rounded-xl bg-primary text-white font-bold text-xs uppercase tracking-widest hover:bg-primary/90 transition-all disabled:opacity-30">Publicar Anuncio</button>
+              </div>
+            </div>
+          ) : (
+            <button onClick={() => setShowCreate(true)} className="w-full p-4 rounded-[1.5rem] border-2 border-dashed border-outline-variant text-on-surface-variant font-bold text-xs uppercase tracking-widest hover:border-primary hover:text-primary transition-all flex items-center justify-center gap-3">
+              <Plus size={16} /> Nuevo Anuncio
+            </button>
+          )}
+        </div>
+      )}
+
+      {announcements.length === 0 ? (
+        <div className="py-20 text-center space-y-4 glass rounded-[3rem]">
+          <Megaphone size={40} className="mx-auto text-on-surface-variant/30" />
+          <p className="text-on-surface-variant font-medium">No hay anuncios oficiales todavía.</p>
+        </div>
+      ) : (
+        announcements.map(ann => (
+          <div key={ann.id} className="p-6 lg:p-10 rounded-[2rem] lg:rounded-[3rem] bg-indigo-50/20 border border-indigo-100 space-y-6 relative overflow-hidden group">
+            <div className="flex flex-col sm:flex-row justify-between items-start gap-4 relative z-10">
+               <div className="space-y-1">
+                  <span className="text-[9px] lg:text-[10px] font-black italic text-indigo-500 uppercase tracking-widest">COMUNICADO OFICIAL</span>
+                  <h3 className="text-2xl lg:text-3xl font-black italic tracking-tight uppercase leading-none">{ann.title}</h3>
+                  <p className="text-[9px] lg:text-[10px] text-on-surface-variant font-bold uppercase tracking-widest">
+                    {ann.createdAt ? format(new Date(ann.createdAt), 'PPP', { locale: es }) : 'N/A'}
+                  </p>
+               </div>
+               <div className="flex items-center gap-2">
+                 {isOrganizer && (
+                   <button onClick={() => handleDelete(ann.id)} className="w-10 h-10 lg:w-12 lg:h-12 bg-red-50 rounded-xl lg:rounded-2xl flex items-center justify-center text-red-500 border border-red-100 opacity-0 group-hover:opacity-100 transition-all hover:bg-red-500 hover:text-white shrink-0">
+                     <Trash2 size={16} />
+                   </button>
+                 )}
+                 <div className="w-10 h-10 lg:w-12 lg:h-12 bg-white rounded-xl lg:rounded-2xl flex items-center justify-center text-indigo-600 shadow-sm shrink-0">
+                   <Megaphone size={20} />
+                 </div>
+               </div>
+            </div>
+            <p className="text-base lg:text-lg text-on-surface-variant leading-relaxed relative z-10">{ann.content}</p>
+            {ann.media && ann.media.length > 0 && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 relative z-10">
+                {ann.media.map((m, i) => (
+                  <img key={i} src={m} className="w-full h-40 lg:h-48 object-cover rounded-2xl lg:rounded-3xl" alt="Ann photo" />
+                ))}
+              </div>
+            )}
+            <div className="absolute bottom-0 right-0 w-64 h-64 bg-indigo-500/5 blur-3xl rounded-full translate-x-20 translate-y-20 group-hover:scale-110 transition-transform" />
+          </div>
+        ))
+      )}
+    </div>
+  );
+};
+
+const EventWall: React.FC<{ eventId: string; organizerOwnerId?: string; eventTitle: string; isModerator: boolean }> = ({ eventId, organizerOwnerId, eventTitle, isModerator: propIsModerator }) => {
   const { user, profile } = useAuth();
   const [posts, setPosts] = useState<any[]>([]);
   const [newPost, setNewPost] = useState('');
@@ -710,10 +851,6 @@ const EventWall: React.FC<{ eventId: string; organizerOwnerId?: string; eventTit
         setPosts(prev => [created, ...prev]);
       }
       setNewPost('');
-
-      if (organizerOwnerId && organizerOwnerId !== user.uid) {
-        // Notification logic...
-      }
     } catch (e) {
       console.error(e);
     }
@@ -739,7 +876,7 @@ const EventWall: React.FC<{ eventId: string; organizerOwnerId?: string; eventTit
     }
   };
 
-  const isModerator = profile?.role === 'admin' || profile?.role === 'moderator';
+  const modRoles = propIsModerator || profile?.role === 'admin' || profile?.role === 'moderator';
 
   return (
     <div className="space-y-10">
@@ -793,7 +930,7 @@ const EventWall: React.FC<{ eventId: string; organizerOwnerId?: string; eventTit
             onClick={handlePost}
             className="btn-primary h-14 px-10 text-[11px] font-black uppercase tracking-widest disabled:opacity-30"
           >
-            PUBLICAR EXPERIENCIA
+            PUBLICAR
           </button>
         </div>
       </div>
@@ -816,7 +953,7 @@ const EventWall: React.FC<{ eventId: string; organizerOwnerId?: string; eventTit
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                {(isModerator || post.id_user === user?.uid) && (
+                {(modRoles || post.id_user === user?.uid) && (
                   <button 
                     onClick={() => handleDeletePost(post.id_post)}
                     className="p-2 rounded-lg bg-red-50 text-red-500 border border-red-100 transition-all opacity-0 group-hover:opacity-100"
@@ -876,10 +1013,11 @@ const EventWall: React.FC<{ eventId: string; organizerOwnerId?: string; eventTit
   );
 };
 
-const LiveChat: React.FC<{ eventId: string }> = ({ eventId }) => {
+const LiveChat: React.FC<{ eventId: string; isModerator: boolean; organizerId: string }> = ({ eventId, isModerator: propIsModerator, organizerId }) => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [showBlockMenu, setShowBlockMenu] = useState<string | null>(null);
   const { profile } = useAuth();
-  const isModerator = profile?.role === 'admin' || profile?.role === 'moderator';
+  const modRoles = propIsModerator || profile?.role === 'admin' || profile?.role === 'moderator';
 
   useEffect(() => {
     const q = query(collection(db, `events/${eventId}/chat`), orderBy('createdAt', 'desc'), limit(50));
@@ -896,6 +1034,15 @@ const LiveChat: React.FC<{ eventId: string }> = ({ eventId }) => {
     }
   };
 
+  const handleBlock = async (targetUserId: string) => {
+    try {
+      await api.blockUserFromEvent(eventId, targetUserId, 'Bloqueado por moderador');
+      setShowBlockMenu(null);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   return (
     <div className="flex flex-col gap-6">
       {messages.map(msg => (
@@ -907,18 +1054,29 @@ const LiveChat: React.FC<{ eventId: string }> = ({ eventId }) => {
                    <span className="text-[10px] font-black uppercase tracking-widest text-primary">USER_{msg.userId.slice(0, 4)}</span>
                    <span className="text-[8px] text-on-surface-variant font-bold">{msg.createdAt?.toDate ? format(msg.createdAt.toDate(), 'HH:mm') : ''}</span>
                 </div>
-                {isModerator && (
-                  <button 
-                    onClick={() => handleDelete(msg.id)}
-                    className="p-1 rounded bg-red-50 text-red-500 opacity-0 group-hover:opacity-100 transition-all hover:bg-red-500 hover:text-white"
-                  >
-                    <Trash2 size={10} />
-                  </button>
-                )}
+                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                  {modRoles && (
+                    <>
+                      <button onClick={() => setShowBlockMenu(showBlockMenu === msg.userId ? null : msg.userId)} className="p-1 rounded bg-amber-50 text-amber-600 hover:bg-amber-500 hover:text-white transition-all" title="Bloquear usuario">
+                        <ShieldCheck size={10} />
+                      </button>
+                      <button onClick={() => handleDelete(msg.id)} className="p-1 rounded bg-red-50 text-red-500 hover:bg-red-500 hover:text-white transition-all" title="Eliminar mensaje">
+                        <Trash2 size={10} />
+                      </button>
+                    </>
+                  )}
+                </div>
              </div>
              <div className="p-4 rounded-2xl bg-surface-container-low text-sm text-on-surface-variant leading-relaxed shadow-sm">
                 {msg.content}
              </div>
+             {showBlockMenu === msg.userId && modRoles && (
+               <div className="mt-2 p-3 rounded-xl bg-white border border-red-200 shadow-lg space-y-2">
+                 <p className="text-[10px] font-black uppercase tracking-widest text-red-600">Bloquear usuario</p>
+                 <button onClick={() => handleBlock(msg.userId)} className="w-full py-2 rounded-lg bg-red-50 text-red-600 text-xs font-bold hover:bg-red-500 hover:text-white transition-all">Bloquear de este evento</button>
+                 <button onClick={() => setShowBlockMenu(null)} className="w-full py-2 rounded-lg bg-surface-container-high text-on-surface-variant text-xs font-bold hover:bg-surface-container transition-all">Cancelar</button>
+               </div>
+             )}
           </div>
         </div>
       ))}

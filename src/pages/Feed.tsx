@@ -155,13 +155,13 @@ const Feed: React.FC = () => {
               </div>
             </div>
 
-            <div className="relative z-10 p-8 lg:p-14 w-full max-w-4xl pointer-events-none">
+            <Link to={`/events/${event.id_event}`} className="relative z-10 p-8 lg:p-14 w-full max-w-4xl">
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: false }}
                 transition={{ duration: 0.5 }}
-                className="flex items-center gap-2 mb-4"
+                className="flex items-center gap-2 mb-4 pointer-events-none"
               >
                 <div className="w-2.5 h-2.5 rounded-full bg-primary animate-pulse shadow-[0_0_10px_#732ee4]" />
                 <span className="text-primary font-black text-xs lg:text-sm tracking-[0.2em] uppercase bg-white/10 backdrop-blur-md px-3 py-1 rounded-full border border-primary/20">
@@ -174,7 +174,7 @@ const Feed: React.FC = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: false }}
                 transition={{ duration: 0.5, delay: 0.1 }}
-                className="font-display text-4xl lg:text-7xl text-white mb-6 leading-[1.1] uppercase font-black tracking-tighter"
+                className="font-display text-4xl lg:text-7xl text-white mb-6 leading-[1.1] uppercase font-black tracking-tighter pointer-events-none"
                 style={{ textShadow: '0 4px 20px rgba(0, 0, 0, 0.5), 0 0 40px rgba(115, 46, 228, 0.3)' }}
               >
                 {event.title}
@@ -185,7 +185,7 @@ const Feed: React.FC = () => {
                 whileInView={{ opacity: 1 }}
                 viewport={{ once: false }}
                 transition={{ duration: 0.5, delay: 0.2 }}
-                className="text-white/90 text-sm lg:text-lg mb-8 max-w-2xl line-clamp-2 lg:line-clamp-none font-medium leading-relaxed pointer-events-auto"
+                className="text-white/90 text-sm lg:text-lg mb-8 max-w-2xl line-clamp-2 lg:line-clamp-none font-medium leading-relaxed pointer-events-none"
               >
                 {event.description}
               </motion.p>
@@ -195,7 +195,7 @@ const Feed: React.FC = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: false }}
                 transition={{ duration: 0.5, delay: 0.3 }}
-                className="flex flex-wrap gap-4 items-center pointer-events-auto"
+                className="flex flex-wrap gap-4 items-center pointer-events-none"
               >
                 {event.date && (
                   <div className="flex items-center gap-3 px-5 py-2.5 bg-white/10 backdrop-blur-xl rounded-2xl border border-white/10 shadow-lg group hover:bg-white/20 transition-all">
@@ -212,7 +212,7 @@ const Feed: React.FC = () => {
                   </div>
                 )}
               </motion.div>
-            </div>
+            </Link>
 
             {index < events.length - 1 && (
               <motion.div
