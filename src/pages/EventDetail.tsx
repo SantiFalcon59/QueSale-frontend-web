@@ -278,20 +278,20 @@ const EventDetail: React.FC = () => {
               </div>
               <div 
                 className="hidden lg:block col-span-1 row-span-1 overflow-hidden"
-                onClick={() => setSelectedImage(event.media?.[1] || "https://images.unsplash.com/photo-1514525253344-991422748105?auto=format&fit=crop&q=80")}
+                onClick={() => setSelectedImage(event.media?.[1] || "https://images.unsplash.com/photo-1561214078-f3247647fc5e?w=800")}
               >
                 <img 
-                  src={event.media?.[1] || "https://images.unsplash.com/photo-1514525253344-991422748105?auto=format&fit=crop&q=80"} 
+                  src={event.media?.[1] || "https://images.unsplash.com/photo-1561214078-f3247647fc5e?w=800"} 
                   alt="Gallery 1" 
                   className="w-full h-full object-cover hover:scale-110 transition-transform duration-500"
                 />
               </div>
               <div 
                 className="hidden lg:block col-span-1 row-span-1 relative overflow-hidden"
-                onClick={() => setSelectedImage(event.media?.[2] || "https://images.unsplash.com/photo-1540575861501-7cf05a4b125a?auto=format&fit=crop&q=80")}
+                onClick={() => setSelectedImage(event.media?.[2] || "https://images.unsplash.com/photo-1552664730-d307ca884978?w=800")}
               >
                 <img 
-                  src={event.media?.[2] || "https://images.unsplash.com/photo-1540575861501-7cf05a4b125a?auto=format&fit=crop&q=80"} 
+                  src={event.media?.[2] || "https://images.unsplash.com/photo-1552664730-d307ca884978?w=800"} 
                   alt="Gallery 2" 
                   className="w-full h-full object-cover hover:scale-110 transition-transform duration-500"
                 />
