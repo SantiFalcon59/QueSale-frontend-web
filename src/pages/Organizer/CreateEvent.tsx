@@ -104,6 +104,7 @@ const CreateEvent: React.FC = () => {
     capacity: '',
     ticketType: 'free' as 'free' | 'external' | 'door',
     ticketUrl: '',
+    qr_enabled: false,
     tags: [] as string[],
     customTag: '',
   });
@@ -197,6 +198,7 @@ const CreateEvent: React.FC = () => {
         capacity: formData.capacity ? parseInt(formData.capacity) : undefined,
         ticket_type: formData.ticketType,
         ticket_url: formData.ticketType === 'external' ? formData.ticketUrl : undefined,
+        qr_enabled: formData.qr_enabled,
         tags: formData.tags,
       });
 
@@ -507,6 +509,31 @@ const CreateEvent: React.FC = () => {
                   </button>
                 </div>
               </div>
+
+              {formData.ticketType !== 'external' && (
+                <div className="p-6 rounded-2xl bg-white border border-outline-variant flex items-center justify-between">
+                  <div className="space-y-1">
+                    <h4 className="text-sm font-black uppercase tracking-tight flex items-center gap-2">
+                      <span className="material-symbols-outlined text-[20px] text-primary">qr_code_2</span>
+                      Habilitar entradas por QR
+                    </h4>
+                    <p className="text-[10px] text-on-surface-variant font-medium">Los usuarios podrán obtener su entrada en la app y web.</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setFormData(prev => ({ ...prev, qr_enabled: !prev.qr_enabled }))}
+                    className={cn(
+                      "w-12 h-6 rounded-full relative transition-all duration-300",
+                      formData.qr_enabled ? "bg-primary" : "bg-outline-variant"
+                    )}
+                  >
+                    <div className={cn(
+                      "absolute top-1 w-4 h-4 rounded-full bg-white transition-all duration-300",
+                      formData.qr_enabled ? "right-1" : "left-1"
+                    )} />
+                  </button>
+                </div>
+              )}
 
               {formData.ticketType === 'external' && (
                 <div className="space-y-2">

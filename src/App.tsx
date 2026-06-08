@@ -128,7 +128,7 @@ export default function App() {
                     <Route path="/tos" element={<PageWrapper><TermsOfService /></PageWrapper>} />
                     <Route path="/notifications" element={<AuthGuard><PageWrapper><Notifications /></PageWrapper></AuthGuard>} />
                     <Route path="/favorites" element={<AuthGuard><PageWrapper><Favorites /></PageWrapper></AuthGuard>} />
-                    <Route path="/tickets" element={<AuthGuard><PageWrapper><MyTickets /></PageWrapper></AuthGuard>} />
+                    <Route path="/my-tickets" element={<AuthGuard><PageWrapper><MyTickets /></PageWrapper></AuthGuard>} />
                     <Route path="/saved" element={<Navigate to="/favorites" replace />} />
                     <Route path="/events/:id" element={<PageWrapper><EventDetail /></PageWrapper>} />
                     <Route path="/organizer/:id" element={<PageWrapper><OrganizerProfile /></PageWrapper>} />

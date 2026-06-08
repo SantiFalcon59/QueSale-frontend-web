@@ -1,179 +1,180 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Ticket as TicketIcon, Calendar, MapPin, Download, ChevronRight, ShieldCheck } from 'lucide-react';
-import { cn } from '../lib/utils';
 import { api } from '../services/apiClient';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import QRCode from 'qrcode';
+
+interface Ticket {
+  id_ticket: string;
+  uuid: string;
+  id_event: string;
+  state: number;
+  buy_date: string;
+  title: string;
+  date: string;
+  ubication: string;
+}
 
 const MyTickets: React.FC = () => {
-  const [tickets, setTickets] = useState<any[]>([]);
-  const [selectedTicket, setSelectedTicket] = useState<any>(null);
+  const [tickets, setTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
+  const [qrDataUrl, setQrDataUrl] = useState<string>('');
 
   useEffect(() => {
-    const fetchTickets = async () => {
-      try {
-        const result: any = await api.apiRequest('/api/tickets/my-tickets', { auth: true });
-        const data = result.data || [];
-        setTickets(data);
-        if (data.length > 0) setSelectedTicket(data[0]);
-      } catch (err) {
-        console.error('Error fetching tickets:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchTickets();
   }, []);
 
-  if (loading) {
-    return <div className="p-20 text-center font-black uppercase tracking-[0.4em] opacity-40 animate-pulse">Recuperando tus accesos...</div>;
-  }
+  const fetchTickets = async () => {
+    try {
+      const response = await api.getUserTickets();
+      setTickets(response.tickets || []);
+    } catch (error) {
+      console.error('Error fetching tickets:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  if (tickets.length === 0) {
-    return (
-      <div className="py-20 text-center space-y-6">
-         <TicketIcon size={80} className="mx-auto text-on-surface-variant opacity-10" />
-         <div className="space-y-2">
-           <h2 className="text-2xl font-black italic tracking-tight opacity-40 uppercase">No tienes entradas aún</h2>
-           <p className="text-on-surface-variant font-medium max-w-xs mx-auto">Cuando compres una entrada para un evento, aparecerá aquí.</p>
-         </div>
-      </div>
-    );
-  }
+  const handleSelectTicket = async (ticket: Ticket) => {
+    setSelectedTicket(ticket);
+    try {
+      const url = await QRCode.toDataURL(ticket.uuid, {
+        width: 300,
+        margin: 2,
+        color: {
+          dark: '#000000',
+          light: '#ffffff',
+        },
+      });
+      setQrDataUrl(url);
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   return (
-    <div className="max-w-5xl mx-auto space-y-8 lg:space-y-12 pb-20">
-      <header className="px-4 lg:px-0">
-        <p className="text-[10px] text-primary uppercase tracking-[0.3em] font-bold mb-2">Acceso Autenticado</p>
-        <h1 className="text-3xl lg:text-5xl font-bold italic font-sans italic tracking-tight">Mis Entradas</h1>
+    <div className="min-h-screen pt-24 pb-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+      <header className="mb-12">
+        <h1 className="text-4xl font-black text-white mb-2 tracking-tight">Mis Entradas</h1>
+        <p className="text-white/50">Aquí puedes ver y gestionar las entradas de tus próximos eventos.</p>
       </header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 px-4 lg:px-0">
-        {/* Tickets List */}
-        <div className="lg:col-span-5 space-y-4">
-           {tickets.map(ticket => (
-             <div 
-               key={ticket.id_ticket}
-               onClick={() => setSelectedTicket(ticket)}
-               className={cn(
-                 "p-6 rounded-[2rem] cursor-pointer transition-all border group",
-                 selectedTicket?.id_ticket === ticket.id_ticket 
-                  ? "bg-surface-container-high border-primary/50 shadow-lg" 
-                  : "bg-surface-container-low border-transparent hover:border-outline-variant"
-               )}
-             >
+      {loading ? (
+        <div className="flex justify-center py-20">
+          <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+        </div>
+      ) : tickets.length === 0 ? (
+        <div className="text-center py-20 bg-white/5 rounded-3xl border border-white/10">
+          <span className="material-symbols-outlined text-6xl text-white/20 mb-4">confirmation_number</span>
+          <h3 className="text-xl font-bold text-white mb-2">No tienes entradas aún</h3>
+          <p className="text-white/50 mb-8">¡Explora eventos y adquiere tu primera entrada!</p>
+          <button 
+            onClick={() => window.location.href = '/discovery'}
+            className="bg-primary text-white px-8 py-3 rounded-xl font-bold hover:bg-primary/90 transition-all"
+          >
+            Explorar Eventos
+          </button>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {tickets.map((ticket) => (
+            <motion.div
+              key={ticket.id_ticket}
+              layoutId={ticket.id_ticket}
+              onClick={() => handleSelectTicket(ticket)}
+              className="bg-[#1a1a2e] border border-white/10 rounded-2xl overflow-hidden hover:border-primary/50 transition-all cursor-pointer group"
+              whileHover={{ y: -4 }}
+            >
+              <div className="p-6">
                 <div className="flex justify-between items-start mb-4">
-                   <div className="w-10 h-10 rounded-xl bg-linear-to-br from-primary/20 to-primary/5 flex items-center justify-center text-primary">
-                      <TicketIcon size={20} />
-                   </div>
-                   <span className={cn(
-                     "text-[9px] font-bold uppercase tracking-widest px-2 py-1 glass rounded",
-                     ticket.state === 1 ? "text-primary" : ticket.state === 2 ? "text-emerald-500" : "text-on-surface-variant"
-                   )}>
-                     {ticket.state === 1 ? 'Activo' : ticket.state === 2 ? 'Validado' : 'Cancelado'}
-                   </span>
-                </div>
-                <h3 className="text-lg font-bold group-hover:text-primary transition-colors">{ticket.event?.title}</h3>
-                <p className="text-xs text-on-surface-variant mt-1">
-                  {ticket.event?.date ? format(new Date(ticket.event.date), "d MMM, yyyy • HH:mm", { locale: es }) : 'Próximamente'}
-                </p>
-                <div className="flex items-center justify-between mt-6 pt-4 border-t border-outline-variant/30">
-                   <span className="text-[10px] font-mono text-on-surface-variant">{ticket.uuid}</span>
-                   <ChevronRight size={16} className="text-on-surface-variant" />
-                </div>
-             </div>
-           ))}
-        </div>
-
-        {/* Ticket Viewer */}
-        <div className="lg:col-span-7">
-           <AnimatePresence mode="wait">
-             {selectedTicket && (
-               <motion.div
-                 key={selectedTicket.id_ticket}
-                 initial={{ opacity: 0, scale: 0.98 }}
-                 animate={{ opacity: 1, scale: 1 }}
-                 exit={{ opacity: 0, scale: 1.02 }}
-                 className="bg-surface-container-high rounded-[2.5rem] lg:rounded-[3rem] overflow-hidden border border-outline-variant shadow-2xl relative"
-               >
-                  {/* Visual Accent */}
-                  <div className="absolute top-0 left-0 right-0 h-2 bg-linear-to-r from-primary to-primary-container" />
-                  
-                  <div className="p-8 lg:p-12 space-y-8 lg:space-y-10">
-                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                        <div className="space-y-1">
-                           <h2 className="text-2xl lg:text-3xl font-bold italic tracking-tight">{selectedTicket.event?.title}</h2>
-                           <p className="text-on-surface-variant text-xs lg:text-sm flex items-center gap-2 font-medium tracking-tight uppercase">
-                              <MapPin size={14} className="text-primary" /> {selectedTicket.event?.ubication}
-                           </p>
-                        </div>
-                        <div className="sm:text-right">
-                           <p className="text-[9px] text-on-surface-variant uppercase tracking-widest font-black">Ticket Tier</p>
-                           <p className="text-sm font-black text-primary uppercase tracking-tight">Standard Entry</p>
-                        </div>
-                     </div>
-
-                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 lg:gap-10 p-6 lg:p-10 rounded-[2rem] lg:rounded-[2.5rem] bg-surface/50 border border-outline-variant">
-                        <div className="space-y-6 lg:space-y-8">
-                           <div className="space-y-1">
-                              <p className="text-[9px] text-on-surface-variant uppercase tracking-widest font-bold">Fecha y Hora</p>
-                              <p className="text-sm font-bold">
-                                {selectedTicket.event?.date ? format(new Date(selectedTicket.event.date), "EEEE d 'de' MMMM, HH:mm", { locale: es }) : '-'}
-                              </p>
-                           </div>
-                           <div className="space-y-1">
-                              <p className="text-[9px] text-on-surface-variant uppercase tracking-widest font-bold">ID de Entrada</p>
-                              <p className="text-sm font-mono font-bold tracking-tight">{selectedTicket.uuid}</p>
-                           </div>
-                           <div className="space-y-1 pt-2 lg:pt-4">
-                              <p className="text-[9px] text-on-surface-variant uppercase tracking-widest font-bold">Estado</p>
-                              <div className="flex items-center gap-2 text-on-surface font-bold text-xs uppercase tracking-tight">
-                                 <ShieldCheck size={16} className="text-primary" /> 
-                                 {selectedTicket.state === 1 ? 'Válida para Ingreso' : selectedTicket.state === 2 ? 'Ya Utilizada' : 'Cancelada'}
-                              </div>
-                           </div>
-                        </div>
-
-                        <div className="flex flex-col items-center justify-center space-y-4">
-                           <div className="w-40 h-40 lg:w-48 lg:h-48 bg-white p-4 rounded-3xl shadow-xl flex items-center justify-center">
-                              {selectedTicket.state === 1 ? (
-                                <img 
-                                  src={`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${selectedTicket.uuid}`} 
-                                  alt="QR Code" 
-                                  className="w-full h-full" 
-                                />
-                              ) : (
-                                <div className="text-center p-4">
-                                   <TicketIcon size={40} className="mx-auto text-on-surface-variant opacity-20 mb-2" />
-                                   <p className="text-[8px] font-black uppercase text-on-surface-variant">QR No Disponible</p>
-                                </div>
-                              )}
-                           </div>
-                           <p className="text-[9px] text-on-surface-variant uppercase tracking-widest font-bold">Escanear al ingresar</p>
-                        </div>
-                     </div>
-
-                     <div className="flex flex-col sm:flex-row gap-4">
-                        <button className="flex-1 btn-primary py-4 px-6 text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2">
-                           <Download size={16} /> GUARDAR EN WALLET
-                        </button>
-                        {selectedTicket.state === 1 && (
-                          <button className="btn-secondary py-4 px-6 text-[10px] font-black uppercase tracking-widest">TRANSFERIR</button>
-                        )}
-                     </div>
+                  <div className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                    ticket.state === 1 ? 'bg-green-500/20 text-green-400' : 
+                    ticket.state === 2 ? 'bg-white/10 text-white/50' : 'bg-red-500/20 text-red-400'
+                  }`}>
+                    {ticket.state === 1 ? 'Activa' : ticket.state === 2 ? 'Usada' : 'Cancelada'}
                   </div>
-                  
-                  {/* Perforation Effect */}
-                  <div className="hidden lg:block absolute top-1/2 left-0 -translate-x-1/2 w-8 h-8 rounded-full bg-surface border-r border-outline-variant" />
-                  <div className="hidden lg:block absolute top-1/2 right-0 translate-x-1/2 w-8 h-8 rounded-full bg-surface border-l border-outline-variant" />
-               </motion.div>
-             )}
-           </AnimatePresence>
+                  <span className="text-white/20 font-mono text-xs">#{ticket.uuid.slice(0, 8)}</span>
+                </div>
+                <h3 className="text-xl font-bold text-white mb-2 group-hover:text-secondary transition-colors line-clamp-1">{ticket.title}</h3>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-white/60 text-sm">
+                    <span className="material-symbols-outlined text-lg">calendar_today</span>
+                    {format(new Date(ticket.date), "EEEE d 'de' MMMM", { locale: es })}
+                  </div>
+                  <div className="flex items-center gap-2 text-white/60 text-sm">
+                    <span className="material-symbols-outlined text-lg">location_on</span>
+                    <span className="truncate">{ticket.ubication}</span>
+                  </div>
+                </div>
+              </div>
+              <div className="bg-white/5 p-4 border-t border-white/10 flex justify-between items-center">
+                <span className="text-[10px] text-white/30 font-bold uppercase tracking-widest">Ver entrada</span>
+                <span className="material-symbols-outlined text-white/30 group-hover:text-secondary group-hover:translate-x-1 transition-all">arrow_forward</span>
+              </div>
+            </motion.div>
+          ))}
         </div>
-      </div>
+      )}
+
+      <AnimatePresence>
+        {selectedTicket && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setSelectedTicket(null)}
+              className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+            />
+            <motion.div
+              layoutId={selectedTicket.id_ticket}
+              className="relative w-full max-w-md bg-[#1a1a2e] border border-white/20 rounded-3xl overflow-hidden shadow-2xl"
+            >
+              <div className="p-8">
+                <div className="text-center mb-8">
+                  <div className="inline-block px-4 py-1.5 rounded-full bg-primary/20 border border-primary/30 text-secondary text-xs font-bold uppercase tracking-widest mb-4">
+                    Entrada Digital
+                  </div>
+                  <h2 className="text-2xl font-black text-white mb-2">{selectedTicket.title}</h2>
+                  <p className="text-white/50 text-sm">Muestra este código al ingresar al evento</p>
+                </div>
+
+                <div className="bg-white p-6 rounded-2xl mb-8 flex justify-center shadow-[0_0_50px_rgba(255,255,255,0.1)]">
+                  {qrDataUrl ? (
+                    <img src={qrDataUrl} alt="QR Code" className="w-full max-w-[200px]" />
+                  ) : (
+                    <div className="w-[200px] h-[200px] bg-gray-100 animate-pulse rounded-lg" />
+                  )}
+                </div>
+
+                <div className="space-y-4 border-t border-white/10 pt-6">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-white/40">Fecha</span>
+                    <span className="text-white font-bold">{format(new Date(selectedTicket.date), "d 'de' MMMM, HH:mm", { locale: es })}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-white/40">Ubicación</span>
+                    <span className="text-white font-bold text-right">{selectedTicket.ubication}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-white/40">ID de Entrada</span>
+                    <span className="text-white font-mono">{selectedTicket.uuid}</span>
+                  </div>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setSelectedTicket(null)}
+                className="w-full py-4 bg-white/5 hover:bg-white/10 text-white font-bold border-t border-white/10 transition-colors"
+              >
+                Cerrar
+              </button>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

@@ -40,6 +40,8 @@ interface Event {
   media: string[];
   image: string;
   status: string;
+  qr_enabled: boolean;
+  ticket_url?: string;
 }
 
 interface Organizer {
@@ -150,6 +152,8 @@ const EventDetail: React.FC = () => {
           media,
           image: thumbnail || media[0] || '',
           status: data.status || 'active',
+          qr_enabled: !!data.qr_enabled,
+          ticket_url: data.ticket_url,
         };
         setEvent(mappedEvent);
         setIsSaved(!!data.isFavorited);
@@ -217,6 +221,20 @@ const EventDetail: React.FC = () => {
       }
     } catch (err) {
       console.error("Error toggling save:", err);
+    }
+  };
+
+  const handlePurchaseTicket = async () => {
+    if (!id) return;
+    try {
+      setLoading(true);
+      await api.purchaseTicket(id);
+      alert('¡Entrada adquirida con éxito! Puedes verla en "Mis Entradas".');
+      setEvent(prev => prev ? { ...prev, attendeesCount: prev.attendeesCount + 1 } : null);
+    } catch (err: any) {
+      alert(err.message || 'Error al adquirir la entrada');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -586,13 +604,22 @@ const EventDetail: React.FC = () => {
 
               <div className="space-y-4">
                   <button
-                    onClick={() => { if (handleInteraction()) return; window.open('https://mercadopago.com.ar', '_blank'); }}
+                    onClick={() => { 
+                      if (handleInteraction()) return; 
+                      if (event.qr_enabled) {
+                        handlePurchaseTicket();
+                      } else {
+                        window.open(event.ticket_url || 'https://mercadopago.com.ar', '_blank'); 
+                      }
+                    }}
                     className="w-full btn-primary h-14 lg:h-16 text-base lg:text-lg flex items-center justify-center gap-3 shadow-xl shadow-primary/20"
                   >
                     <TicketIcon size={22} className="lg:size-6" />
-                    ADQUIRIR ACCESO
+                    {event.qr_enabled ? 'OBTENER ENTRADA QR' : 'ADQUIRIR ACCESO'}
                   </button>
-                 <p className="text-[9px] lg:text-[10px] text-center text-on-surface-variant font-bold uppercase tracking-widest">Pago directo al organizador</p>
+                 <p className="text-[9px] lg:text-[10px] text-center text-on-surface-variant font-bold uppercase tracking-widest">
+                   {event.qr_enabled ? 'Entrada digital vía QueSale' : 'Pago directo al organizador'}
+                 </p>
               </div>
 
               <div className="space-y-4 lg:space-y-6">
