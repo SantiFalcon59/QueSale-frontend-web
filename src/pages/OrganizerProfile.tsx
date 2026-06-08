@@ -18,7 +18,7 @@ const OrganizerProfile: React.FC = () => {
   const [following, setFollowing] = useState(false);
 
   useEffect(() => {
-    if (!id) return;
+    if (!id || id === 'undefined') return;
     const fetch = async () => {
       try {
         const [orgData, evData, folData] = await Promise.all([

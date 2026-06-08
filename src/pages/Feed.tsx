@@ -215,7 +215,7 @@ const Feed: React.FC = () => {
                 className="flex items-center gap-2 mb-4 pointer-events-none"
               >
                 <div className="w-2.5 h-2.5 rounded-full bg-primary animate-pulse shadow-[0_0_10px_#732ee4]" />
-                <span className="text-primary font-black text-xs lg:text-sm tracking-[0.2em] uppercase bg-white/10 backdrop-blur-md px-3 py-1 rounded-full border border-primary/20">
+                <span className="text-primary font-black text-xs lg:text-sm tracking-[0.2em] uppercase bg-white/10 backdrop-blur-md px-3 py-1 rounded-full border-2 border-primary/30 shadow-sm shadow-primary/20">
                   {event.organizer?.name || event.interests?.[0]?.name || event.tags?.[0] || 'Evento'}
                 </span>
               </motion.div>

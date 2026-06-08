@@ -5,7 +5,7 @@ const TermsOfService: React.FC = () => {
     <div className="max-w-4xl mx-auto py-20 px-6 space-y-12">
       <header className="space-y-4">
         <h1 className="text-6xl font-black italic tracking-tighter uppercase leading-none">TÉRMINOS <span className="text-primary">DE SERVICIO</span></h1>
-        <p className="text-on-surface-variant font-medium text-lg italic">Versión 1.0 - Actualizado Mayo 2024</p>
+        <p className="text-on-surface-variant font-medium text-lg italic">Versión 1.0 - Actualizado Mayo 2026</p>
       </header>
 
       <div className="prose prose-stone prose-invert max-w-none space-y-8 text-on-surface-variant font-medium">

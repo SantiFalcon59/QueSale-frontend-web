@@ -9,11 +9,12 @@ interface PostFeedProps {
   onComment?: (postId: number, content: string) => void;
   onShare?: (content: string) => void;
   onDeleteComment?: (commentId: number) => void;
+  onVotePoll?: (postId: number, optionId: number) => void;
   showDelete?: (post: any) => boolean;
   canDeleteComment?: (comment: any) => boolean;
 }
 
-const PostFeed: React.FC<PostFeedProps> = ({ posts, loading, onReact, onDelete, onComment, onShare, onDeleteComment, showDelete, canDeleteComment }) => {
+const PostFeed: React.FC<PostFeedProps> = ({ posts, loading, onReact, onDelete, onComment, onShare, onDeleteComment, onVotePoll, showDelete, canDeleteComment }) => {
   if (loading) {
     return (
       <div className="flex justify-center py-16">
@@ -42,6 +43,7 @@ const PostFeed: React.FC<PostFeedProps> = ({ posts, loading, onReact, onDelete, 
           onComment={onComment}
           onShare={onShare}
           onDeleteComment={onDeleteComment}
+          onVotePoll={onVotePoll}
           showDelete={showDelete?.(post)}
           canDeleteComment={canDeleteComment}
         />

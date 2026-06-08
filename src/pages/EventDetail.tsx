@@ -104,6 +104,7 @@ const EventDetail: React.FC = () => {
   const [isModerator, setIsModerator] = useState(false);
   const [isOrganizer, setIsOrganizer] = useState(false);
   const [onlineCount, setOnlineCount] = useState(0);
+  const [replyingTo, setReplyingTo] = useState<{ id: string; userId: string; displayName: string; message: string } | null>(null);
 
   const handleInteraction = (e?: React.MouseEvent) => {
     if (!user) {
@@ -664,11 +665,11 @@ const EventDetail: React.FC = () => {
               </div>
 
               <div className="flex-1 overflow-y-auto p-8 space-y-6 no-scrollbar">
-                <LiveChat eventId={event.id} isModerator={isModerator} organizerId={event.organizerId} onOnlineCountChange={setOnlineCount} />
+                <LiveChat eventId={event.id} isModerator={isModerator} organizerId={event.organizerId} onOnlineCountChange={setOnlineCount} onReply={setReplyingTo} />
               </div>
 
               <div className="p-8 border-t border-outline-variant bg-surface-container-low/50">
-                <ChatMessageInput eventId={event.id} />
+                <ChatMessageInput eventId={event.id} replyingTo={replyingTo} onCancelReply={() => setReplyingTo(null)} />
               </div>
             </motion.div>
           )}
@@ -959,10 +960,10 @@ const EventWall: React.FC<{ eventId: string; organizerOwnerId?: string; eventTit
     }
   };
 
-  const handlePost = async (content: string, type?: string, media?: string[]) => {
+  const handlePost = async (content: string, type?: string, media?: string[], pollOptions?: string[]) => {
     if (!user) return;
     try {
-      const created: any = await api.createWallPost_new('event', eventId, content, type, media);
+      const created: any = await api.createWallPost_new('event', eventId, content, type, media, pollOptions);
       if (created) setPosts(prev => [created, ...prev]);
     } catch (e) {
       console.error(e);
@@ -1015,6 +1016,18 @@ const EventWall: React.FC<{ eventId: string; organizerOwnerId?: string; eventTit
     }
   };
 
+  const handleVotePoll = async (postId: number, optionId: number) => {
+    if (!user) return;
+    try {
+      const result: any = await api.votePoll(postId, optionId, eventId);
+      if (result?.post) {
+        setPosts(prev => prev.map(p => p.id_post === postId ? result.post : p));
+      }
+    } catch (err) {
+      console.error('Error voting on poll:', err);
+    }
+  };
+
   return (
     <div className="space-y-10">
       <PostComposer onSubmit={handlePost} />
@@ -1025,6 +1038,7 @@ const EventWall: React.FC<{ eventId: string; organizerOwnerId?: string; eventTit
         onDelete={handleDeletePost}
         onComment={handleComment}
         onShare={handleShare}
+        onVotePoll={handleVotePoll}
         onDeleteComment={handleDeleteComment}
         showDelete={(post) => modRoles || post.id_user === user?.uid}
         canDeleteComment={(comment) => modRoles || comment.id_user === user?.uid || (posts.find(p => p.comments?.some((c: any) => c.id_comment === comment.id_comment))?.id_user === user?.uid)}
@@ -1033,7 +1047,7 @@ const EventWall: React.FC<{ eventId: string; organizerOwnerId?: string; eventTit
   );
 };
 
-const LiveChat: React.FC<{ eventId: string; isModerator: boolean; organizerId: string; onOnlineCountChange: (n: number) => void }> = ({ eventId, isModerator: propIsModerator, organizerId, onOnlineCountChange }) => {
+const LiveChat: React.FC<{ eventId: string; isModerator: boolean; organizerId: string; onOnlineCountChange: (n: number) => void; onReply: (reply: { id: string; userId: string; displayName: string; message: string } | null) => void }> = ({ eventId, isModerator: propIsModerator, organizerId, onOnlineCountChange, onReply }) => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [hasMore, setHasMore] = useState(true);
@@ -1165,9 +1179,21 @@ const LiveChat: React.FC<{ eventId: string; isModerator: boolean; organizerId: s
                   )}
                 </div>
              </div>
-             <div className="p-4 rounded-2xl bg-surface-container-low text-sm text-on-surface-variant leading-relaxed shadow-sm">
+              <div className="p-4 rounded-2xl bg-surface-container-low text-sm text-on-surface-variant leading-relaxed shadow-sm">
+                {msg.replyTo && (
+                  <div className="mb-2 pl-3 border-l-2 border-primary/30 py-1.5 text-xs text-on-surface-variant/60 space-y-0.5">
+                    <span className="font-bold text-primary/80">{msg.replyTo.displayName}</span>
+                    <p className="truncate">{msg.replyTo.message}</p>
+                  </div>
+                )}
                 {msg.message}
-             </div>
+              </div>
+              <button
+                onClick={() => onReply({ id: msg.id, userId: msg.userId, displayName: msg.displayName, message: msg.message })}
+                className="text-[10px] text-on-surface-variant/40 hover:text-secondary font-bold uppercase tracking-wider transition-colors"
+              >
+                Responder
+              </button>
              {showBlockMenu === msg.userId && modRoles && (
                <div className="mt-2 p-3 rounded-xl bg-white border border-red-200 shadow-lg space-y-2">
                  <p className="text-[10px] font-black uppercase tracking-widest text-red-600">Bloquear usuario</p>
@@ -1182,11 +1208,25 @@ const LiveChat: React.FC<{ eventId: string; isModerator: boolean; organizerId: s
   );
 };
 
-const ChatMessageInput: React.FC<{ eventId: string }> = ({ eventId }) => {
+const EMOJI_LIST = ['😀','😎','🔥','❤️','😂','🎉','👍','🙌','😢','😡','🎶','💀','👀','💯','✨','🥳'];
+
+const ChatMessageInput: React.FC<{ eventId: string; replyingTo: { id: string; userId: string; displayName: string; message: string } | null; onCancelReply: () => void }> = ({ eventId, replyingTo, onCancelReply }) => {
   const { user, profile } = useAuth();
   const [msg, setMsg] = useState('');
+  const [showEmojis, setShowEmojis] = useState(false);
   const { getSocketToken } = useAuth();
   const socketRef = useRef<Socket | null>(null);
+  const emojiRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (emojiRef.current && !emojiRef.current.contains(e.target as Node)) {
+        setShowEmojis(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   useEffect(() => {
     const token = getSocketToken();
@@ -1215,32 +1255,87 @@ const ChatMessageInput: React.FC<{ eventId: string }> = ({ eventId }) => {
   const send = () => {
     if (!msg.trim() || !user) return;
     if (socketRef.current?.connected) {
-      socketRef.current.emit('send-message', {
+      const data: any = {
         eventId,
         message: msg.trim(),
         messageType: 'chat',
-      });
+      };
+      if (replyingTo) {
+        data.replyTo = { id: replyingTo.id, userId: replyingTo.userId, displayName: replyingTo.displayName, message: replyingTo.message };
+      }
+      socketRef.current.emit('send-message', data);
     }
     setMsg('');
+    if (replyingTo) onCancelReply();
+  };
+
+  const insertEmoji = (emoji: string) => {
+    setMsg(prev => prev + emoji);
+    setShowEmojis(false);
   };
 
   return (
-    <div className="relative">
-      <input 
-        type="text" 
-        value={msg}
-        onChange={(e) => setMsg(e.target.value)}
-        onFocus={() => { if (!user) document.dispatchEvent(new CustomEvent('show-login-prompt')); }}
-        onKeyDown={(e) => e.key === 'Enter' && send()}
-        placeholder="Escribe algo..." 
-        className="w-full h-14 bg-white rounded-2xl pl-6 pr-14 text-sm text-on-surface outline-none ring-1 ring-outline-variant focus:ring-primary/40 shadow-sm transition-all" 
-      />
-      <button 
-        onClick={send}
-        className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-xl bg-primary text-white flex items-center justify-center hover:bg-primary-container shadow-lg shadow-primary/20 transition-all active:scale-90"
-      >
-        <Send size={18} />
-      </button>
+    <div className="space-y-2">
+      {replyingTo && (
+        <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary/5 border border-primary/20 text-xs text-on-surface-variant">
+          <Reply size={12} className="text-primary flex-shrink-0" />
+          <span className="flex-1 truncate">
+            <span className="font-bold text-primary">@{replyingTo.displayName}: </span>
+            {replyingTo.message}
+          </span>
+          <button onClick={onCancelReply} className="p-1 hover:bg-surface-container-high rounded-lg transition-colors">
+            <X size={14} />
+          </button>
+        </div>
+      )}
+      <div className="relative">
+        <input 
+          type="text" 
+          value={msg}
+          onChange={(e) => setMsg(e.target.value)}
+          onFocus={() => { if (!user) document.dispatchEvent(new CustomEvent('show-login-prompt')); }}
+          onKeyDown={(e) => e.key === 'Enter' && send()}
+          placeholder="Escribe algo..." 
+          className="w-full h-14 bg-white rounded-2xl pl-6 pr-28 text-sm text-on-surface outline-none ring-1 ring-outline-variant focus:ring-primary/40 shadow-sm transition-all" 
+        />
+        <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
+          <div className="relative" ref={emojiRef}>
+            <button
+              onClick={() => setShowEmojis(!showEmojis)}
+              className="w-9 h-9 rounded-xl bg-surface-container-high text-on-surface-variant hover:bg-surface-container flex items-center justify-center transition-all"
+            >
+              <span className="text-lg">😊</span>
+            </button>
+            <AnimatePresence>
+              {showEmojis && (
+                <motion.div
+                  initial={{ opacity: 0, y: -8, scale: 0.9 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -8, scale: 0.9 }}
+                  transition={{ duration: 0.15 }}
+                  className="absolute bottom-full right-0 mb-2 p-2 rounded-xl bg-[#1a1a2e] border border-white/10 shadow-xl grid grid-cols-4 gap-1 z-50"
+                >
+                  {EMOJI_LIST.map(emoji => (
+                    <button
+                      key={emoji}
+                      onClick={() => insertEmoji(emoji)}
+                      className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/10 transition-colors text-lg"
+                    >
+                      {emoji}
+                    </button>
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+          <button 
+            onClick={send}
+            className="w-10 h-10 rounded-xl bg-primary text-white flex items-center justify-center hover:bg-primary-container shadow-lg shadow-primary/20 transition-all active:scale-90"
+          >
+            <Send size={18} />
+          </button>
+        </div>
+      </div>
     </div>
   );
 };

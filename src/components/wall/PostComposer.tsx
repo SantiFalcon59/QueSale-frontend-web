@@ -15,7 +15,7 @@ const GridIcon = (props: any) => (
 
 interface PostComposerProps {
   placeholder?: string;
-  onSubmit: (content: string, type?: string, media?: string[]) => void;
+  onSubmit: (content: string, type?: string, media?: string[], pollOptions?: string[]) => void;
 }
 
 const PostComposer: React.FC<PostComposerProps> = ({ placeholder = '¿Qué tienes en mente?', onSubmit }) => {
@@ -27,6 +27,7 @@ const PostComposer: React.FC<PostComposerProps> = ({ placeholder = '¿Qué tiene
   const [selectedGif, setSelectedGif] = useState<string | null>(null);
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [pollOptions, setPollOptions] = useState<string[]>(['', '']);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -80,11 +81,12 @@ const PostComposer: React.FC<PostComposerProps> = ({ placeholder = '¿Qué tiene
     const finalContent = selectedGif
       ? `${content.trim()}\n[GIF:${selectedGif}]`
       : content.trim();
-    onSubmit(finalContent, postType, media.length > 0 ? media : undefined);
+    onSubmit(finalContent, postType, media.length > 0 ? media : undefined, postType === 'poll' ? pollOptions.filter(o => o.trim()) : undefined);
     setContent('');
     setPostType('comment');
     setSelectedGif(null);
     setUploadedImages([]);
+    setPollOptions(['', '']);
     setShowEmojiPicker(false);
     setShowGifPicker(false);
   };
@@ -169,6 +171,38 @@ const PostComposer: React.FC<PostComposerProps> = ({ placeholder = '¿Qué tiene
                   </button>
                 </motion.div>
               ))}
+            </div>
+          )}
+          {postType === 'poll' && (
+            <div className="space-y-2 pl-2 border-l-2 border-purple-300/50">
+              {pollOptions.map((opt, idx) => (
+                <div key={idx} className="flex items-center gap-2">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-purple-500 w-6">{idx + 1}.</span>
+                  <input
+                    value={opt}
+                    onChange={e => {
+                      const next = [...pollOptions];
+                      next[idx] = e.target.value;
+                      setPollOptions(next);
+                    }}
+                    placeholder={`Opción ${idx + 1}`}
+                    className="flex-1 h-10 px-4 rounded-xl bg-surface-container-low text-sm text-on-surface outline-none ring-1 ring-outline-variant focus:ring-purple-400/40 transition-all"
+                  />
+                  {pollOptions.length > 2 && (
+                    <button onClick={() => setPollOptions(pollOptions.filter((_, i) => i !== idx))} className="p-1.5 rounded-lg text-on-surface-variant/50 hover:text-red-500 hover:bg-red-50 transition-all cursor-pointer">
+                      <X size={14} />
+                    </button>
+                  )}
+                </div>
+              ))}
+              {pollOptions.length < 10 && (
+                <button
+                  onClick={() => setPollOptions([...pollOptions, ''])}
+                  className="text-xs text-purple-500 font-bold hover:text-purple-700 transition-colors flex items-center gap-1 cursor-pointer"
+                >
+                  <Plus size={14} /> Agregar opción
+                </button>
+              )}
             </div>
           )}
           <div className="flex flex-wrap gap-2">

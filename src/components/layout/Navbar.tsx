@@ -1,10 +1,11 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Menu } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { cn } from '../../lib/utils';
 import { NotificationsPopover } from './NotificationsPopover';
 import { motion, AnimatePresence } from 'motion/react';
+import { api } from '../../services/apiClient';
 
 export const Navbar: React.FC<{ onMenuClick: () => void }> = ({ onMenuClick }) => {
   const { user, profile, logout } = useAuth();
@@ -12,17 +13,53 @@ export const Navbar: React.FC<{ onMenuClick: () => void }> = ({ onMenuClick }) =
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<{ events: any[]; users: any[]; organizers: any[] }>({ events: [], users: [], organizers: [] });
+  const [showSearchResults, setShowSearchResults] = useState(false);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
+  const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
+    if (!searchQuery.trim()) {
+      setSearchResults({ events: [], users: [], organizers: [] });
+      setShowSearchResults(false);
+      return;
+    }
+    searchTimeoutRef.current = setTimeout(async () => {
+      setSearchLoading(true);
+      try {
+        const [eventsRes, communityRes] = await Promise.all([
+          api.getEventsWithFilters(`search=${encodeURIComponent(searchQuery)}&limit=3`),
+          api.communitySearch(searchQuery),
+        ]);
+        setSearchResults({
+          events: eventsRes.events || [],
+          users: communityRes.users || [],
+          organizers: communityRes.organizers || [],
+        });
+        setShowSearchResults(true);
+      } catch {
+      } finally {
+        setSearchLoading(false);
+      }
+    }, 300);
+    return () => { if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current); };
+  }, [searchQuery]);
+
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
+        setShowSearchResults(false);
+      }
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
         setDropdownOpen(false);
       }
     };
-    if (dropdownOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
+    document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [dropdownOpen]);
+  }, []);
 
   const handleLogout = async () => {
     await logout();
@@ -40,13 +77,111 @@ export const Navbar: React.FC<{ onMenuClick: () => void }> = ({ onMenuClick }) =
           <Menu size={24} />
         </button>
         
-        <div className="relative w-full max-w-md group hidden sm:block">
+        <div className="relative w-full max-w-md group hidden sm:block" ref={searchRef}>
           <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-white/40 group-focus-within:text-secondary transition-colors">search</span>
-          <input 
+          <input
             type="text"
-            placeholder="Buscar eventos, lugares..."
+            placeholder="Buscar eventos, usuarios, organizaciones..."
+            value={searchQuery}
+            onChange={e => { setSearchQuery(e.target.value); }}
+            onFocus={() => { if (searchResults.events.length || searchResults.users.length || searchResults.organizers.length) setShowSearchResults(true); }}
             className="w-full bg-white/5 border border-white/10 rounded-full py-2 pl-12 pr-4 text-sm focus:ring-2 focus:ring-primary/40 transition-all text-white placeholder:text-white/30 outline-none"
           />
+          {searchLoading && (
+            <span className="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-white/40 animate-spin text-lg">progress_activity</span>
+          )}
+          <AnimatePresence>
+            {showSearchResults && (searchResults.events.length > 0 || searchResults.users.length > 0 || searchResults.organizers.length > 0) && (
+              <motion.div
+                initial={{ opacity: 0, y: -8, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -8, scale: 0.95 }}
+                transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
+                className="absolute top-full mt-2 left-0 w-full rounded-2xl bg-[#1a1a2e] border border-white/10 shadow-xl overflow-hidden z-50 max-h-[70vh] overflow-y-auto"
+              >
+                {searchResults.events.length > 0 && (
+                  <div className="p-3 border-b border-white/10">
+                    <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest mb-2 px-1">Eventos</p>
+                    {searchResults.events.map(ev => (
+                      <button
+                        key={ev.id_event}
+                        onClick={() => { setShowSearchResults(false); setSearchQuery(''); navigate(`/events/${ev.id_event}`); }}
+                        className="w-full flex items-center gap-3 px-2 py-2 rounded-xl hover:bg-white/5 transition-colors text-left cursor-pointer"
+                      >
+                        {ev.photo_url ? (
+                          <img src={ev.photo_url} alt="" className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
+                        ) : (
+                          <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center flex-shrink-0">
+                            <span className="material-symbols-outlined text-secondary text-lg">event</span>
+                          </div>
+                        )}
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-semibold text-white truncate">{ev.title}</p>
+                          <p className="text-xs text-white/50 truncate">{ev.ubication || ev.location}</p>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {searchResults.users.length > 0 && (
+                  <div className="p-3 border-b border-white/10">
+                    <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest mb-2 px-1">Usuarios</p>
+                    {searchResults.users.map(u => (
+                      <button
+                        key={u.id_user}
+                        onClick={() => { setShowSearchResults(false); setSearchQuery(''); navigate(`/@${u.username}`); }}
+                        className="w-full flex items-center gap-3 px-2 py-2 rounded-xl hover:bg-white/5 transition-colors text-left cursor-pointer"
+                      >
+                        <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center overflow-hidden flex-shrink-0">
+                          {u.photo_url ? (
+                            <img src={u.photo_url} alt="" className="w-full h-full object-cover" />
+                          ) : (
+                            <span className="material-symbols-outlined text-secondary text-lg">person</span>
+                          )}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-semibold text-white truncate">{u.display_name || u.username}</p>
+                          <p className="text-xs text-white/50">@{u.username}</p>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {searchResults.organizers.length > 0 && (
+                  <div className="p-3">
+                    <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest mb-2 px-1">Organizaciones</p>
+                    {searchResults.organizers.map(o => (
+                      <button
+                        key={o.id_organizer}
+                        onClick={() => { setShowSearchResults(false); setSearchQuery(''); navigate(`/organizer/${o.id_organizer}`); }}
+                        className="w-full flex items-center gap-3 px-2 py-2 rounded-xl hover:bg-white/5 transition-colors text-left cursor-pointer"
+                      >
+                        <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center overflow-hidden flex-shrink-0">
+                          {o.logo_url ? (
+                            <img src={o.logo_url} alt="" className="w-full h-full object-cover" />
+                          ) : (
+                            <span className="material-symbols-outlined text-secondary text-lg">groups</span>
+                          )}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-semibold text-white truncate">{o.name}</p>
+                          <p className="text-xs text-white/50">{o.category || 'Organización'}</p>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+                <div className="p-2 border-t border-white/10">
+                  <button
+                    onClick={() => { setShowSearchResults(false); setSearchQuery(''); navigate(`/discovery?search=${encodeURIComponent(searchQuery)}`); }}
+                    className="w-full text-center text-xs text-secondary font-semibold py-2 hover:bg-white/5 rounded-xl transition-colors cursor-pointer"
+                  >
+                    Ver todos los resultados
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
 

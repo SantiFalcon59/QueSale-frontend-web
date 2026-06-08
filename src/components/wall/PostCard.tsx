@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { MessageSquare, Share2, Trash2, Send } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -22,11 +23,12 @@ interface PostCardProps {
   onComment?: (postId: number, content: string) => void;
   onShare?: (content: string) => void;
   onDeleteComment?: (commentId: number) => void;
+  onVotePoll?: (postId: number, optionId: number) => void;
   showDelete?: boolean;
   canDeleteComment?: (comment: any) => boolean;
 }
 
-const PostCard: React.FC<PostCardProps> = ({ post, onReact, onDelete, onComment, onShare, onDeleteComment, showDelete, canDeleteComment }) => {
+const PostCard: React.FC<PostCardProps> = ({ post, onReact, onDelete, onComment, onShare, onDeleteComment, onVotePoll, showDelete, canDeleteComment }) => {
   const { user } = useAuth();
   const [expandedComment, setExpandedComment] = useState(false);
   const [commentText, setCommentText] = useState('');
@@ -92,9 +94,15 @@ const PostCard: React.FC<PostCardProps> = ({ post, onReact, onDelete, onComment,
             "px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border",
             post.type === 'query' ? "bg-amber-50 text-amber-600 border-amber-200" :
             post.type === 'feedback' ? "bg-emerald-50 text-emerald-600 border-emerald-200" :
+            post.type === 'poll' ? "bg-purple-50 text-purple-600 border-purple-200" :
             "bg-surface-container-high text-on-surface-variant border-transparent"
           )}>
-            {post.type}
+            {({
+              comment: 'Comentario',
+              query: 'Pregunta',
+              poll: 'Encuesta',
+              feedback: 'Feedback',
+            } as Record<string, string>)[post.type] || post.type}
           </div>
         </div>
       </div>
@@ -128,6 +136,39 @@ const PostCard: React.FC<PostCardProps> = ({ post, onReact, onDelete, onComment,
         );
       })()}
 
+      {post.pollOptions && post.pollOptions.length > 0 && (
+        <div className="space-y-2">
+          {post.pollOptions.map((opt: any) => {
+            const pct = post.totalPollVotes > 0 ? Math.round((opt.votes / post.totalPollVotes) * 100) : 0;
+            const isSelected = post.userVote === opt.id;
+            return (
+              <button
+                key={opt.id}
+                onClick={() => {
+                  if (!user) return document.dispatchEvent(new CustomEvent('show-login-prompt'));
+                  onVotePoll?.(post.id_post, opt.id);
+                }}
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border transition-all text-left cursor-pointer relative overflow-hidden"
+                style={{
+                  borderColor: isSelected ? '#7c3aed' : 'rgba(255,255,255,0.1)',
+                  background: isSelected ? 'rgba(124,58,237,0.08)' : 'rgba(255,255,255,0.03)',
+                }}
+              >
+                <div
+                  className="absolute inset-0 rounded-xl transition-all"
+                  style={{
+                    width: `${pct}%`,
+                    background: isSelected ? 'rgba(124,58,237,0.12)' : 'rgba(124,58,237,0.05)',
+                  }}
+                />
+                <span className="relative z-10 flex-1 text-sm font-medium text-on-surface">{opt.text}</span>
+                <span className="relative z-10 text-xs font-bold text-on-surface-variant">{pct}%</span>
+              </button>
+            );
+          })}
+          <p className="text-[10px] text-on-surface-variant font-bold">{post.totalPollVotes} votos</p>
+        </div>
+      )}
       <div className="flex gap-4 lg:gap-8 pt-6 lg:pt-8 border-t border-outline-variant/30">
         {/* Reaction Button */}
         <div className="relative" ref={pickerRef}>
@@ -205,7 +246,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, onReact, onDelete, onComment,
             <div key={comment.id_comment} className="flex items-start gap-3 group/comment">
               <div className="flex-1 space-y-1">
                 <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-black italic">{comment.author}</span>
+                  <Link to={`/@${comment.author}`} className="text-[10px] font-black italic hover:text-primary transition-colors">{comment.author}</Link>
                   <span className="text-[8px] text-on-surface-variant font-bold uppercase">
                     {format(new Date(comment.created_at), 'HH:mm • d MMM', { locale: es })}
                   </span>

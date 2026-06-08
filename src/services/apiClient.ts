@@ -397,10 +397,10 @@ export const api = {
   getWallPosts: (wallType: string, wallId: string, page = 1, limit = 20, typeFilter?: string) =>
     apiRequest(`/api/wall/${encodeURIComponent(wallType)}/${encodeURIComponent(wallId)}?page=${page}&limit=${limit}${typeFilter ? `&type=${typeFilter}` : ''}`),
 
-  createWallPost_new: (wallType: string, wallId: string, content: string, type?: string, media?: string[]) =>
+  createWallPost_new: (wallType: string, wallId: string, content: string, type?: string, media?: string[], pollOptions?: string[]) =>
     apiRequest(`/api/wall/${encodeURIComponent(wallType)}/${encodeURIComponent(wallId)}`, {
       method: 'POST',
-      body: { content, type: type || 'comment', media },
+      body: { content, type: type || 'comment', media, pollOptions },
       auth: true,
     }),
 
@@ -448,4 +448,14 @@ export const api = {
 
   checkFollowing: (userId: string) =>
     apiRequest(`/api/community/users/${encodeURIComponent(userId)}/is-following`, { auth: true }),
+
+  communitySearch: (q: string) =>
+    apiRequest(`/api/community/search?q=${encodeURIComponent(q)}&type=all`),
+
+  votePoll: (postId: number, optionId: number, wallId: string) =>
+    apiRequest(`/api/wall/post/${postId}/vote`, {
+      method: 'POST',
+      auth: true,
+      body: { optionId, wallId },
+    }),
 };

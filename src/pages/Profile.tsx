@@ -205,13 +205,23 @@ const Profile: React.FC<{ usernameFromUrl?: string }> = ({ usernameFromUrl }) =>
     setShowGifPicker(false);
   };
 
-  const handleLike = async (postId: number) => {
+  const handleReact = async (postId: number, type: string) => {
     if (!currentUser) return;
+    const prev = posts.find(p => p.id_post === postId);
+    const prevReaction = prev?.user_reaction;
+    setPosts(prev => prev.map(p =>
+      p.id_post === postId ? { ...p, user_reaction: p.user_reaction === type ? null : type } : p
+    ));
     try {
-      const result: any = await api.toggleWallPostLike_new(postId);
-      setPosts(prev => prev.map(p => p.id_post === postId ? { ...p, likes_count: result.likes_count } : p));
+      const result: any = await api.toggleReaction(postId, type);
+      setPosts(prev => prev.map(p =>
+        p.id_post === postId ? { ...p, reactions: result.reactions } : p
+      ));
     } catch (err) {
-      console.error("Error toggling like:", err);
+      setPosts(prev => prev.map(p =>
+        p.id_post === postId ? { ...p, user_reaction: prevReaction } : p
+      ));
+      console.error("Error toggling reaction:", err);
     }
   };
 
@@ -587,7 +597,7 @@ const Profile: React.FC<{ usernameFromUrl?: string }> = ({ usernameFromUrl }) =>
 
                   <PostFeed
                     posts={posts}
-                    onLike={handleLike}
+                    onReact={handleReact}
                     onDelete={handleDeletePost}
                     onComment={handleComment}
                     onShare={(content) => {
