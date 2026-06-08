@@ -273,10 +273,13 @@ function UserCard({ user }: { user: any }) {
 }
 
 function OrganizerCard({ organizer }: { organizer: any }) {
+  const navigate = useNavigate();
   return (
-    <div className="flex items-center gap-4 bg-surface-container-low rounded-2xl p-4 border border-outline-variant/50 hover:border-primary/30 transition-all cursor-pointer">
+    <div className="flex items-center gap-4 bg-surface-container-low rounded-2xl p-4 border border-outline-variant/50 hover:border-primary/30 transition-all cursor-pointer"
+      onClick={() => navigate(`/organizer/${organizer.id_organizer}`)}
+    >
       <img
-        src={organizer.logo_url || 'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=96'}
+        src={resolveImgUrl(organizer.logo_url) || 'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=96'}
         alt={organizer.name}
         className="w-12 h-12 rounded-full object-cover bg-surface-container-high"
       />

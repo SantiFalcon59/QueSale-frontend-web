@@ -19,6 +19,7 @@ import { api, resolveAssetUrl } from '../services/apiClient';
 import { io, Socket } from 'socket.io-client';
 import PostFeed from '../components/wall/PostFeed';
 import PostComposer from '../components/wall/PostComposer';
+import { TicketSuccessModal } from '../components/ui/TicketSuccessModal';
 
 const GOOGLE_MAPS_KEY = process.env.GOOGLE_MAPS_PLATFORM_KEY || '';
 
@@ -99,6 +100,7 @@ const EventDetail: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [galleryIdx, setGalleryIdx] = useState<number | null>(null);
   const galleryImages = event?.media || [];
   const [isSaved, setIsSaved] = useState(false);
@@ -229,7 +231,7 @@ const EventDetail: React.FC = () => {
     try {
       setLoading(true);
       await api.purchaseTicket(id);
-      alert('¡Entrada adquirida con éxito! Puedes verla en "Mis Entradas".');
+      setShowSuccessModal(true);
       setEvent(prev => prev ? { ...prev, attendeesCount: prev.attendeesCount + 1 } : null);
     } catch (err: any) {
       alert(err.message || 'Error al adquirir la entrada');
@@ -260,12 +262,20 @@ const EventDetail: React.FC = () => {
 
   return (
     <div className="relative px-4 lg:px-8 xl:px-12 max-w-[1600px] mx-auto">
-      <LoginPromptModal 
-        isOpen={showLoginPrompt} 
-        onClose={() => setShowLoginPrompt(false)} 
+      <LoginPromptModal
+        isOpen={showLoginPrompt}
+        onClose={() => setShowLoginPrompt(false)}
                     title="Acceso Requerido"
         message="Registrate o inicia sesión para comprar entradas, participar en la comunidad y chatear en vivo."
       />
+
+      {event && (
+        <TicketSuccessModal
+          isOpen={showSuccessModal}
+          onClose={() => setShowSuccessModal(false)}
+          event={event}
+        />
+      )}
       
       {/* Image Gallery Modal */}
       <AnimatePresence>
