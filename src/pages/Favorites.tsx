@@ -40,7 +40,7 @@ const Favorites: React.FC = () => {
   };
 
   return (
-    <div className="space-y-12 pb-20">
+    <div className="space-y-12 pb-20 px-4 lg:px-8 xl:px-12">
       <header className="space-y-4">
         <div className="flex items-center gap-4">
           <div className="w-16 h-16 rounded-[2rem] bg-red-50 flex items-center justify-center text-red-500 shadow-xl shadow-red-500/5 border border-red-100">

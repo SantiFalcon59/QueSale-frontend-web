@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
@@ -89,6 +89,7 @@ interface ChatMessage {
 
 const EventDetail: React.FC = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const { user, profile } = useAuth();
   const [event, setEvent] = useState<Event | null>(null);
   const [organizer, setOrganizer] = useState<Organizer | null>(null);
@@ -460,7 +461,7 @@ const EventDetail: React.FC = () => {
                             </div>
                           </div>
                           <p className="text-xs lg:text-sm text-on-surface-variant leading-relaxed">{organizer.description}</p>
-                          <button onClick={() => navigate('/organizer')} className="w-full h-10 lg:h-12 rounded-xl lg:rounded-2xl bg-white border border-outline-variant font-bold text-[10px] lg:text-xs uppercase tracking-widest hover:bg-primary hover:text-white hover:border-primary transition-all">Ver Perfil Completo</button>
+                          <button onClick={() => navigate('/organizer/' + organizer.id_organizer)} className="w-full h-10 lg:h-12 rounded-xl lg:rounded-2xl bg-white border border-outline-variant font-bold text-[10px] lg:text-xs uppercase tracking-widest hover:bg-primary hover:text-white hover:border-primary transition-all">Ver Perfil Completo</button>
                         </div>
                       </div>
                     )}
@@ -848,7 +849,22 @@ const EventAnnouncements: React.FC<{ eventId: string; organizerId: string; isOrg
                  </div>
                </div>
             </div>
-            <p className="text-base lg:text-lg text-on-surface-variant leading-relaxed relative z-10">{ann.content}</p>
+            {(() => {
+              const gifMatch = ann.content?.match(/\[GIF:(https?:\/\/[^\]]+)\]/);
+              const textContent = ann.content?.replace(/\[GIF:https?:\/\/[^\]]+\]/g, '').trim();
+              return (
+                <>
+                  {textContent && (
+                    <p className="text-base lg:text-lg text-on-surface-variant leading-relaxed relative z-10">{textContent}</p>
+                  )}
+                  {gifMatch && (
+                    <div className="rounded-xl overflow-hidden max-h-96 bg-black/5 relative z-10">
+                      <img src={gifMatch[1]} alt="GIF" className="w-full h-full object-contain mx-auto" />
+                    </div>
+                  )}
+                </>
+              );
+            })()}
             {ann.media && ann.media.length > 0 && (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 relative z-10">
                 {ann.media.map((m, i) => (
@@ -896,10 +912,10 @@ const EventWall: React.FC<{ eventId: string; organizerOwnerId?: string; eventTit
     }
   };
 
-  const handlePost = async (content: string, type?: string) => {
+  const handlePost = async (content: string, type?: string, media?: string[]) => {
     if (!user) return;
     try {
-      const created: any = await api.createWallPost_new('event', eventId, content, type);
+      const created: any = await api.createWallPost_new('event', eventId, content, type, media);
       if (created) setPosts(prev => [created, ...prev]);
     } catch (e) {
       console.error(e);
@@ -968,9 +984,12 @@ const EventWall: React.FC<{ eventId: string; organizerOwnerId?: string; eventTit
 
 const LiveChat: React.FC<{ eventId: string; isModerator: boolean; organizerId: string; onOnlineCountChange: (n: number) => void }> = ({ eventId, isModerator: propIsModerator, organizerId, onOnlineCountChange }) => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
   const [showBlockMenu, setShowBlockMenu] = useState<string | null>(null);
   const { profile, getSocketToken } = useAuth();
   const socketRef = useRef<Socket | null>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
   const modRoles = propIsModerator || profile?.role === 'admin' || profile?.role === 'moderator';
 
   useEffect(() => {
@@ -988,8 +1007,20 @@ const LiveChat: React.FC<{ eventId: string; isModerator: boolean; organizerId: s
       socket.emit('join-event', eventId);
     });
 
+    socket.on('chat-history', (history: ChatMessage[]) => {
+      setMessages(history);
+      setHasMore(history.length >= 20);
+      setLoadingHistory(false);
+    });
+
     socket.on('new-message', (msg: ChatMessage) => {
       setMessages(prev => [...prev, msg]);
+    });
+
+    socket.on('older-messages', (older: ChatMessage[]) => {
+      setMessages(prev => [...older, ...prev]);
+      setHasMore(older.length >= 20);
+      setLoadingHistory(false);
     });
 
     socket.on('user-joined', (data: { totalUsers: number }) => {
@@ -1017,15 +1048,28 @@ const LiveChat: React.FC<{ eventId: string; isModerator: boolean; organizerId: s
     };
   }, [eventId, getSocketToken, onOnlineCountChange]);
 
-  const handleDelete = async (msgId: string) => {
-    try {
-      // Message deletion not supported via Socket.io — delegate to the socket
-      // For now, just remove it from local state
-      setMessages(prev => prev.filter(m => m.id !== msgId));
-    } catch (e) {
-      console.error(e);
-    }
+  const loadOlder = () => {
+    if (loadingHistory || !hasMore || messages.length === 0) return;
+    setLoadingHistory(true);
+    const oldest = messages[0];
+    socketRef.current?.emit('load-messages', {
+      eventId,
+      before: oldest.timestamp,
+    });
   };
+
+  // Enable pagination — user scrolls to top, emit load-messages
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const onScroll = () => {
+      if (el.scrollTop < 50 && hasMore && !loadingHistory) {
+        loadOlder();
+      }
+    };
+    el.addEventListener('scroll', onScroll);
+    return () => el.removeEventListener('scroll', onScroll);
+  }, [hasMore, loadingHistory, messages]);
 
   const handleBlock = async (targetUserId: string) => {
     try {
@@ -1037,11 +1081,21 @@ const LiveChat: React.FC<{ eventId: string; isModerator: boolean; organizerId: s
   };
 
   return (
-    <div className="flex flex-col gap-6">
+    <div ref={scrollRef} className="flex flex-col gap-6 overflow-y-auto max-h-[500px] pr-2">
+      {loadingHistory && (
+        <div className="text-center py-4">
+          <span className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant/50 animate-pulse">Cargando mensajes anteriores...</span>
+        </div>
+      )}
+      {!hasMore && messages.length > 0 && (
+        <div className="text-center py-2">
+          <span className="text-[8px] font-black uppercase tracking-widest text-on-surface-variant/30">— No hay más mensajes —</span>
+        </div>
+      )}
       {messages.map(msg => (
         <div key={msg.id} className="flex gap-4 group">
           <img
-            src={msg.photoURL ? `https://quesale.splindux.com${msg.photoURL}` : `https://api.dicebear.com/7.x/avataaars/svg?seed=${msg.userId}`}
+            src={resolveAssetUrl(msg.photoURL) || `https://api.dicebear.com/7.x/avataaars/svg?seed=${msg.userId}`}
             className="w-10 h-10 rounded-xl bg-surface-container-high object-cover" alt="chat-user"
           />
           <div className="flex-1 space-y-1">

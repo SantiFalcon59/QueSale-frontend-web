@@ -29,6 +29,7 @@ const Register = React.lazy(() => import('./pages/Auth/Register'));
 const OrganizerDashboard = React.lazy(() => import('./pages/Organizer/Dashboard'));
 const CreateEvent = React.lazy(() => import('./pages/Organizer/CreateEvent'));
 const AdminOrganizations = React.lazy(() => import('./pages/Admin/AdminOrganizations'));
+const OrganizerProfile = React.lazy(() => import('./pages/OrganizerProfile'));
 const AdminPanel = React.lazy(() => import('./pages/Admin/AdminPanel'));
 
 import { useAuth } from './context/AuthContext';
@@ -130,6 +131,7 @@ export default function App() {
                     <Route path="/tickets" element={<AuthGuard><PageWrapper><MyTickets /></PageWrapper></AuthGuard>} />
                     <Route path="/saved" element={<Navigate to="/favorites" replace />} />
                     <Route path="/events/:id" element={<PageWrapper><EventDetail /></PageWrapper>} />
+                    <Route path="/organizer/:id" element={<PageWrapper><OrganizerProfile /></PageWrapper>} />
                     <Route path="/organizer" element={<AuthGuard><PageWrapper><OrganizerDashboard /></PageWrapper></AuthGuard>} />
                     <Route path="/organizer/new" element={<AuthGuard><PageWrapper><CreateEvent /></PageWrapper></AuthGuard>} />
                     <Route path="/admin" element={<AuthGuard><AdminGuard><PageWrapper><AdminPanel /></PageWrapper></AdminGuard></AuthGuard>} />

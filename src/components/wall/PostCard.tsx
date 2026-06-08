@@ -73,6 +73,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, onLike, onDelete, onComment, 
       {(() => {
         const gifMatch = post.content?.match(/\[GIF:(https?:\/\/[^\]]+)\]/);
         const textContent = post.content?.replace(/\[GIF:https?:\/\/[^\]]+\]/g, '').trim();
+        const mediaList = Array.isArray(post.media) ? post.media : [];
         return (
           <>
             {textContent && (
@@ -81,8 +82,17 @@ const PostCard: React.FC<PostCardProps> = ({ post, onLike, onDelete, onComment, 
               </p>
             )}
             {gifMatch && (
-              <div className="rounded-xl overflow-hidden h-48 bg-black/5">
-                <img src={gifMatch[1]} alt="GIF" className="w-full h-full object-cover mx-auto" />
+              <div className="rounded-xl overflow-hidden max-h-96 bg-black/5">
+                <img src={gifMatch[1]} alt="GIF" className="w-full h-full object-contain mx-auto" />
+              </div>
+            )}
+            {mediaList.length > 0 && !gifMatch && (
+              <div className={cn("grid gap-3", mediaList.length > 1 ? "grid-cols-2" : "grid-cols-1")}>
+                {mediaList.map((url: string, i: number) => (
+                  <div key={i} className="rounded-xl overflow-hidden max-h-96 bg-black/5">
+                    <img src={resolveAssetUrl(url) || url} alt="" className="w-full h-full object-contain mx-auto" />
+                  </div>
+                ))}
               </div>
             )}
           </>

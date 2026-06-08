@@ -304,6 +304,28 @@ export const api = {
       auth: true,
     }),
 
+  uploadPostMedia: async (file: File): Promise<string> => {
+    const formData = new FormData();
+    formData.append('image', file);
+
+    const token = await auth.currentUser?.getIdToken();
+    const headers: Record<string, string> = {};
+    if (token) headers.Authorization = `Bearer ${token}`;
+
+    const response = await fetch(`${API_URL}/api/upload/post-media`, {
+      method: 'POST',
+      headers,
+      body: formData,
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to upload post media');
+    }
+
+    const result = await response.json();
+    return resolveAssetUrl(result.data?.media_url) || '';
+  },
+
   uploadEventMedia: async (file: File, eventId: string): Promise<string> => {
     const formData = new FormData();
     formData.append('media', file);
@@ -329,6 +351,18 @@ export const api = {
 
   getOrganizerFollowers: (organizerId: string, page = 1, limit = 50) =>
     apiRequest(`/api/organizers/${encodeURIComponent(organizerId)}/followers?page=${page}&limit=${limit}`),
+
+  followOrganizer: (organizerId: string) =>
+    apiRequest(`/api/organizers/${encodeURIComponent(organizerId)}/follow`, {
+      method: 'POST',
+      auth: true,
+    }),
+
+  unfollowOrganizer: (organizerId: string) =>
+    apiRequest(`/api/organizers/${encodeURIComponent(organizerId)}/follow`, {
+      method: 'DELETE',
+      auth: true,
+    }),
 
   addOrganizerAdmin: (organizerId: string, adminId: string, role?: string) =>
     apiRequest(`/api/organizers/${encodeURIComponent(organizerId)}/admins`, {
@@ -363,10 +397,10 @@ export const api = {
   getWallPosts: (wallType: string, wallId: string, page = 1, limit = 20) =>
     apiRequest(`/api/wall/${encodeURIComponent(wallType)}/${encodeURIComponent(wallId)}?page=${page}&limit=${limit}`),
 
-  createWallPost_new: (wallType: string, wallId: string, content: string, type?: string) =>
+  createWallPost_new: (wallType: string, wallId: string, content: string, type?: string, media?: string[]) =>
     apiRequest(`/api/wall/${encodeURIComponent(wallType)}/${encodeURIComponent(wallId)}`, {
       method: 'POST',
-      body: { content, type: type || 'comment' },
+      body: { content, type: type || 'comment', media },
       auth: true,
     }),
 

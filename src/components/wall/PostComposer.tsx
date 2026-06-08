@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
-import { MessageSquare, Info, ThumbsUp, ImageIcon, X } from 'lucide-react';
+import { MessageSquare, Info, ThumbsUp, ImageIcon, X, Loader2 } from 'lucide-react';
 import { cn } from '../../lib/utils';
-import { resolveAssetUrl } from '../../services/apiClient';
+import { resolveAssetUrl, api } from '../../services/apiClient';
 import { useAuth } from '../../context/AuthContext';
 import EmojiPicker, { EmojiClickData } from 'emoji-picker-react';
 import { GifPicker } from '../post/GifPicker';
@@ -15,7 +15,7 @@ const GridIcon = (props: any) => (
 
 interface PostComposerProps {
   placeholder?: string;
-  onSubmit: (content: string, type?: string) => void;
+  onSubmit: (content: string, type?: string, media?: string[]) => void;
 }
 
 const PostComposer: React.FC<PostComposerProps> = ({ placeholder = '¿Qué tienes en mente?', onSubmit }) => {
@@ -25,7 +25,10 @@ const PostComposer: React.FC<PostComposerProps> = ({ placeholder = '¿Qué tiene
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [showGifPicker, setShowGifPicker] = useState(false);
   const [selectedGif, setSelectedGif] = useState<string | null>(null);
+  const [uploadedImages, setUploadedImages] = useState<string[]>([]);
+  const [uploading, setUploading] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const insertAtCursor = (text: string) => {
     const textarea = textareaRef.current;
@@ -51,21 +54,68 @@ const PostComposer: React.FC<PostComposerProps> = ({ placeholder = '¿Qué tiene
     setShowGifPicker(false);
   };
 
+  const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      const url = await api.uploadPostMedia(file);
+      if (url) setUploadedImages(prev => [...prev, url]);
+    } catch (err) {
+      console.error('Error uploading image:', err);
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const removeImage = (idx: number) => {
+    setUploadedImages(prev => prev.filter((_, i) => i !== idx));
+  };
+
   const handleSubmit = () => {
-    if ((!content.trim() && !selectedGif) || !user) return;
+    if ((!content.trim() && !selectedGif && uploadedImages.length === 0) || !user) return;
+    const media = [...uploadedImages];
+    if (selectedGif) media.push(selectedGif);
     const finalContent = selectedGif
       ? `${content.trim()}\n[GIF:${selectedGif}]`
       : content.trim();
-    onSubmit(finalContent, postType);
+    onSubmit(finalContent, postType, media.length > 0 ? media : undefined);
     setContent('');
     setPostType('comment');
     setSelectedGif(null);
+    setUploadedImages([]);
     setShowEmojiPicker(false);
     setShowGifPicker(false);
   };
 
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    const file = e.dataTransfer.files?.[0];
+    if (!file || !file.type.startsWith('image/')) return;
+    setUploading(true);
+    try {
+      const url = await api.uploadPostMedia(file);
+      if (url) setUploadedImages(prev => [...prev, url]);
+    } catch (err) {
+      console.error('Error uploading dropped image:', err);
+    } finally {
+      setUploading(false);
+    }
+  };
+
   return (
-    <div className="p-6 lg:p-10 rounded-[2.5rem] lg:rounded-[3.5rem] bg-surface-container-low border border-outline-variant space-y-6">
+    <div
+      className="p-6 lg:p-10 rounded-[2.5rem] lg:rounded-[3.5rem] bg-surface-container-low border border-outline-variant space-y-6"
+      onDragOver={(e) => e.preventDefault()}
+      onDrop={handleDrop}
+    >
+      {uploading && (
+        <div className="flex items-center justify-center gap-3 py-3 text-primary">
+          <Loader2 size={20} className="animate-spin" />
+          <span className="text-xs font-bold uppercase tracking-widest">Subiendo imagen...</span>
+        </div>
+      )}
       <div className="flex flex-col sm:flex-row gap-4 lg:gap-6">
         <div className="flex items-center gap-4 sm:block sm:gap-0">
           <img
@@ -99,6 +149,27 @@ const PostComposer: React.FC<PostComposerProps> = ({ placeholder = '¿Qué tiene
                 <X size={14} />
               </button>
             </motion.div>
+          )}
+          {uploadedImages.length > 0 && (
+            <div className="flex flex-wrap gap-3">
+              {uploadedImages.map((url, idx) => (
+                <motion.div
+                  key={url}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="relative w-20 h-20 rounded-xl overflow-hidden border border-outline-variant bg-surface-container-high"
+                >
+                  <img src={resolveAssetUrl(url) || url} alt="" className="w-full h-full object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => removeImage(idx)}
+                    className="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/60 text-white flex items-center justify-center hover:bg-black/80 transition-colors cursor-pointer"
+                  >
+                    <X size={10} />
+                  </button>
+                </motion.div>
+              ))}
+            </div>
           )}
           <div className="flex flex-wrap gap-2">
             {[
@@ -169,16 +240,24 @@ const PostComposer: React.FC<PostComposerProps> = ({ placeholder = '¿Qué tiene
               )}
             </AnimatePresence>
           </div>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleImageSelect}
+          />
           <button
             type="button"
+            onClick={() => fileInputRef.current?.click()}
             className="p-2 rounded-xl hover:bg-surface-container transition-colors cursor-pointer text-on-surface-variant hover:text-primary"
-            title="Adjuntar imagen (próximamente)"
+            title="Adjuntar imagen"
           >
             <ImageIcon size={18} />
           </button>
         </div>
         <button
-          disabled={!content.trim() && !selectedGif}
+          disabled={!content.trim() && !selectedGif && uploadedImages.length === 0}
           onClick={handleSubmit}
           className="btn-primary h-14 px-10 text-[11px] font-black uppercase tracking-widest disabled:opacity-30"
         >
