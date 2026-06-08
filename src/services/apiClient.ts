@@ -385,4 +385,32 @@ export const api = {
       method: 'POST',
       auth: true,
     }),
+
+  deleteWallComment_new: (commentId: number) =>
+    apiRequest(`/api/wall/post/0/comments/${commentId}`, {
+      method: 'DELETE',
+      auth: true,
+    }),
+
+  // Followers / Following
+  getUserFollowers: (userId: string) =>
+    apiRequest(`/api/community/users/${encodeURIComponent(userId)}/followers`),
+
+  getUserFollowing: (userId: string) =>
+    apiRequest(`/api/community/users/${encodeURIComponent(userId)}/following`),
+
+  followUser: (userId: string) =>
+    apiRequest(`/api/community/users/${encodeURIComponent(userId)}/follow`, {
+      method: 'POST',
+      auth: true,
+    }),
+
+  unfollowUser: (userId: string) =>
+    apiRequest(`/api/community/users/${encodeURIComponent(userId)}/follow`, {
+      method: 'DELETE',
+      auth: true,
+    }),
+
+  checkFollowing: (userId: string) =>
+    apiRequest(`/api/community/users/${encodeURIComponent(userId)}/is-following`, { auth: true }),
 };

@@ -1,8 +1,11 @@
-import React, { useState } from 'react';
-import { MessageSquare, Info, ThumbsUp, ImageIcon } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { MessageSquare, Info, ThumbsUp, ImageIcon, X } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { resolveAssetUrl } from '../../services/apiClient';
 import { useAuth } from '../../context/AuthContext';
+import EmojiPicker, { EmojiClickData } from 'emoji-picker-react';
+import { GifPicker } from '../post/GifPicker';
+import { motion, AnimatePresence } from 'motion/react';
 
 const GridIcon = (props: any) => (
   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
@@ -19,12 +22,46 @@ const PostComposer: React.FC<PostComposerProps> = ({ placeholder = '¿Qué tiene
   const { user, profile } = useAuth();
   const [content, setContent] = useState('');
   const [postType, setPostType] = useState<string>('comment');
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [showGifPicker, setShowGifPicker] = useState(false);
+  const [selectedGif, setSelectedGif] = useState<string | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const insertAtCursor = (text: string) => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const before = content.substring(0, start);
+    const after = content.substring(end);
+    setContent(before + text + after);
+    setTimeout(() => {
+      textarea.focus();
+      const newPos = start + text.length;
+      textarea.setSelectionRange(newPos, newPos);
+    }, 0);
+  };
+
+  const handleEmojiSelect = (emojiData: EmojiClickData) => {
+    insertAtCursor(emojiData.emoji);
+  };
+
+  const handleGifSelect = (gifUrl: string) => {
+    setSelectedGif(gifUrl);
+    setShowGifPicker(false);
+  };
 
   const handleSubmit = () => {
-    if (!content.trim() || !user) return;
-    onSubmit(content, postType);
+    if ((!content.trim() && !selectedGif) || !user) return;
+    const finalContent = selectedGif
+      ? `${content.trim()}\n[GIF:${selectedGif}]`
+      : content.trim();
+    onSubmit(finalContent, postType);
     setContent('');
     setPostType('comment');
+    setSelectedGif(null);
+    setShowEmojiPicker(false);
+    setShowGifPicker(false);
   };
 
   return (
@@ -40,12 +77,29 @@ const PostComposer: React.FC<PostComposerProps> = ({ placeholder = '¿Qué tiene
         </div>
         <div className="flex-1 space-y-4">
           <textarea
+            ref={textareaRef}
             value={content}
             onChange={(e) => setContent(e.target.value)}
             onFocus={() => { if (!user) document.dispatchEvent(new CustomEvent('show-login-prompt')); }}
             placeholder={placeholder}
             className="w-full bg-transparent border-none outline-none text-base lg:text-xl font-medium placeholder:text-on-surface-variant/40 resize-none min-h-[80px] lg:min-h-[100px] pt-1"
           />
+          {selectedGif && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="mt-3 relative rounded-xl overflow-hidden max-h-48 bg-black/5"
+            >
+              <img src={selectedGif} alt="Selected GIF" className="max-h-48 object-cover mx-auto" />
+              <button
+                type="button"
+                onClick={() => setSelectedGif(null)}
+                className="absolute top-2 right-2 w-7 h-7 rounded-full bg-black/60 text-white flex items-center justify-center hover:bg-black/80 transition-colors cursor-pointer"
+              >
+                <X size={14} />
+              </button>
+            </motion.div>
+          )}
           <div className="flex flex-wrap gap-2">
             {[
               { id: 'comment', name: 'Comentario', icon: MessageSquare },
@@ -69,11 +123,62 @@ const PostComposer: React.FC<PostComposerProps> = ({ placeholder = '¿Qué tiene
         </div>
       </div>
       <div className="flex items-center justify-between pt-6 border-t border-outline-variant/30">
-        <div className="flex gap-2">
-          <button className="p-3 rounded-2xl bg-surface-container-high text-on-surface-variant hover:bg-primary/10 hover:text-primary transition-all"><ImageIcon size={20} /></button>
+        <div className="flex items-center gap-1 relative">
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => { setShowEmojiPicker(!showEmojiPicker); setShowGifPicker(false); }}
+              className="p-2 rounded-xl hover:bg-surface-container transition-colors cursor-pointer text-on-surface-variant hover:text-primary"
+            >
+              😊
+            </button>
+            <AnimatePresence>
+              {showEmojiPicker && (
+                <motion.div
+                  initial={{ opacity: 0, y: 8, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 8, scale: 0.95 }}
+                  className="absolute bottom-full left-0 mb-2 z-50"
+                >
+                  <EmojiPicker
+                    onEmojiClick={handleEmojiSelect}
+                    lazyLoadEmojis
+                    searchDisabled={false}
+                    skinTonesDisabled
+                    width={320}
+                    height={350}
+                  />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => { setShowGifPicker(!showGifPicker); setShowEmojiPicker(false); }}
+              className="p-2 rounded-xl hover:bg-surface-container transition-colors cursor-pointer text-on-surface-variant hover:text-primary font-black text-xs tracking-wider"
+            >
+              GIF
+            </button>
+            <AnimatePresence>
+              {showGifPicker && (
+                <GifPicker
+                  onSelect={handleGifSelect}
+                  onClose={() => setShowGifPicker(false)}
+                />
+              )}
+            </AnimatePresence>
+          </div>
+          <button
+            type="button"
+            className="p-2 rounded-xl hover:bg-surface-container transition-colors cursor-pointer text-on-surface-variant hover:text-primary"
+            title="Adjuntar imagen (próximamente)"
+          >
+            <ImageIcon size={18} />
+          </button>
         </div>
         <button
-          disabled={!content.trim()}
+          disabled={!content.trim() && !selectedGif}
           onClick={handleSubmit}
           className="btn-primary h-14 px-10 text-[11px] font-black uppercase tracking-widest disabled:opacity-30"
         >

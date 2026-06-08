@@ -98,8 +98,8 @@ const Profile: React.FC<{ usernameFromUrl?: string }> = ({ usernameFromUrl }) =>
 
     const fetchSaved = async () => {
       try {
-        const data: any = await api.getSavedEvents(1, 50);
-        setSavedEvents(data.data || []);
+        const result: any = await api.getSavedEvents(1, 50);
+        setSavedEvents(Array.isArray(result) ? result : []);
       } catch (err) {
         console.error('Error fetching saved events:', err);
         setSavedEvents([]);
@@ -420,26 +420,21 @@ const Profile: React.FC<{ usernameFromUrl?: string }> = ({ usernameFromUrl }) =>
         className="px-4 lg:px-0"
       >
         <div className="bg-surface-container-low rounded-[1.5rem] p-6 border border-outline-variant hover:border-primary/20 hover:shadow-md transition-all duration-300">
-          <div className="flex items-start gap-3">
-            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
-              <Settings size={14} className="text-primary" />
-            </div>
-            <div className="flex-1">
-              <h3 className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant mb-1">Sobre</h3>
-              <p className="text-sm text-on-surface leading-relaxed font-medium">
-                {profileUser?.description || "Este usuario aún no ha escrito su biografía. ¡Parece que prefiere dejar que sus eventos hablen por él!"}
-              </p>
-              {profileUser?.instagram && (
-                <div className="flex items-center gap-1.5 mt-3 text-xs text-on-surface-variant">
-                  <Instagram size={14} />
-                  <span className="font-medium">{profileUser.instagramVerified ? (
-                    <span className="text-primary font-semibold">@{profileUser.instagram} ✓</span>
-                  ) : (
-                    `@${profileUser.instagram}`
-                  )}</span>
-                </div>
-              )}
-            </div>
+          <div className="flex-1">
+            <h3 className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant mb-1">Sobre</h3>
+            <p className="text-sm text-on-surface leading-relaxed font-medium">
+              {profileUser?.description || "Este usuario aún no ha escrito su biografía. ¡Parece que prefiere dejar que sus eventos hablen por él!"}
+            </p>
+            {profileUser?.instagram && (
+              <div className="flex items-center gap-1.5 mt-3 text-xs text-on-surface-variant">
+                <Instagram size={14} />
+                <span className="font-medium">{profileUser.instagramVerified ? (
+                  <span className="text-primary font-semibold">@{profileUser.instagram} ✓</span>
+                ) : (
+                  `@${profileUser.instagram}`
+                )}</span>
+              </div>
+            )}
           </div>
         </div>
       </motion.div>
@@ -602,7 +597,18 @@ const Profile: React.FC<{ usernameFromUrl?: string }> = ({ usernameFromUrl }) =>
                         navigator.clipboard.writeText(`${content} — ${window.location.href}`);
                       }
                     }}
+                    onDeleteComment={async (commentId: number) => {
+                      if (!window.confirm('¿Eliminar este comentario?')) return;
+                      try {
+                        await api.deleteWallComment_new(commentId);
+                        const data: any = await api.getWallPosts('user_profile', profileUser.id, 1, 50);
+                        setPosts(data || []);
+                      } catch (err) {
+                        console.error('Error deleting comment:', err);
+                      }
+                    }}
                     showDelete={(post) => isOwnProfile || isModerator || post.id_user === currentUser?.uid}
+                    canDeleteComment={(comment) => isOwnProfile || isModerator || comment.id_user === currentUser?.uid || posts.find(p => p.comments?.some((c: any) => c.id_comment === comment.id_comment))?.id_user === currentUser?.uid}
                   />
                 </motion.div>
               )}
@@ -736,28 +742,7 @@ const Profile: React.FC<{ usernameFromUrl?: string }> = ({ usernameFromUrl }) =>
                ))}
             </motion.div>
 
-            {/* Social connections */}
-            <motion.div
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="space-y-4"
-            >
-               <h3 className="text-label ml-4">Conexiones</h3>
-               <div className="flex -space-x-4 pl-4 overflow-x-auto no-scrollbar py-2">
-                  {[1, 2, 3, 4, 5].map(i => (
-                    <div
-                      key={i}
-                      className="w-10 h-10 lg:w-12 lg:h-12 rounded-full border-4 border-white overflow-hidden bg-surface-container-low shrink-0 shadow-lg opacity-50 transition-all duration-200 hover:opacity-100 hover:scale-125 hover:z-10 hover:shadow-xl"
-                    >
-                       <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${i}prof`} alt="Connection" />
-                    </div>
-                  ))}
-                  <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-full border-4 border-white bg-surface-container-high flex items-center justify-center text-[10px] font-bold shrink-0 shadow-lg opacity-50">
-                    +12
-                  </div>
-               </div>
-            </motion.div>
+            <ConnectionsSection userId={profileUser.id} />
          </aside>
       </div>
 
@@ -927,6 +912,60 @@ const Profile: React.FC<{ usernameFromUrl?: string }> = ({ usernameFromUrl }) =>
 const AtSign = ({ size }: { size: number }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="4"/><path d="M16 8v5a3 3 0 0 0 6 0v-1a10 10 0 1 0-4 8"/></svg>
 );
+
+const ConnectionsSection: React.FC<{ userId: string }> = ({ userId }) => {
+  const [followers, setFollowers] = React.useState<any[]>([]);
+  const [following, setFollowing] = React.useState<any[]>([]);
+
+  React.useEffect(() => {
+    Promise.all([
+      api.getUserFollowers(userId).catch(() => []),
+      api.getUserFollowing(userId).catch(() => []),
+    ]).then(([f, fw]) => {
+      setFollowers(Array.isArray(f) ? f : []);
+      setFollowing(Array.isArray(fw) ? fw : []);
+    });
+  }, [userId]);
+
+  const allConnections = [...followers, ...following];
+  const unique = allConnections.filter((c, i, a) => a.findIndex(x => x.id_user === c.id_user) === i).slice(0, 8);
+  const remaining = Math.max(0, allConnections.length - 8);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 15 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.2 }}
+      className="space-y-4"
+    >
+      <h3 className="text-label ml-4">Conexiones</h3>
+      {unique.length > 0 ? (
+        <div className="flex -space-x-4 pl-4 overflow-x-auto no-scrollbar py-2">
+          {unique.map((conn: any) => (
+            <Link key={conn.id_user} to={`/@${conn.username}`}>
+              <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-full border-4 border-white overflow-hidden bg-surface-container-low shrink-0 shadow-lg transition-all duration-200 hover:opacity-100 hover:scale-125 hover:z-10 hover:shadow-xl">
+                <img
+                  src={conn.photo_url ? resolveAssetUrl(conn.photo_url) : `https://api.dicebear.com/7.x/avataaars/svg?seed=${conn.username}`}
+                  alt={conn.username}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            </Link>
+          ))}
+          {remaining > 0 && (
+            <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-full border-4 border-white bg-surface-container-high flex items-center justify-center text-[10px] font-bold shrink-0 shadow-lg">
+              +{remaining}
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="flex -space-x-4 pl-4 py-2">
+          <p className="text-[10px] text-on-surface-variant font-bold uppercase tracking-widest opacity-50 ml-4">Sin conexiones aún</p>
+        </div>
+      )}
+    </motion.div>
+  );
+};
 
 const PostComments: React.FC<{ comments: any[]; isModerator: boolean; profileUserId: string }> = ({ comments, isModerator, profileUserId }) => {
   const { user: currentUser } = useAuth();

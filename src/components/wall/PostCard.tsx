@@ -12,10 +12,12 @@ interface PostCardProps {
   onDelete?: (postId: number) => void;
   onComment?: (postId: number, content: string) => void;
   onShare?: (content: string) => void;
+  onDeleteComment?: (commentId: number) => void;
   showDelete?: boolean;
+  canDeleteComment?: (comment: any) => boolean;
 }
 
-const PostCard: React.FC<PostCardProps> = ({ post, onLike, onDelete, onComment, onShare, showDelete }) => {
+const PostCard: React.FC<PostCardProps> = ({ post, onLike, onDelete, onComment, onShare, onDeleteComment, showDelete, canDeleteComment }) => {
   const { user } = useAuth();
   const [expandedComment, setExpandedComment] = useState(false);
   const [commentText, setCommentText] = useState('');
@@ -79,8 +81,8 @@ const PostCard: React.FC<PostCardProps> = ({ post, onLike, onDelete, onComment, 
               </p>
             )}
             {gifMatch && (
-              <div className="rounded-xl overflow-hidden max-h-80 bg-black/5">
-                <img src={gifMatch[1]} alt="GIF" className="w-full max-h-80 object-cover mx-auto" />
+              <div className="rounded-xl overflow-hidden h-48 bg-black/5">
+                <img src={gifMatch[1]} alt="GIF" className="w-full h-full object-cover mx-auto" />
               </div>
             )}
           </>
@@ -119,14 +121,24 @@ const PostCard: React.FC<PostCardProps> = ({ post, onLike, onDelete, onComment, 
       {post.comments?.length > 0 && (
         <div className="space-y-4 pt-4 ml-6 lg:ml-10 border-l-2 border-outline-variant/30 pl-6">
           {post.comments.map((comment: any) => (
-            <div key={comment.id_comment} className="space-y-2">
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] font-black italic">{comment.author}</span>
-                <span className="text-[8px] text-on-surface-variant font-bold uppercase">
-                  {format(new Date(comment.created_at), 'HH:mm • d MMM', { locale: es })}
-                </span>
+            <div key={comment.id_comment} className="flex items-start gap-3 group/comment">
+              <div className="flex-1 space-y-1">
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-black italic">{comment.author}</span>
+                  <span className="text-[8px] text-on-surface-variant font-bold uppercase">
+                    {format(new Date(comment.created_at), 'HH:mm • d MMM', { locale: es })}
+                  </span>
+                </div>
+                <p className="text-sm lg:text-base text-on-surface-variant">{comment.content}</p>
               </div>
-              <p className="text-sm lg:text-base text-on-surface-variant">{comment.content}</p>
+              {canDeleteComment?.(comment) && (
+                <button
+                  onClick={() => onDeleteComment?.(comment.id_comment)}
+                  className="p-1.5 rounded-lg bg-red-50 text-red-500 opacity-0 group-hover/comment:opacity-100 transition-all hover:bg-red-500 hover:text-white shrink-0 mt-0.5"
+                >
+                  <Trash2 size={12} />
+                </button>
+              )}
             </div>
           ))}
         </div>

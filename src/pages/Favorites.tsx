@@ -19,7 +19,7 @@ const Favorites: React.FC = () => {
     const fetchFavorites = async () => {
       try {
         const result: any = await api.getSavedEvents(1, 100);
-        setFavorites(result.data || []);
+        setFavorites(Array.isArray(result) ? result : []);
       } catch (err) {
         console.error("Error fetching favorites:", err);
       } finally {

@@ -55,6 +55,16 @@ const Feed: React.FC = () => {
     fetchEvents();
   }, []);
 
+  useEffect(() => {
+    if (!user) return;
+    api.getSavedEvents(1, 100).then((result: any) => {
+      const saved = Array.isArray(result) ? result : [];
+      const map: Record<string, boolean> = {};
+      saved.forEach((e: any) => { map[e.id_event] = true; });
+      setSavedEvents(map);
+    }).catch(() => {});
+  }, [user]);
+
   const handleInteraction = (e: React.MouseEvent, action?: string) => {
     if (!user) {
       e.preventDefault();

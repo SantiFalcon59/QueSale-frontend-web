@@ -750,18 +750,18 @@ const CalendarWidget: React.FC<{ eventDate: Date }> = ({ eventDate }) => {
 const EventAnnouncements: React.FC<{ eventId: string; organizerId: string; isOrganizer: boolean }> = ({ eventId, organizerId, isOrganizer }) => {
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [loading, setLoading] = useState(true);
-  const [newAnnouncement, setNewAnnouncement] = useState('');
   const [showCreate, setShowCreate] = useState(false);
 
   const fetchAnnouncements = async () => {
     try {
-      const data: any = await api.getEventPosts(eventId, 'announcement', 1, 50);
-      const mapped = (data || []).map((item: any) => ({
+      const data: any = await api.getWallPosts('event', eventId, 1, 50);
+      const announced = (data || []).filter((p: any) => p.type === 'announcement');
+      const mapped = announced.map((item: any) => ({
         id: String(item.id_post || item.id),
         title: 'Anuncio',
         content: item.content,
         createdAt: item.created_at,
-        media: [],
+        media: item.media || [],
       }));
       setAnnouncements(mapped);
     } catch (err) {
@@ -776,11 +776,10 @@ const EventAnnouncements: React.FC<{ eventId: string; organizerId: string; isOrg
     fetchAnnouncements();
   }, [eventId]);
 
-  const handleCreate = async () => {
-    if (!newAnnouncement.trim()) return;
+  const handleCreate = async (content: string, type?: string) => {
+    if (!content.trim()) return;
     try {
-      await api.createEventPost(eventId, { content: newAnnouncement, type: 'announcement' });
-      setNewAnnouncement('');
+      await api.createWallPost_new('event', eventId, content, 'announcement');
       setShowCreate(false);
       fetchAnnouncements();
     } catch (err) {
@@ -791,7 +790,7 @@ const EventAnnouncements: React.FC<{ eventId: string; organizerId: string; isOrg
   const handleDelete = async (postId: string) => {
     if (!window.confirm('¿Eliminar este anuncio?')) return;
     try {
-      await api.deleteEventPost(postId);
+      await api.deleteWallPost_new(parseInt(postId));
       setAnnouncements(prev => prev.filter(a => a.id !== postId));
     } catch (err) {
       console.error('Error deleting announcement:', err);
@@ -805,22 +804,19 @@ const EventAnnouncements: React.FC<{ eventId: string; organizerId: string; isOrg
       {isOrganizer && (
         <div className="space-y-4">
           {showCreate ? (
-            <div className="p-6 lg:p-8 rounded-[2rem] lg:rounded-[3rem] bg-surface-container-low border border-outline-variant space-y-4">
-              <textarea
-                value={newAnnouncement}
-                onChange={(e) => setNewAnnouncement(e.target.value)}
-                placeholder="Escribe un anuncio oficial..."
-                className="w-full bg-transparent border-none outline-none text-base lg:text-lg font-medium placeholder:text-on-surface-variant/40 resize-none min-h-[80px]"
-              />
-              <div className="flex justify-end gap-3">
-                <button onClick={() => { setShowCreate(false); setNewAnnouncement(''); }} className="px-6 py-3 rounded-xl bg-surface-container-high text-on-surface-variant font-bold text-xs uppercase tracking-widest hover:bg-red-50 hover:text-red-500 transition-all">Cancelar</button>
-                <button onClick={handleCreate} disabled={!newAnnouncement.trim()} className="px-6 py-3 rounded-xl bg-primary text-white font-bold text-xs uppercase tracking-widest hover:bg-primary/90 transition-all disabled:opacity-30">Publicar Anuncio</button>
-              </div>
-            </div>
+            <PostComposer
+              placeholder="Escribe un anuncio oficial..."
+              onSubmit={handleCreate}
+            />
           ) : (
             <button onClick={() => setShowCreate(true)} className="w-full p-4 rounded-[1.5rem] border-2 border-dashed border-outline-variant text-on-surface-variant font-bold text-xs uppercase tracking-widest hover:border-primary hover:text-primary transition-all flex items-center justify-center gap-3">
               <Plus size={16} /> Nuevo Anuncio
             </button>
+          )}
+          {showCreate && (
+            <div className="flex justify-end -mt-4">
+              <button onClick={() => setShowCreate(false)} className="px-6 py-2 rounded-xl bg-surface-container-high text-on-surface-variant font-bold text-xs uppercase tracking-widest hover:bg-red-50 hover:text-red-500 transition-all">Cancelar</button>
+            </div>
           )}
         </div>
       )}
@@ -941,6 +937,17 @@ const EventWall: React.FC<{ eventId: string; organizerOwnerId?: string; eventTit
     }
   };
 
+  const handleDeleteComment = async (commentId: number) => {
+    if (!window.confirm('¿Eliminar este comentario?')) return;
+    try {
+      await api.deleteWallComment_new(commentId);
+      const data: any = await api.getWallPosts('event', eventId, 1, 50);
+      setPosts(data || []);
+    } catch (err) {
+      console.error('Error deleting comment:', err);
+    }
+  };
+
   return (
     <div className="space-y-10">
       <PostComposer onSubmit={handlePost} />
@@ -951,7 +958,9 @@ const EventWall: React.FC<{ eventId: string; organizerOwnerId?: string; eventTit
         onDelete={handleDeletePost}
         onComment={handleComment}
         onShare={handleShare}
+        onDeleteComment={handleDeleteComment}
         showDelete={(post) => modRoles || post.id_user === user?.uid}
+        canDeleteComment={(comment) => modRoles || comment.id_user === user?.uid || (posts.find(p => p.comments?.some((c: any) => c.id_comment === comment.id_comment))?.id_user === user?.uid)}
       />
     </div>
   );
