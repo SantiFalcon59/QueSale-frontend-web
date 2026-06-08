@@ -425,6 +425,24 @@ const EventDetail: React.FC = () => {
                       </p>
                     </div>
 
+                    {/* Tags */}
+                    {(event as any).tags?.length > 0 && (
+                      <div className="space-y-3">
+                        <h3 className="text-lg lg:text-xl font-bold uppercase tracking-widest opacity-60">Tags</h3>
+                        <div className="flex flex-wrap gap-2">
+                          {(event as any).tags.map((tag: string) => (
+                            <Link
+                              key={tag}
+                              to={`/events?tags=${encodeURIComponent(tag)}`}
+                              className="px-3 py-1.5 rounded-full bg-primary/5 text-primary text-[10px] font-bold uppercase tracking-wider hover:bg-primary hover:text-white transition-all border border-primary/10"
+                            >
+                              #{tag}
+                            </Link>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
                     <div className="space-y-4">
                       <EventMapControls event={event} GOOGLE_MAPS_KEY={GOOGLE_MAPS_KEY} />
                     </div>
@@ -470,27 +488,31 @@ const EventDetail: React.FC = () => {
                       <div className="space-y-4">
                         <h3 className="text-xl font-bold uppercase tracking-widest opacity-60">Otros Eventos de {organizer?.name}</h3>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                          {organizerEvents.slice(0, 4).map(orgEvent => {
-                            const isPast = new Date(orgEvent.date) < new Date();
-                            return (
-                              <button
-                                key={orgEvent.id_event}
-                                onClick={() => window.location.href = `/events/${orgEvent.id_event}`}
-                                className="flex items-center gap-3 p-3 rounded-xl bg-surface-container-low border border-outline-variant hover:border-primary/30 transition-all text-left group"
-                              >
-                                <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
-                                  <Calendar size={18} />
+                          {organizerEvents.slice(0, 4).map(orgEvent => (
+                            <Link
+                              key={orgEvent.id_event}
+                              to={`/events/${orgEvent.id_event}`}
+                              className="group bg-white rounded-2xl border border-outline-variant overflow-hidden hover:border-primary/50 transition-all hover:shadow-lg"
+                            >
+                              <div className="relative h-36 overflow-hidden">
+                                <img
+                                  src={orgEvent.images?.[0] || orgEvent.thumbnail_url || NO_EVENT_IMAGE}
+                                  alt={orgEvent.title}
+                                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                                />
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
+                                <div className="absolute bottom-2 left-3 right-3">
+                                  <p className="text-sm font-black text-white leading-tight truncate">{orgEvent.title}</p>
                                 </div>
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-sm font-bold truncate group-hover:text-primary transition-colors">{orgEvent.title}</p>
-                                  <p className="text-[10px] text-on-surface-variant">
-                                    {new Date(orgEvent.date).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}
-                                    {isPast ? ' · Pasado' : ' · Próximo'}
-                                  </p>
-                                </div>
-                              </button>
-                            );
-                          })}
+                              </div>
+                              <div className="p-3 flex items-center justify-between">
+                                <span className="text-[9px] text-on-surface-variant font-bold">
+                                  {new Date(orgEvent.date).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                </span>
+                                <span className="text-[9px] font-black text-primary">{formatPrice(orgEvent.price)}</span>
+                              </div>
+                            </Link>
+                          ))}
                         </div>
                       </div>
                     )}
@@ -885,10 +907,11 @@ const EventWall: React.FC<{ eventId: string; organizerOwnerId?: string; eventTit
   const [posts, setPosts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const modRoles = propIsModerator || profile?.role === 'admin' || profile?.role === 'moderator';
+  const WALL_TYPE_FILTER = 'comment,query,feedback,poll';
 
   const fetchPosts = async () => {
     try {
-      const data: any = await api.getWallPosts('event', eventId, 1, 50);
+      const data: any = await api.getWallPosts('event', eventId, 1, 50, WALL_TYPE_FILTER);
       setPosts(data || []);
     } catch (err) {
       console.error('Error fetching posts:', err);
@@ -922,13 +945,17 @@ const EventWall: React.FC<{ eventId: string; organizerOwnerId?: string; eventTit
     }
   };
 
-  const handleToggleLike = async (postId: number) => {
+  const handleReact = async (postId: number, type: string) => {
     if (!user) return document.dispatchEvent(new CustomEvent('show-login-prompt'));
+    const prev = posts.find(p => p.id_post === postId);
+    const prevReaction = prev?.user_reaction;
+    setPosts(prev => prev.map(p => p.id_post === postId ? { ...p, user_reaction: p.user_reaction === type ? null : type } : p));
     try {
-      const result: any = await api.toggleWallPostLike_new(postId);
-      setPosts(prev => prev.map(p => p.id_post === postId ? { ...p, likes_count: result.likes_count } : p));
+      const result: any = await api.toggleReaction(postId, type);
+      setPosts(prev => prev.map(p => p.id_post === postId ? { ...p, reactions: result.reactions } : p));
     } catch (err) {
-      console.error('Error toggling like:', err);
+      setPosts(prev => prev.map(p => p.id_post === postId ? { ...p, user_reaction: prevReaction } : p));
+      console.error('Error toggling reaction:', err);
     }
   };
 
@@ -946,7 +973,7 @@ const EventWall: React.FC<{ eventId: string; organizerOwnerId?: string; eventTit
     if (!user) return;
     try {
       await api.createWallComment_new(postId, content);
-      const data: any = await api.getWallPosts('event', eventId, 1, 50);
+      const data: any = await api.getWallPosts('event', eventId, 1, 50, WALL_TYPE_FILTER);
       setPosts(data || []);
     } catch (err) {
       console.error('Error posting comment:', err);
@@ -957,7 +984,7 @@ const EventWall: React.FC<{ eventId: string; organizerOwnerId?: string; eventTit
     if (!window.confirm('¿Eliminar este comentario?')) return;
     try {
       await api.deleteWallComment_new(commentId);
-      const data: any = await api.getWallPosts('event', eventId, 1, 50);
+      const data: any = await api.getWallPosts('event', eventId, 1, 50, WALL_TYPE_FILTER);
       setPosts(data || []);
     } catch (err) {
       console.error('Error deleting comment:', err);
@@ -970,7 +997,7 @@ const EventWall: React.FC<{ eventId: string; organizerOwnerId?: string; eventTit
       <PostFeed
         posts={posts}
         loading={loading}
-        onLike={handleToggleLike}
+        onReact={handleReact}
         onDelete={handleDeletePost}
         onComment={handleComment}
         onShare={handleShare}

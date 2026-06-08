@@ -101,6 +101,7 @@ const Discovery: React.FC = () => {
   const [priceFilterVersion, setPriceFilterVersion] = useState(0);
   const [activeQuickFilter, setActiveQuickFilter] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [events, setEvents] = useState<any[]>([]);
   const [categories, setCategories] = useState<{ id: number; name: string; color?: string; icon_url?: string; events_count?: number }[]>([]);
   const [loading, setLoading] = useState(true);
@@ -127,9 +128,10 @@ const Discovery: React.FC = () => {
       params.set('dateFrom', start.toISOString());
       params.set('dateTo', end.toISOString());
     }
+    if (selectedTags.length > 0) params.set('tags', selectedTags.join(','));
 
     return params.toString();
-  }, [searchQuery, selectedCategory, priceType, priceMin, priceMax, priceFilterVersion, activeQuickFilter, selectedDate]);
+  }, [searchQuery, selectedCategory, priceType, priceMin, priceMax, priceFilterVersion, activeQuickFilter, selectedDate, selectedTags]);
 
   const fetchEvents = useCallback(async () => {
     setLoading(true);
@@ -185,6 +187,12 @@ const Discovery: React.FC = () => {
     setActiveQuickFilter(null);
   };
 
+  const toggleTag = (tag: string) => {
+    setSelectedTags(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]);
+  };
+
+  const allTags = [...new Set(events.flatMap(e => e.tags || []))].sort();
+
   const handleReset = () => {
     setSearchQuery('');
     setSelectedCategory('ALL');
@@ -194,9 +202,10 @@ const Discovery: React.FC = () => {
     setPriceFilterVersion(v => v + 1);
     setActiveQuickFilter(null);
     setSelectedDate(null);
+    setSelectedTags([]);
   };
 
-  const hasActiveFilters = searchQuery || selectedCategory !== 'ALL' || priceType !== 'all' || activeQuickFilter || selectedDate || priceMin > 0 || priceMax < 50000;
+  const hasActiveFilters = searchQuery || selectedCategory !== 'ALL' || priceType !== 'all' || activeQuickFilter || selectedDate || selectedTags.length > 0 || priceMin > 0 || priceMax < 50000;
 
   const safeDate = (d: string) => { const parsed = new Date(d); return isNaN(parsed.getTime()) ? new Date() : parsed; };
   const isFree = (p: any) => Number(p) === 0 || !p;
@@ -308,6 +317,31 @@ const Discovery: React.FC = () => {
                 </p>
               )}
             </div>
+
+            {/* Tags */}
+            {allTags.length > 0 && (
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant ml-1 flex items-center gap-1.5">
+                  # Tags
+                </label>
+                <div className="flex flex-wrap gap-1.5">
+                  {allTags.slice(0, 20).map(tag => (
+                    <button
+                      key={tag}
+                      onClick={() => toggleTag(tag)}
+                      className={cn(
+                        "px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all",
+                        selectedTags.includes(tag)
+                          ? "bg-primary text-white shadow-lg shadow-primary/20"
+                          : "bg-surface-container-high text-on-surface-variant hover:bg-primary/10 hover:text-primary"
+                      )}
+                    >
+                      #{tag}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Price */}
             <div className="space-y-2">

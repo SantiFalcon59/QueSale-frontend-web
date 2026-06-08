@@ -394,8 +394,8 @@ export const api = {
     apiRequest(`/api/events/${encodeURIComponent(eventId)}/blocked-users`, { auth: true }),
 
   // Unified wall API
-  getWallPosts: (wallType: string, wallId: string, page = 1, limit = 20) =>
-    apiRequest(`/api/wall/${encodeURIComponent(wallType)}/${encodeURIComponent(wallId)}?page=${page}&limit=${limit}`),
+  getWallPosts: (wallType: string, wallId: string, page = 1, limit = 20, typeFilter?: string) =>
+    apiRequest(`/api/wall/${encodeURIComponent(wallType)}/${encodeURIComponent(wallId)}?page=${page}&limit=${limit}${typeFilter ? `&type=${typeFilter}` : ''}`),
 
   createWallPost_new: (wallType: string, wallId: string, content: string, type?: string, media?: string[]) =>
     apiRequest(`/api/wall/${encodeURIComponent(wallType)}/${encodeURIComponent(wallId)}`, {
@@ -414,9 +414,10 @@ export const api = {
       auth: true,
     }),
 
-  toggleWallPostLike_new: (postId: number) =>
-    apiRequest(`/api/wall/post/${postId}/like`, {
+  toggleReaction: (postId: number, type: string) =>
+    apiRequest(`/api/wall/post/${postId}/reaction`, {
       method: 'POST',
+      body: { type },
       auth: true,
     }),
 

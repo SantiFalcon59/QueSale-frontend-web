@@ -4,7 +4,7 @@ import PostCard from './PostCard';
 interface PostFeedProps {
   posts: any[];
   loading?: boolean;
-  onLike?: (postId: number) => void;
+  onReact?: (postId: number, type: string) => void;
   onDelete?: (postId: number) => void;
   onComment?: (postId: number, content: string) => void;
   onShare?: (content: string) => void;
@@ -13,7 +13,7 @@ interface PostFeedProps {
   canDeleteComment?: (comment: any) => boolean;
 }
 
-const PostFeed: React.FC<PostFeedProps> = ({ posts, loading, onLike, onDelete, onComment, onShare, onDeleteComment, showDelete, canDeleteComment }) => {
+const PostFeed: React.FC<PostFeedProps> = ({ posts, loading, onReact, onDelete, onComment, onShare, onDeleteComment, showDelete, canDeleteComment }) => {
   if (loading) {
     return (
       <div className="flex justify-center py-16">
@@ -37,7 +37,7 @@ const PostFeed: React.FC<PostFeedProps> = ({ posts, loading, onLike, onDelete, o
         <PostCard
           key={post.id_post}
           post={post}
-          onLike={onLike}
+          onReact={onReact}
           onDelete={onDelete}
           onComment={onComment}
           onShare={onShare}

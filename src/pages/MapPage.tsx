@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { APIProvider, Map, AdvancedMarker, useAdvancedMarkerRef, useMap } from '@vis.gl/react-google-maps';
 import { motion, AnimatePresence } from 'motion/react';
-import { MapPin, Calendar, Plus, Minus, Target, ChevronRight, X, Share2, Loader2 } from 'lucide-react';
+import { MapPin, Calendar, Plus, Minus, Target, ChevronRight, X, Share2, Loader2, CalendarDays } from 'lucide-react';
 import { cn, formatPrice, NO_EVENT_IMAGE } from '../lib/utils';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../services/apiClient';
@@ -42,11 +42,38 @@ const MapControls = ({ onZoomIn, onZoomOut, onRecenter }: { onZoomIn: () => void
   );
 };
 
+const QUICK_FILTERS = [
+  { id: 'today', label: 'Hoy' },
+  { id: 'tomorrow', label: 'Mañana' },
+  { id: 'weekend', label: 'Fin de Semana' },
+  { id: 'next-week', label: 'Próxima Semana' },
+  { id: 'next-month', label: 'Próximo Mes' },
+];
+
+const getQuickDateRange = (id: string): { from: Date; to: Date } | null => {
+  const now = new Date();
+  const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  switch (id) {
+    case 'today': return { from: start, to: new Date(start.getTime() + 86400000) };
+    case 'tomorrow': return { from: new Date(start.getTime() + 86400000), to: new Date(start.getTime() + 2 * 86400000) };
+    case 'weekend': {
+      const day = start.getDay();
+      const sat = new Date(start.getTime() + (day <= 6 ? (6 - day) : 6) * 86400000);
+      return { from: sat, to: new Date(sat.getTime() + 2 * 86400000) };
+    }
+    case 'next-week': return { from: new Date(start.getTime() + 7 * 86400000), to: new Date(start.getTime() + 14 * 86400000) };
+    case 'next-month': return { from: new Date(start.getTime() + 30 * 86400000), to: new Date(start.getTime() + 60 * 86400000) };
+    default: return null;
+  }
+};
+
 const MapPage: React.FC = () => {
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [activeCategory, setActiveCategory] = useState('Todos');
   const [proximity, setProximity] = useState(25);
   const [selectedDate, setSelectedDate] = useState('');
+  const [activeQuickFilter, setActiveQuickFilter] = useState<string | null>(null);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [events, setEvents] = useState<any[]>([]);
@@ -126,6 +153,8 @@ const MapPage: React.FC = () => {
             events={events}
             proximity={proximity}
             selectedDate={selectedDate}
+            activeQuickFilter={activeQuickFilter}
+            selectedTags={selectedTags}
           />
         </APIProvider>
       ) : (
@@ -156,8 +185,8 @@ const MapPage: React.FC = () => {
               <span className="material-symbols-outlined text-primary text-base">tune</span>
               Filtros
             </h3>
-            {activeCategory !== 'Todos' || selectedDate || proximity < 100 ? (
-              <button onClick={() => { setActiveCategory('Todos'); setSelectedDate(''); setProximity(25); }}
+            {activeCategory !== 'Todos' || selectedDate || activeQuickFilter || selectedTags.length > 0 || proximity < 100 ? (
+              <button onClick={() => { setActiveCategory('Todos'); setSelectedDate(''); setActiveQuickFilter(null); setSelectedTags([]); setProximity(25); }}
                 className="text-[9px] font-bold text-primary/60 hover:text-primary uppercase tracking-widest transition-colors">
                 Limpiar
               </button>
@@ -184,6 +213,52 @@ const MapPage: React.FC = () => {
               );
             })}
           </div>
+
+          {/* Quick Date Filters */}
+          <div className="space-y-2 mb-3">
+            <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant flex items-center gap-1">
+              <CalendarDays size={12} /> Fecha rápida
+            </label>
+            <div className="flex flex-wrap gap-1.5">
+              {QUICK_FILTERS.map(qf => (
+                <button
+                  key={qf.id}
+                  onClick={() => { setActiveQuickFilter(activeQuickFilter === qf.id ? null : qf.id); setSelectedDate(''); }}
+                  className={cn(
+                    "px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all",
+                    activeQuickFilter === qf.id
+                      ? "bg-primary text-white shadow-lg shadow-primary/20"
+                      : "bg-surface-container-high text-on-surface-variant hover:bg-primary/10 hover:text-primary"
+                  )}
+                >
+                  {qf.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Tags */}
+          {events.length > 0 && (
+            <div className="space-y-2 mb-3">
+              <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant flex items-center gap-1"># Tags</label>
+              <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto">
+                {[...new Set(events.flatMap((e: any) => e.tags || []))].slice(0, 15).map(tag => (
+                  <button
+                    key={tag}
+                    onClick={() => setSelectedTags(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag])}
+                    className={cn(
+                      "px-2.5 py-1 rounded-full text-[9px] font-bold uppercase tracking-wider transition-all",
+                      selectedTags.includes(tag)
+                        ? "bg-primary text-white"
+                        : "bg-surface-container-high text-on-surface-variant hover:bg-primary/10 hover:text-primary"
+                    )}
+                  >
+                    #{tag}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Advanced Filters Toggle */}
           <button onClick={() => setShowAdvanced(!showAdvanced)}
@@ -303,7 +378,7 @@ const MapPage: React.FC = () => {
   );
 };
 
-const MapWrapper = ({ userLocation, selectedEventId, onSelectEvent, activeCategory, events, proximity, selectedDate }: any) => {
+const MapWrapper = ({ userLocation, selectedEventId, onSelectEvent, activeCategory, events, proximity, selectedDate, activeQuickFilter, selectedTags }: any) => {
   const map = useMap();
   
   const handleZoomIn = useCallback(() => {
@@ -340,13 +415,26 @@ const MapWrapper = ({ userLocation, selectedEventId, onSelectEvent, activeCatego
       const catName = e.interests?.[0]?.name;
       if (catName !== activeCategory) return false;
     }
-    if (selectedDate) {
+
+    if (activeQuickFilter) {
+      const range = getQuickDateRange(activeQuickFilter);
+      if (range) {
+        const eventDate = new Date(e.date);
+        if (eventDate < range.from || eventDate >= range.to) return false;
+      }
+    } else if (selectedDate) {
       const eventDate = new Date(e.date);
       eventDate.setHours(0, 0, 0, 0);
       const filterDate = new Date(selectedDate);
       filterDate.setHours(0, 0, 0, 0);
       if (eventDate < filterDate) return false;
     }
+
+    if (selectedTags.length > 0) {
+      const eventTags = (e.tags || []).map((t: string) => t.toLowerCase());
+      if (!selectedTags.some(t => eventTags.includes(t.toLowerCase()))) return false;
+    }
+
     if (userLocation && proximity < 100) {
       const dist = haversine(userLocation.lat, userLocation.lng, Number(e.latitude), Number(e.longitude));
       if (dist > proximity) return false;
