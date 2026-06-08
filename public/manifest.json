@@ -1,0 +1,21 @@
+{
+  "name": "QueSale - Tu Portal Geek",
+  "short_name": "QueSale",
+  "description": "Descubrí eventos geek: anime, gaming, cosplay y más",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0b0e14",
+  "theme_color": "#732ee4",
+  "icons": [
+    {
+      "src": "/logo.jpg",
+      "sizes": "192x192",
+      "type": "image/jpeg"
+    },
+    {
+      "src": "/logo.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg"
+    }
+  ]
+}

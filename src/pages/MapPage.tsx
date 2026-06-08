@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { APIProvider, Map, AdvancedMarker, useAdvancedMarkerRef, useMap } from '@vis.gl/react-google-maps';
 import { motion, AnimatePresence } from 'motion/react';
 import { MapPin, Calendar, Plus, Minus, Target, ChevronRight, X, Share2, Loader2 } from 'lucide-react';
-import { cn } from '../lib/utils';
+import { cn, formatPrice, NO_EVENT_IMAGE } from '../lib/utils';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../services/apiClient';
 
@@ -232,7 +232,7 @@ const MapPage: React.FC = () => {
             <div className="bg-white/90 backdrop-blur-3xl rounded-[2.5rem] overflow-hidden shadow-[0_25px_60px_-15px_rgba(0,0,0,0.3)] border border-white/60 flex h-40 ring-1 ring-primary/5">
               {/* Left: Image Section */}
               <div className="w-1/3 relative overflow-hidden group shrink-0">
-                <img className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" src={selectedEvent.images?.[0] || selectedEvent.thumbnail_url || 'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=800'} alt={selectedEvent.title} />
+                <img className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" src={selectedEvent.images?.[0] || selectedEvent.thumbnail_url || NO_EVENT_IMAGE} alt={selectedEvent.title} />
                 <div className="absolute top-3 left-3">
                   <span
                     className="text-white text-[8px] font-black px-3 py-1 rounded-md uppercase tracking-wider"
@@ -251,7 +251,7 @@ const MapPage: React.FC = () => {
                     <h2 className="text-lg lg:text-xl font-display font-black italic tracking-tighter text-on-surface leading-tight uppercase line-clamp-2">{selectedEvent.title}</h2>
                     {!isNaN(Number(selectedEvent.price)) && Number(selectedEvent.price) > 0 && (
                       <span className="text-primary font-black text-xl leading-none italic shrink-0">
-                        ${Number(selectedEvent.price).toLocaleString('es-AR')}
+                        {formatPrice(selectedEvent.price)}
                       </span>
                     )}
                   </div>
@@ -423,7 +423,7 @@ const CustomMarker = ({ event, isSelected, onSelect }: any) => {
             : "border-outline-variant/40 hover:border-primary hover:scale-110"
         )}>
           <div className="w-12 h-12 rounded-full overflow-hidden border border-outline-variant/30">
-            <img src={event.images?.[0] || event.thumbnail_url || 'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=800'} className="w-full h-full object-cover" alt={event.title} />
+            <img src={event.images?.[0] || event.thumbnail_url || NO_EVENT_IMAGE} className="w-full h-full object-cover" alt={event.title} />
           </div>
           
           <div className={cn(

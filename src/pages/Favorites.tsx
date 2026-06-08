@@ -4,6 +4,7 @@ import { Heart, Calendar, MapPin, GridIcon } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/apiClient';
 import { Link } from 'react-router-dom';
+import { formatPrice, NO_EVENT_IMAGE } from '../lib/utils';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -69,7 +70,7 @@ const Favorites: React.FC = () => {
               className="group bg-white rounded-[2.5rem] border border-outline-variant hover:border-primary/50 transition-all overflow-hidden shadow-sm hover:shadow-xl hover:shadow-black/5"
             >
               <Link to={`/events/${event.id_event}`} className="block relative h-48 overflow-hidden">
-                <img src={event.images?.[0] || event.thumbnail_url || 'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=800'} alt={event.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                <img src={event.images?.[0] || event.thumbnail_url || NO_EVENT_IMAGE} alt={event.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
                 <div className="absolute top-4 right-4">
                    <button 
                      onClick={(e) => {
@@ -108,7 +109,7 @@ const Favorites: React.FC = () => {
 
                 <div className="pt-4 flex items-center justify-between border-t border-outline-variant/30">
                   <div className="text-[10px] font-black text-primary">
-                    {event.price === 0 || !event.price ? 'GRATIS' : `$${Number(event.price).toLocaleString('es-AR')}`}
+                    {formatPrice(event.price)}
                   </div>
                   <Link to={`/events/${event.id_event}`} className="w-10 h-10 rounded-full border border-outline-variant flex items-center justify-center group-hover:bg-primary group-hover:border-primary transition-all">
                     <GridIcon size={16} className="group-hover:text-white transition-colors" />

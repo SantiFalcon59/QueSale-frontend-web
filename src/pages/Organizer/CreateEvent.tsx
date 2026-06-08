@@ -201,10 +201,12 @@ const CreateEvent: React.FC = () => {
       });
 
       if (mediaFiles.length > 0 && created?.id_event) {
-        try {
-          await api.uploadEventMedia(mediaFiles[0], created.id_event);
-        } catch (err) {
-          console.error('Error uploading media:', err);
+        for (const file of mediaFiles) {
+          try {
+            await api.uploadEventMedia(file, created.id_event);
+          } catch (err) {
+            console.error('Error uploading media:', err);
+          }
         }
       }
 
@@ -219,7 +221,7 @@ const CreateEvent: React.FC = () => {
   const canProceed = () => {
     switch (currentStep) {
       case 0: return formData.title.trim() && formData.description.trim() && formData.date && formData.time;
-      case 1: return true;
+      case 1: return mediaFiles.length > 0;
       case 2: return formData.address.trim();
       case 3: return formData.ticketType !== 'external' || formData.ticketUrl.trim();
       case 4: return true;

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { SlidersHorizontal, Grid as GridIcon, List, X, Search, MapPin, CalendarDays, Sparkles, RotateCcw, ChevronLeft, ChevronRight } from 'lucide-react';
-import { cn } from '../lib/utils';
+import { cn, formatPrice, NO_EVENT_IMAGE } from '../lib/utils';
 import { api } from '../services/apiClient';
 import { Link } from 'react-router-dom';
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths } from 'date-fns';
@@ -462,7 +462,7 @@ const Discovery: React.FC = () => {
                     view === 'grid' ? "aspect-[4/3]" : "aspect-[16/9] md:w-80 md:h-full shrink-0"
                   )}>
                     <img
-                      src={event.thumbnail_url || 'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=800'}
+                       src={event.thumbnail_url || NO_EVENT_IMAGE}
                       alt={event.title}
                       className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
                     />
@@ -490,7 +490,7 @@ const Discovery: React.FC = () => {
                       })()}
                       {!isFree(event.price) && (
                         <span className="text-xs font-black text-on-surface-variant/60 uppercase tracking-widest">
-                          ${Number(event.price).toLocaleString('es-AR')}
+                          {formatPrice(event.price)}
                         </span>
                       )}
                     </div>

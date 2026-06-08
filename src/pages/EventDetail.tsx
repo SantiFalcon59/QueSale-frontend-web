@@ -10,7 +10,7 @@ import {
   ZoomIn, ZoomOut, Crosshair, ChevronLeft, ChevronRight
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { cn } from '../lib/utils';
+import { cn, formatPrice, NO_EVENT_IMAGE } from '../lib/utils';
 import { APIProvider, Map, Marker, useMap } from '@vis.gl/react-google-maps';
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, isSameDay, isToday } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -318,7 +318,7 @@ const EventDetail: React.FC = () => {
                 onClick={() => setGalleryIdx(1)}
               >
                 <img
-                  src={event.media?.[1] || "https://images.unsplash.com/photo-1561214078-f3247647fc5e?w=800"}
+                  src={event.media?.[1] || NO_EVENT_IMAGE}
                   alt="Gallery 1"
                   className="w-full h-full object-cover hover:scale-110 transition-transform duration-500"
                 />
@@ -330,7 +330,7 @@ const EventDetail: React.FC = () => {
                 onClick={() => setGalleryIdx(event.media.length > 3 ? 3 : 2)}
               >
                 <img
-                  src={event.media?.[2] || "https://images.unsplash.com/photo-1552664730-d307ca884978?w=800"}
+                  src={event.media?.[2] || NO_EVENT_IMAGE}
                   alt="Gallery 2"
                   className="w-full h-full object-cover hover:scale-110 transition-transform duration-500"
                 />
@@ -527,7 +527,7 @@ const EventDetail: React.FC = () => {
               <div className="space-y-4">
                  <p className="text-[10px] text-primary uppercase tracking-[0.3em] font-black">ENTRADAS DESDE</p>
                  <div className="flex items-baseline gap-2">
-                    <span className="text-4xl lg:text-6xl font-black italic tracking-tighter text-on-surface">${event.price.toFixed(2)}</span>
+                    <span className="text-4xl lg:text-6xl font-black italic tracking-tighter text-on-surface">{formatPrice(event.price)}</span>
                     <span className="px-3 py-1 rounded bg-tertiary/10 text-tertiary text-[9px] lg:text-[10px] font-black tracking-widest uppercase whitespace-nowrap">
                       {Math.round((event.attendeesCount / event.capacity) * 100)}% Vendido
                     </span>
@@ -535,13 +535,13 @@ const EventDetail: React.FC = () => {
               </div>
 
               <div className="space-y-4">
-                 <button 
-                  onClick={() => handleInteraction()}
-                  className="w-full btn-primary h-14 lg:h-16 text-base lg:text-lg flex items-center justify-center gap-3 shadow-xl shadow-primary/20"
-                 >
+                  <button
+                    onClick={() => { if (handleInteraction()) return; window.open('https://mercadopago.com.ar', '_blank'); }}
+                    className="w-full btn-primary h-14 lg:h-16 text-base lg:text-lg flex items-center justify-center gap-3 shadow-xl shadow-primary/20"
+                  >
                     <TicketIcon size={22} className="lg:size-6" />
                     ADQUIRIR ACCESO
-                 </button>
+                  </button>
                  <p className="text-[9px] lg:text-[10px] text-center text-on-surface-variant font-bold uppercase tracking-widest">Pago directo al organizador</p>
               </div>
 

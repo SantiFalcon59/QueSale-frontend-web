@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
-import { cn } from '../lib/utils';
+import { motion } from 'motion/react';
+import { cn, NO_EVENT_IMAGE } from '../lib/utils';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { LoginPromptModal } from '../components/ui/LoginPromptModal';
@@ -18,11 +18,23 @@ const Feed: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [savedEvents, setSavedEvents] = useState<Record<string, boolean>>({});
   const [imageIndex, setImageIndex] = useState(0);
+  const [fadingMap, setFadingMap] = useState<Record<string, string>>({});
 
   useEffect(() => {
     const hasMulitpleImages = events.some(e => e.images?.length > 1);
     if (!hasMulitpleImages) return;
-    const interval = setInterval(() => setImageIndex(i => i + 1), CYCLE_MS);
+    const interval = setInterval(() => {
+      setImageIndex(prev => {
+        const next: Record<string, string> = {};
+        for (const event of events) {
+          const imgs = event.images;
+          if (!imgs?.length || imgs.length < 2) continue;
+          next[event.id_event] = imgs[prev % imgs.length];
+        }
+        setFadingMap(next);
+        return prev + 1;
+      });
+    }, CYCLE_MS);
     return () => clearInterval(interval);
   }, [events]);
 
@@ -107,24 +119,30 @@ const Feed: React.FC = () => {
       {events.map((event, index) => {
         const images = event.images?.length ? event.images : [];
         const imgIdx = images.length > 1 ? imageIndex % images.length : 0;
-        const currentSrc = images.length > 0 ? images[imgIdx] : event.thumbnail_url || 'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=800';
+        const currentSrc = images.length > 0 ? images[imgIdx] : event.thumbnail_url || NO_EVENT_IMAGE;
         return (
         <div key={event.id_event} className="w-full h-full snap-start p-4 lg:p-8">
           <div className="relative w-full h-full rounded-[40px] overflow-hidden bg-black shadow-2xl flex flex-col justify-end border border-white/5">
             <div className="absolute inset-0 z-0 overflow-hidden">
               <div className="w-full h-full transition-transform duration-1000 group-hover:scale-105">
-                <AnimatePresence mode="sync">
+                {/* Current image — always present underneath */}
+                <img src={currentSrc} className="absolute inset-0 w-full h-full object-cover opacity-70" alt={event.title} />
+                {/* Previous image — fading out on top, revealing current underneath */}
+                {fadingMap[event.id_event] && (
                   <motion.img
-                    key={`${event.id_event}-${imgIdx}`}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 0.7 }}
-                    exit={{ opacity: 0 }}
+                    initial={{ opacity: 0.7 }}
+                    animate={{ opacity: 0 }}
                     transition={{ duration: 1.2, ease: "easeInOut" }}
-                    alt={event.title}
-                    className="w-full h-full object-cover"
-                    src={currentSrc}
+                    onAnimationComplete={() => setFadingMap(prev => {
+                      const next = { ...prev };
+                      delete next[event.id_event];
+                      return next;
+                    })}
+                    src={fadingMap[event.id_event]}
+                    className="absolute inset-0 w-full h-full object-cover"
+                    alt=""
                   />
-                </AnimatePresence>
+                )}
               </div>
               <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent pointer-events-none" />
             </div>

@@ -2,7 +2,7 @@ import React, { useRef, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { Settings, MapPin, Calendar, Grid, Bookmark, Users, Heart, Pencil, X, Check, Instagram, Image, Smile, Loader2, Upload } from 'lucide-react';
-import { cn } from '../lib/utils';
+import { cn, NO_EVENT_IMAGE } from '../lib/utils';
 import { useAuth } from '../context/AuthContext';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -766,7 +766,7 @@ const Profile: React.FC<{ usernameFromUrl?: string }> = ({ usernameFromUrl }) =>
                          className="flex flex-col sm:flex-row gap-4 lg:gap-6 p-4 lg:p-6 bg-surface-container-low rounded-[1.5rem] lg:rounded-[2rem] border border-transparent hover:border-primary/20 hover:shadow-md hover:shadow-primary/5 transition-all duration-300 cursor-pointer"
                        >
                            <div className="w-full sm:w-24 h-40 sm:h-24 rounded-2xl overflow-hidden bg-white shrink-0">
-                              <img src={event.images?.[0] || event.thumbnail_url || `https://images.unsplash.com/photo-${1500000000000+i}?auto=format&fit=crop&q=80&w=400`} className="w-full h-full object-cover transition-transform hover:scale-110 duration-500" />
+                              <img src={event.images?.[0] || event.thumbnail_url || NO_EVENT_IMAGE} className="w-full h-full object-cover transition-transform hover:scale-110 duration-500" />
                            </div>
                            <div className="flex-1 space-y-2">
                               <div className="flex justify-between items-start">
@@ -817,7 +817,7 @@ const Profile: React.FC<{ usernameFromUrl?: string }> = ({ usernameFromUrl }) =>
                         className="flex flex-col sm:flex-row gap-4 lg:gap-6 p-4 lg:p-6 bg-surface-container-low rounded-[1.5rem] lg:rounded-[2rem] border border-transparent hover:border-primary/20 hover:shadow-md hover:shadow-primary/5 transition-all duration-300 cursor-pointer"
                       >
                           <div className="w-full sm:w-24 h-40 sm:h-24 rounded-2xl overflow-hidden bg-white shrink-0">
-                             <img src={event.images?.[0] || event.thumbnail_url || `https://images.unsplash.com/photo-1500000000000?auto=format&fit=crop&q=80&w=400`} className="w-full h-full object-cover transition-transform hover:scale-110 duration-500" />
+                             <img src={event.images?.[0] || event.thumbnail_url || NO_EVENT_IMAGE} className="w-full h-full object-cover transition-transform hover:scale-110 duration-500" />
                           </div>
                          <div className="flex-1 space-y-2">
                             <h3 className="text-lg lg:text-xl font-bold font-sans">{event.title}</h3>
