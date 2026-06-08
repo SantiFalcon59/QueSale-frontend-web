@@ -512,13 +512,14 @@ const Discovery: React.FC = () => {
                   <div className="p-8 flex flex-col flex-grow">
                     <div className="flex justify-between items-start mb-3">
                       {(() => {
-                        const catColor = categories.find(c => c.name === event.category)?.color;
+                        const catName = event.interests?.[0]?.name || event.tags?.[0] || event.category;
+                        const catColor = categories.find(c => c.name === catName)?.color;
                         return (
                           <span
                             className="px-2.5 py-1 rounded-md text-[9px] font-black uppercase tracking-wider text-white"
                             style={{ backgroundColor: catColor || '#732ee4' }}
                           >
-                            {event.category || 'EVENTO'}
+                            {catName || 'EVENTO'}
                           </span>
                         );
                       })()}

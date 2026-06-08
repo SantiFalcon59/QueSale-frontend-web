@@ -36,6 +36,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const username = backendProfile?.username;
     const firebasePhoto = auth.currentUser?.photoURL || null;
     const backendPhoto = resolveAssetUrl(backendProfile?.photo_url) || firebasePhoto;
+
+    // If user has Google photo but no backend photo, save it to DB
+    if (firebasePhoto && !backendProfile?.photo_url && backendProfile?.id_user) {
+      api.updateProfile({ photo_url: firebasePhoto }).catch(() => {});
+    }
+
     return {
       uid,
       email: backendProfile?.email || auth.currentUser?.email || null,
@@ -52,18 +58,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setProfile(mapProfile(uid, backendProfile));
     } catch (err) {
       console.error('Error fetching profile:', err);
-      const firebaseUser = auth.currentUser;
-      const usernameFromDisplayName = firebaseUser?.displayName
-        ? firebaseUser.displayName.toLowerCase().replace(/[^a-z0-9_]/g, '_').replace(/_+/g, '_').slice(0, 20)
-        : undefined;
-      setProfile({
-        uid,
-        email: firebaseUser?.email || null,
-        displayName: usernameFromDisplayName || null,
-        photoURL: firebaseUser?.photoURL || null,
-        username: usernameFromDisplayName,
-        role: usernameFromDisplayName?.toLowerCase() === 'santipingui58' ? 'admin' : 'user',
-      });
+      setProfile(null);
     }
   };
 

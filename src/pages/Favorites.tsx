@@ -88,7 +88,7 @@ const Favorites: React.FC = () => {
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
                     <span className="text-[9px] font-black uppercase tracking-widest text-primary bg-primary/5 px-2 py-0.5 rounded border border-primary/10">
-                      EVENTO
+                      {event.interests?.[0]?.name || event.tags?.[0] || 'EVENTO'}
                     </span>
                   </div>
                   <h3 className="text-xl font-black italic tracking-tight group-hover:text-primary transition-colors leading-tight">

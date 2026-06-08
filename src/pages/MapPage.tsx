@@ -529,7 +529,7 @@ const CustomMarker = ({ event, isSelected, onSelect }: any) => {
                 className="ml-3 pr-4 whitespace-nowrap"
               >
                 <p className="text-[8px] font-black text-primary uppercase tracking-[0.15em] leading-none mb-1">
-                  {category?.toUpperCase() || 'EVENTO'}
+                  {category?.toUpperCase() || event.tags?.[0]?.toUpperCase() || 'EVENTO'}
                 </p>
                 <p className="text-[11px] font-black text-on-surface leading-none uppercase tracking-tighter">
                   {event.title}

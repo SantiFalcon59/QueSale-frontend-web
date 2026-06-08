@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
-  Calendar, MapPin, Users, Heart, Share2, Send, MessageSquare, 
+  Calendar, CalendarDays, MapPin, Users, Heart, Share2, Send, MessageSquare, 
   ShieldCheck, Ticket as TicketIcon, ThumbsUp, Reply, 
   Instagram, Twitter, Globe, Info, Megaphone, Users2,
   X, Image as ImageIcon, Plus, CheckCircle2, Trash2, Gavel,
@@ -485,31 +485,55 @@ const EventDetail: React.FC = () => {
                     )}
 
                     {organizerEvents.length > 0 && (
-                      <div className="space-y-4">
+                      <div className="space-y-6">
                         <h3 className="text-xl font-bold uppercase tracking-widest opacity-60">Otros Eventos de {organizer?.name}</h3>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                           {organizerEvents.slice(0, 4).map(orgEvent => (
                             <Link
                               key={orgEvent.id_event}
                               to={`/events/${orgEvent.id_event}`}
-                              className="group bg-white rounded-2xl border border-outline-variant overflow-hidden hover:border-primary/50 transition-all hover:shadow-lg"
+                              className="group bg-white rounded-[2rem] border border-outline-variant overflow-hidden hover:border-primary/50 transition-all hover:shadow-xl hover:-translate-y-1"
                             >
-                              <div className="relative h-36 overflow-hidden">
+                              <div className="relative aspect-[4/3] overflow-hidden">
                                 <img
                                   src={orgEvent.images?.[0] || orgEvent.thumbnail_url || NO_EVENT_IMAGE}
                                   alt={orgEvent.title}
                                   className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                                 />
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
-                                <div className="absolute bottom-2 left-3 right-3">
-                                  <p className="text-sm font-black text-white leading-tight truncate">{orgEvent.title}</p>
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
+                                <div className="absolute bottom-3 left-4 right-4">
+                                  <p className="text-base font-black text-white leading-tight truncate drop-shadow-lg">{orgEvent.title}</p>
                                 </div>
+                                <div className="absolute top-3 left-3">
+                                  <span className="px-2 py-1 rounded-lg bg-white/20 backdrop-blur-md text-white text-[8px] font-black uppercase tracking-wider border border-white/10">
+                                    {orgEvent.interests?.[0]?.name || orgEvent.tags?.[0] || 'Evento'}
+                                  </span>
+                                </div>
+                                {(!orgEvent.price || Number(orgEvent.price) === 0) && (
+                                  <div className="absolute top-3 right-3 px-2 py-1 rounded-lg bg-green-500 text-white text-[8px] font-black tracking-widest uppercase shadow-lg">
+                                    Gratis
+                                  </div>
+                                )}
                               </div>
-                              <div className="p-3 flex items-center justify-between">
-                                <span className="text-[9px] text-on-surface-variant font-bold">
-                                  {new Date(orgEvent.date).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })}
-                                </span>
-                                <span className="text-[9px] font-black text-primary">{formatPrice(orgEvent.price)}</span>
+                              <div className="p-4 space-y-3">
+                                <div className="flex items-center justify-between">
+                                  <span className="text-[10px] text-on-surface-variant font-bold flex items-center gap-1">
+                                    <CalendarDays size={12} className="text-primary shrink-0" />
+                                    {new Date(orgEvent.date).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}
+                                  </span>
+                                  <span className="text-[10px] font-black text-primary">{formatPrice(orgEvent.price)}</span>
+                                </div>
+                                <div className="flex items-center gap-1 text-[9px] text-on-surface-variant font-bold">
+                                  <MapPin size={10} className="text-primary shrink-0" />
+                                  <span className="truncate">{orgEvent.ubication || 'Consultar ubicación'}</span>
+                                </div>
+                                {orgEvent.tags && orgEvent.tags.length > 0 && (
+                                  <div className="flex gap-1 flex-wrap pt-1">
+                                    {orgEvent.tags.slice(0, 2).map((t: string) => (
+                                      <span key={t} className="px-1.5 py-0.5 rounded bg-primary/5 text-primary text-[7px] font-bold uppercase tracking-wider">#{t}</span>
+                                    ))}
+                                  </div>
+                                )}
                               </div>
                             </Link>
                           ))}

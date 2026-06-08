@@ -111,14 +111,14 @@ const PostCard: React.FC<PostCardProps> = ({ post, onReact, onDelete, onComment,
               </p>
             )}
             {gifMatch && (
-              <div className="rounded-xl overflow-hidden max-h-96 bg-black/5">
+              <div className="rounded-xl overflow-hidden max-h-96 max-w-2xl mx-auto bg-black/5">
                 <img src={gifMatch[1]} alt="GIF" className="w-full h-full object-contain mx-auto" />
               </div>
             )}
             {mediaList.length > 0 && !gifMatch && (
               <div className={cn("grid gap-3", mediaList.length > 1 ? "grid-cols-2" : "grid-cols-1")}>
                 {mediaList.map((url: string, i: number) => (
-                  <div key={i} className="rounded-xl overflow-hidden max-h-96 bg-black/5">
+                  <div key={i} className="rounded-xl overflow-hidden max-h-96 max-w-2xl mx-auto bg-black/5">
                     <img src={resolveAssetUrl(url) || url} alt="" className="w-full h-full object-contain mx-auto" />
                   </div>
                 ))}
@@ -137,12 +137,11 @@ const PostCard: React.FC<PostCardProps> = ({ post, onReact, onDelete, onComment,
               if (userReaction) {
                 onReact?.(post.id_post, userReaction);
               } else {
-                setShowReactionPicker(!showReactionPicker);
+                setShowReactionPicker(prev => !prev);
               }
             }}
-            onMouseEnter={() => { if (user) setShowReactionPicker(true); }}
             className={cn(
-              "flex items-center gap-2 lg:gap-3 text-[10px] lg:text-xs font-black uppercase tracking-widest transition-all px-3 py-1.5 rounded-xl",
+              "flex items-center gap-2 lg:gap-3 text-[10px] lg:text-xs font-black uppercase tracking-widest transition-all px-3 py-1.5 rounded-xl cursor-pointer",
               userReaction ? "bg-primary/10 text-primary" : "text-on-surface-variant hover:text-primary"
             )}
           >
@@ -154,16 +153,13 @@ const PostCard: React.FC<PostCardProps> = ({ post, onReact, onDelete, onComment,
             {totalReactions > 0 ? totalReactions : 'Reaccionar'}
           </button>
           {showReactionPicker && (
-            <div
-              className="absolute bottom-full left-0 mb-2 flex gap-1 bg-white rounded-2xl shadow-2xl border border-outline-variant p-2 z-50"
-              onMouseLeave={() => setShowReactionPicker(false)}
-            >
+            <div className="absolute bottom-full left-0 mb-2 flex gap-1 bg-white rounded-2xl shadow-2xl border border-outline-variant p-2 z-50">
               {REACTIONS.map(r => (
                 <button
                   key={r.type}
                   onClick={() => handleReaction(r.type)}
                   className={cn(
-                    "w-10 h-10 flex items-center justify-center rounded-xl text-xl hover:scale-125 transition-all hover:bg-surface-container-low",
+                    "w-10 h-10 flex items-center justify-center rounded-xl text-xl hover:scale-125 transition-all hover:bg-surface-container-low cursor-pointer",
                     userReaction === r.type && "bg-primary/10 ring-2 ring-primary/30"
                   )}
                   title={r.label}
