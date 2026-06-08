@@ -487,7 +487,7 @@ const EventDetail: React.FC = () => {
                     {organizerEvents.length > 0 && (
                       <div className="space-y-6">
                         <h3 className="text-xl font-bold uppercase tracking-widest opacity-60">Otros Eventos de {organizer?.name}</h3>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
                           {organizerEvents.slice(0, 4).map(orgEvent => (
                             <Link
                               key={orgEvent.id_event}
@@ -1134,7 +1134,7 @@ const LiveChat: React.FC<{ eventId: string; isModerator: boolean; organizerId: s
   };
 
   return (
-    <div ref={scrollRef} className="flex flex-col gap-6 overflow-y-auto max-h-[500px] pr-2">
+    <div ref={scrollRef} className="flex flex-col gap-6 pr-2">
       {loadingHistory && (
         <div className="text-center py-4">
           <span className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant/50 animate-pulse">Cargando mensajes anteriores...</span>

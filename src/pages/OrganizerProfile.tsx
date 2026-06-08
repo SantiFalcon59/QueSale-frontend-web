@@ -29,6 +29,7 @@ const OrganizerProfile: React.FC = () => {
         setOrganizer(orgData);
         setEvents(Array.isArray(evData) ? evData : []);
         setFollowers(Array.isArray(folData) ? folData : []);
+        setFollowing(orgData.is_following ?? false);
       } catch (err) {
         console.error('Error loading organizer profile:', err);
       } finally {
@@ -44,9 +45,11 @@ const OrganizerProfile: React.FC = () => {
       if (following) {
         await api.unfollowOrganizer(id!);
         setFollowing(false);
+        setOrganizer(prev => ({ ...prev, followers_count: Math.max(0, (prev.followers_count || 0) - 1) }));
       } else {
         await api.followOrganizer(id!);
         setFollowing(true);
+        setOrganizer(prev => ({ ...prev, followers_count: (prev.followers_count || 0) + 1 }));
       }
     } catch (err) {
       console.error('Error toggling follow:', err);
@@ -111,6 +114,9 @@ const OrganizerProfile: React.FC = () => {
               <div className="flex items-center gap-4 justify-center lg:justify-start text-on-surface-variant font-bold text-xs uppercase tracking-widest">
                 <span className="flex items-center gap-1.5"><Calendar size={14} /> {eventsCount} Eventos</span>
                 <span className="flex items-center gap-1.5"><Heart size={14} /> {followersCount} Seguidores</span>
+                {organizer.created_at && (
+                  <span className="flex items-center gap-1.5"><Calendar size={14} /> Creada el {format(new Date(organizer.created_at), "d 'de' MMMM, yyyy", { locale: es })}</span>
+                )}
               </div>
             </div>
             {organizer.description && (
@@ -208,36 +214,7 @@ const OrganizerProfile: React.FC = () => {
         )}
       </section>
 
-      {/* Followers */}
-      <section className="space-y-6">
-        <h2 className="text-2xl lg:text-3xl font-black italic tracking-tight uppercase">
-          Seguidores <span className="text-on-surface-variant/40 text-lg">({followersCount})</span>
-        </h2>
-        {followers.length === 0 ? (
-          <div className="py-10 text-center">
-            <p className="text-on-surface-variant font-medium">Sin seguidores todavía.</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-            {followers.map((f: any) => (
-              <Link
-                key={f.id_user}
-                to={`/@${f.user?.username || f.id_user}`}
-                className="flex flex-col items-center gap-2 p-4 rounded-2xl bg-white border border-outline-variant hover:border-primary/30 hover:shadow-md transition-all group"
-              >
-                <img
-                  src={resolveAssetUrl(f.user?.profile?.photo_url) || `https://api.dicebear.com/7.x/avataaars/svg?seed=${f.id_user}`}
-                  alt={f.user?.username || 'User'}
-                  className="w-12 h-12 rounded-xl object-cover bg-surface-container-high"
-                />
-                <span className="text-[10px] font-bold text-center truncate w-full group-hover:text-primary transition-colors">
-                  @{f.user?.username || 'usuario'}
-                </span>
-              </Link>
-            ))}
-          </div>
-        )}
-      </section>
+
     </div>
   );
 };

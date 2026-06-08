@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { MessageSquare, Info, ThumbsUp, ImageIcon, X, Loader2 } from 'lucide-react';
+import { MessageSquare, Info, ThumbsUp, ImageIcon, X, Loader2, Plus } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { resolveAssetUrl, api } from '../../services/apiClient';
 import { useAuth } from '../../context/AuthContext';

@@ -139,7 +139,7 @@ export const api = {
     apiRequest(`/api/events/${encodeURIComponent(eventId)}`),
 
   getOrganizerById: (organizerId: string) =>
-    apiRequest(`/api/organizers/${encodeURIComponent(organizerId)}`),
+    apiRequest(`/api/organizers/${encodeURIComponent(organizerId)}`, { auth: true }),
 
   getEventPosts: (eventId: string, type?: string, page = 1, limit = 20) => {
     const typeQuery = type ? `&type=${encodeURIComponent(type)}` : '';

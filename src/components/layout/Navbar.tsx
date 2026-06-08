@@ -259,6 +259,14 @@ export const Navbar: React.FC<{ onMenuClick: () => void }> = ({ onMenuClick }) =
                       <span className="material-symbols-outlined text-[20px] text-white/60">groups</span>
                       Mis Organizaciones
                     </motion.button>
+                    <motion.button
+                      whileHover={{ x: 4, backgroundColor: 'rgba(255,255,255,0.05)' }}
+                      onClick={() => { setDropdownOpen(false); navigate('/my-tickets'); }}
+                      className="w-full px-4 py-2.5 text-left text-sm text-white flex items-center gap-3 transition-colors cursor-pointer"
+                    >
+                      <span className="material-symbols-outlined text-[20px] text-white/60">qr_code_2</span>
+                      Mis Entradas
+                    </motion.button>
                     {profile?.role === 'admin' && (
                       <motion.button
                         whileHover={{ x: 4, backgroundColor: 'rgba(255,255,255,0.05)' }}
