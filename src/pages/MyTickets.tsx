@@ -160,7 +160,7 @@ const MyTickets: React.FC = () => {
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-white/40">ID de Entrada</span>
-                    <span className="text-white font-mono">{selectedTicket.uuid}</span>
+                    <span className="text-white font-mono bg-black/50 px-2 py-1 rounded">{selectedTicket.uuid}</span>
                   </div>
                 </div>
               </div>

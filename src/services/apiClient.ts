@@ -185,16 +185,16 @@ export const api = {
   getOrganizerDashboard: (organizerId: string) =>
     apiRequest(`/api/organizers/${encodeURIComponent(organizerId)}/dashboard`, { auth: true }),
 
-  createEvent: (payload: {
-    title: string;
-    description: string;
-    date: string | Date;
-    location: string;
-    organizerId: string;
-    interestIds?: number[];
-  }) =>
+  createEvent: (payload: any) =>
     apiRequest('/api/events', {
       method: 'POST',
+      body: payload,
+      auth: true,
+    }),
+
+  updateEvent: (eventId: string, payload: any) =>
+    apiRequest(`/api/events/${encodeURIComponent(eventId)}`, {
+      method: 'PUT',
       body: payload,
       auth: true,
     }),
@@ -276,6 +276,15 @@ export const api = {
   getSavedEvents: (page = 1, limit = 20) =>
     apiRequest(`/api/users/saved-events?page=${page}&limit=${limit}`, { auth: true }),
 
+  getUserTickets: (page = 1, limit = 20) =>
+    apiRequest(`/api/tickets/my-tickets?page=${page}&limit=${limit}`, { auth: true }),
+
+  purchaseTicket: (eventId: string) =>
+    apiRequest('/api/tickets/purchase', { method: 'POST', body: { eventId }, auth: true }),
+
+  validateTicket: (ticketUuid: string) =>
+    apiRequest(`/api/tickets/${encodeURIComponent(ticketUuid)}/validate`, { method: 'POST', auth: true }),
+
   createEventComment: (postId: string, content: string) =>
     apiRequest(`/api/events/posts/${encodeURIComponent(postId)}/comments`, {
       method: 'POST',
@@ -329,9 +338,11 @@ export const api = {
     return resolveAssetUrl(result.data?.media_url) || '';
   },
 
-  uploadEventMedia: async (file: File, eventId: string): Promise<string> => {
+  uploadEventMedia: async (files: File[], eventId: string): Promise<string[]> => {
     const formData = new FormData();
-    formData.append('media', file);
+    for (const file of files) {
+      formData.append('media', file);
+    }
     formData.append('eventId', eventId);
 
     const token = await auth.currentUser?.getIdToken();
@@ -349,7 +360,7 @@ export const api = {
     }
 
     const result = await response.json();
-    return resolveAssetUrl(result.data?.media_url) || '';
+    return (result.data?.media_urls || []).map((url: string) => resolveAssetUrl(url));
   },
 
   getOrganizerFollowers: (organizerId: string, page = 1, limit = 50) =>

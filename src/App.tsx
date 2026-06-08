@@ -28,6 +28,7 @@ const Login = React.lazy(() => import('./pages/Auth/Login'));
 const Register = React.lazy(() => import('./pages/Auth/Register'));
 const OrganizerDashboard = React.lazy(() => import('./pages/Organizer/Dashboard'));
 const CreateEvent = React.lazy(() => import('./pages/Organizer/CreateEvent'));
+const EditEvent = React.lazy(() => import('./pages/Organizer/EditEvent'));
 const AdminOrganizations = React.lazy(() => import('./pages/Admin/AdminOrganizations'));
 const OrganizerProfile = React.lazy(() => import('./pages/OrganizerProfile'));
 const AdminPanel = React.lazy(() => import('./pages/Admin/AdminPanel'));
@@ -134,6 +135,7 @@ export default function App() {
                     <Route path="/organizer/:id" element={<PageWrapper><OrganizerProfile /></PageWrapper>} />
                     <Route path="/organizer" element={<AuthGuard><PageWrapper><OrganizerDashboard /></PageWrapper></AuthGuard>} />
                     <Route path="/organizer/new" element={<AuthGuard><PageWrapper><CreateEvent /></PageWrapper></AuthGuard>} />
+                    <Route path="/organizer/edit/:eventId" element={<AuthGuard><PageWrapper><EditEvent /></PageWrapper></AuthGuard>} />
                     <Route path="/admin" element={<AuthGuard><AdminGuard><PageWrapper><AdminPanel /></PageWrapper></AdminGuard></AuthGuard>} />
                     <Route path="/*" element={<CatchAllRouter />} />
                   </Routes>

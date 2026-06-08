@@ -86,7 +86,7 @@ const MapPicker: React.FC<{ lat: number; lng: number; address: string; onLocatio
   );
 };
 
-const CreateEvent: React.FC = () => {
+const EditEvent: React.FC = () => {
   const navigate = useNavigate();
   const { eventId } = useParams<{ eventId?: string }>();
   const isEditing = !!eventId;
@@ -122,7 +122,7 @@ const CreateEvent: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    const fetchOrg = async () => {
+    const fetchData = async () => {
       if (!user) return;
       try {
         const data: any = await api.getMyOrganizers(1, 1);
@@ -131,22 +131,53 @@ const CreateEvent: React.FC = () => {
           setOrganization({ id: org.id_organizer, name: org.name, verified: org.verified });
         } else {
           navigate('/organizer');
+          return;
         }
 
         const catsData: any = await api.getCategories();
         const cats = catsData?.data || catsData || [];
         setCategories(cats);
-        if (cats.length > 0 && !formData.category) {
+
+        if (isEditing && eventId) {
+          const eventData: any = await api.getEventById(eventId);
+          if (eventData) {
+            const evDate = new Date(eventData.date);
+            setFormData({
+              title: eventData.title,
+              description: eventData.description || '',
+              category: eventData.interests?.[0]?.name || (cats.length > 0 ? cats[0].name : ''),
+              date: evDate.toISOString().split('T')[0],
+              time: evDate.toTimeString().split(':')[0] + ':' + evDate.toTimeString().split(':')[1],
+              address: eventData.ubication || '',
+              lat: Number(eventData.latitude) || -34.6037,
+              lng: Number(eventData.longitude) || -58.3816,
+              price: Number(eventData.price) || 0,
+              capacity: eventData.capacity ? String(eventData.capacity) : '',
+              ticketType: eventData.ticket_type || 'free',
+              ticketUrl: eventData.ticket_url || '',
+              qr_enabled: !!eventData.qr_enabled,
+              tags: eventData.tags || [],
+              customTag: '',
+            });
+            
+            // Set existing media previews (assuming images is an array of paths/urls)
+            if (eventData.images && Array.isArray(eventData.images)) {
+              setMediaPreviews(eventData.images.map((img: string) => resolveAssetUrl(img)));
+            } else if (eventData.thumbnail_url) {
+              setMediaPreviews([resolveAssetUrl(eventData.thumbnail_url)]);
+            }
+          }
+        } else if (cats.length > 0 && !formData.category) {
           setFormData(prev => ({ ...prev, category: cats[0].name }));
         }
       } catch (err) {
-        console.error("Error fetching org:", err);
+        console.error("Error fetching data:", err);
       } finally {
         setLoading(false);
       }
     };
-    fetchOrg();
-  }, [user, navigate]);
+    fetchData();
+  }, [user, navigate, isEditing, eventId]);
 
   const handleMediaSelect = (files: FileList | File[]) => {
     const fileArray = Array.from(files);
@@ -191,7 +222,7 @@ const CreateEvent: React.FC = () => {
     try {
       const eventDate = new Date(`${formData.date}T${formData.time}`);
 
-      const created: any = await api.createEvent({
+      const eventPayload = {
         title: formData.title,
         description: formData.description,
         date: eventDate.toISOString(),
@@ -206,19 +237,31 @@ const CreateEvent: React.FC = () => {
         ticket_url: formData.ticketType === 'external' ? formData.ticketUrl : undefined,
         qr_enabled: formData.qr_enabled,
         tags: formData.tags,
-      });
+      };
 
-      if (mediaFiles.length > 0 && created?.id_event) {
-        try {
-          await api.uploadEventMedia(mediaFiles, created.id_event);
-        } catch (err) {
-          console.error('Error uploading media:', err);
+      if (isEditing && eventId) {
+        await api.updateEvent(eventId, eventPayload);
+        if (mediaFiles.length > 0) {
+          try {
+            await api.uploadEventMedia(mediaFiles, eventId);
+          } catch (err) {
+            console.error('Error uploading media:', err);
+          }
+        }
+      } else {
+        const created: any = await api.createEvent(eventPayload);
+        if (mediaFiles.length > 0 && created?.id_event) {
+          try {
+            await api.uploadEventMedia(mediaFiles, created.id_event);
+          } catch (err) {
+            console.error('Error uploading media:', err);
+          }
         }
       }
 
       navigate('/organizer');
     } catch (err: any) {
-      setError(err.message || "Error al crear el evento.");
+      setError(err.message || "Error al guardar el evento.");
     } finally {
       setSubmitting(false);
     }
@@ -256,8 +299,8 @@ const CreateEvent: React.FC = () => {
 
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
           <div className="space-y-2">
-            <p className="text-[10px] text-primary uppercase tracking-[0.4em] font-black italic">Nuevo Evento</p>
-            <h1 className="text-5xl font-black italic tracking-tighter uppercase leading-none">CREAR <span className="text-primary">EVENTO</span></h1>
+            <p className="text-[10px] text-primary uppercase tracking-[0.4em] font-black italic">{isEditing ? 'Editar Evento' : 'Nuevo Evento'}</p>
+            <h1 className="text-5xl font-black italic tracking-tighter uppercase leading-none">{isEditing ? 'EDITAR' : 'CREAR'} <span className="text-primary">EVENTO</span></h1>
           </div>
           {organization && (
             <div className="px-5 py-2.5 rounded-xl border border-primary/20 bg-primary/5 text-primary flex items-center gap-2">
@@ -668,7 +711,7 @@ const CreateEvent: React.FC = () => {
             className="btn-primary h-14 px-10 text-sm font-black uppercase tracking-widest disabled:opacity-30 flex items-center gap-2"
           >
             {submitting ? <Loader2 size={18} className="animate-spin" /> : <Sparkles size={18} />}
-            {submitting ? 'Publicando...' : 'Publicar Evento'}
+            {submitting ? 'Guardando...' : (isEditing ? 'Guardar Cambios' : 'Publicar Evento')}
           </button>
         )}
       </div>
@@ -683,4 +726,4 @@ const TicketIcon = (props: any) => (
   </svg>
 );
 
-export default CreateEvent;
+export default EditEvent;

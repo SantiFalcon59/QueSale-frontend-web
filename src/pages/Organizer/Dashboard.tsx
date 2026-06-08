@@ -792,6 +792,12 @@ const OrganizerDashboard: React.FC = () => {
                   >
                     Ver
                   </button>
+                  <button
+                    onClick={() => navigate(`/organizer/edit/${event.id_event}`)}
+                    className="h-10 w-10 rounded-xl bg-surface text-primary text-[9px] font-black uppercase tracking-widest hover:bg-primary hover:text-white transition-all flex items-center justify-center border border-outline-variant"
+                  >
+                    <Edit size={14} />
+                  </button>
                   {isCreator && (
                     <button
                       onClick={() => handleDeleteEvent(event.id_event)}
