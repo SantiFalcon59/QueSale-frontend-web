@@ -69,7 +69,7 @@ const Favorites: React.FC = () => {
               className="group bg-white rounded-[2.5rem] border border-outline-variant hover:border-primary/50 transition-all overflow-hidden shadow-sm hover:shadow-xl hover:shadow-black/5"
             >
               <Link to={`/events/${event.id_event}`} className="block relative h-48 overflow-hidden">
-                <img src={event.thumbnail_url || 'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=800'} alt={event.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                <img src={event.images?.[0] || event.thumbnail_url || 'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=800'} alt={event.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
                 <div className="absolute top-4 right-4">
                    <button 
                      onClick={(e) => {

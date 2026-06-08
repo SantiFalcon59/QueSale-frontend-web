@@ -142,7 +142,7 @@ const Discovery: React.FC = () => {
         description: e.description,
         date: e.date,
         ubication: e.ubication || e.location,
-        thumbnail_url: e.thumbnail_url || e.image,
+        thumbnail_url: e.thumbnail_url || e.images?.[0] || e.image,
         category: e.interests?.[0]?.name || e.category,
         price: e.price,
         tags: e.tags || [],

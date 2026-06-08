@@ -46,11 +46,21 @@ const MapPage: React.FC = () => {
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [activeCategory, setActiveCategory] = useState('Todos');
   const [proximity, setProximity] = useState(25);
+  const [selectedDate, setSelectedDate] = useState('');
+  const [showAdvanced, setShowAdvanced] = useState(false);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [events, setEvents] = useState<any[]>([]);
   const [categories, setCategories] = useState<{ id: number | string; name: string; color?: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+
+  const haversine = (lat1: number, lng1: number, lat2: number, lng2: number): number => {
+    const R = 6371;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLng = (lng2 - lng1) * Math.PI / 180;
+    const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLng / 2) ** 2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  };
 
   useEffect(() => {
     if (navigator.geolocation) {
@@ -114,6 +124,8 @@ const MapPage: React.FC = () => {
             onSelectEvent={setSelectedEventId}
             activeCategory={activeCategory}
             events={events}
+            proximity={proximity}
+            selectedDate={selectedDate}
           />
         </APIProvider>
       ) : (
@@ -135,65 +147,76 @@ const MapPage: React.FC = () => {
         </div>
       )}
 
-      {/* Advanced Side Filters */}
-      <div className="absolute top-24 left-8 w-64 flex flex-col gap-4 z-30 pointer-events-none">
-        <div className="bg-white/85 backdrop-blur-2xl p-6 rounded-[2.5rem] shadow-2xl border border-white/40 ring-1 ring-primary/10 pointer-events-auto">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-[10px] font-black text-on-surface-variant uppercase tracking-[0.2em]">Filtros Avanzados</h3>
-            <span className="material-symbols-outlined text-primary text-sm">tune</span>
+      {/* Floating Filter Panel */}
+      <div className="absolute top-24 left-4 lg:left-8 w-72 flex flex-col gap-3 z-30 pointer-events-none">
+        <div className="bg-white/90 backdrop-blur-2xl p-5 lg:p-6 rounded-[2rem] shadow-2xl border border-white/50 ring-1 ring-primary/10 pointer-events-auto">
+          {/* Header */}
+          <div className="flex items-center justify-between mb-5">
+            <h3 className="text-xs font-black text-on-surface uppercase tracking-[0.15em] flex items-center gap-2">
+              <span className="material-symbols-outlined text-primary text-base">tune</span>
+              Filtros
+            </h3>
+            {activeCategory !== 'Todos' || selectedDate || proximity < 100 ? (
+              <button onClick={() => { setActiveCategory('Todos'); setSelectedDate(''); setProximity(25); }}
+                className="text-[9px] font-bold text-primary/60 hover:text-primary uppercase tracking-widest transition-colors">
+                Limpiar
+              </button>
+            ) : null}
           </div>
           
-          <div className="flex flex-col gap-2 mb-8">
-            {categories.map(cat => {
+          {/* Categories — chip-style */}
+          <div className="flex flex-wrap gap-2 mb-4">
+            {categories.slice(0, 6).map(cat => {
               const isActive = cat.id === 'Todos' ? activeCategory === 'Todos' : activeCategory === cat.name;
               return (
-                <button 
-                  key={cat.id}
+                <button key={cat.id}
                   onClick={() => setActiveCategory(cat.id === 'Todos' ? 'Todos' : cat.name)}
                   className={cn(
-                    "flex items-center justify-between w-full px-5 py-3 rounded-2xl transition-all group",
+                    "px-4 py-2 rounded-xl text-xs font-bold transition-all border",
                     isActive
-                      ? "text-white shadow-lg border border-white/20" 
-                      : "hover:bg-surface-variant/50 border border-transparent"
+                      ? "text-white border-transparent shadow-md"
+                      : "bg-white/60 text-on-surface-variant border-outline-variant/30 hover:border-primary/40 hover:text-primary"
                   )}
-                  style={isActive ? { backgroundColor: cat.color || '#732ee4', boxShadow: `0 4px 14px ${cat.color || '#732ee4'}40` } : {}}
+                  style={isActive ? { backgroundColor: cat.color || '#732ee4' } : {}}
                 >
-                  <div className="flex items-center gap-3">
-                    <span
-                      className="w-3 h-3 rounded-sm shrink-0"
-                      style={{ backgroundColor: cat.color || '#732ee4' }}
-                    />
-                    <span className={cn(
-                      "text-xs font-bold",
-                      isActive ? "text-white" : "text-on-surface-variant"
-                    )}>{cat.name}</span>
-                  </div>
+                  {cat.name}
                 </button>
               );
             })}
           </div>
 
-          <div className="space-y-6 border-t border-outline-variant/30 pt-6">
-            <div>
-              <div className="flex justify-between items-center mb-3">
-                <span className="text-[9px] font-black text-outline uppercase tracking-widest">Proximidad</span>
-                <span className="text-[10px] font-black text-primary bg-primary/10 px-2 py-0.5 rounded-lg">{proximity}km</span>
+          {/* Advanced Filters Toggle */}
+          <button onClick={() => setShowAdvanced(!showAdvanced)}
+            className="flex items-center gap-2 w-full py-2.5 px-3 rounded-xl hover:bg-surface-variant/30 transition-colors text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">
+            <span className="material-symbols-outlined text-sm transition-transform" style={{ transform: showAdvanced ? 'rotate(180deg)' : 'rotate(0deg)' }}>expand_more</span>
+            Avanzados
+          </button>
+
+          {/* Collapsible Advanced Section */}
+          {showAdvanced && (
+            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}
+              className="space-y-5 pt-4 border-t border-outline-variant/20 overflow-hidden">
+              {/* Proximity */}
+              <div>
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-[10px] font-black text-outline uppercase tracking-widest">Proximidad</span>
+                  <span className="text-xs font-black text-primary bg-primary/10 px-2 py-0.5 rounded-lg">{proximity}km</span>
+                </div>
+                <input className="w-full h-2 bg-surface-variant/50 rounded-full appearance-none cursor-pointer accent-primary"
+                  max="100" min="1" type="range" value={proximity}
+                  onChange={(e) => setProximity(parseInt(e.target.value))} />
               </div>
-              <input 
-                className="w-full h-1.5 bg-surface-variant/50 rounded-lg appearance-none cursor-pointer accent-primary" 
-                max="100" min="1" type="range" 
-                value={proximity}
-                onChange={(e) => setProximity(parseInt(e.target.value))}
-              />
-            </div>
-            <div>
-              <span className="text-[9px] font-black text-outline uppercase tracking-widest mb-3 block">Fecha Seleccionada</span>
-              <div className="flex items-center gap-2 bg-surface-variant/20 rounded-xl px-4 py-2.5 border border-outline-variant/20">
-                <span className="material-symbols-outlined text-sm text-primary">calendar_month</span>
-                <span className="text-[11px] font-bold text-on-surface truncate">Hoy, 27 Octubre</span>
+              {/* Date */}
+              <div>
+                <span className="text-[10px] font-black text-outline uppercase tracking-widest mb-2 block">Fecha</span>
+                <input type="date"
+                  value={selectedDate}
+                  min={new Date().toISOString().split('T')[0]}
+                  onChange={(e) => setSelectedDate(e.target.value)}
+                  className="w-full bg-surface-variant/20 rounded-xl px-4 py-2.5 border border-outline-variant/20 text-xs font-bold text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/30" />
               </div>
-            </div>
-          </div>
+            </motion.div>
+          )}
         </div>
       </div>
 
@@ -209,7 +232,7 @@ const MapPage: React.FC = () => {
             <div className="bg-white/90 backdrop-blur-3xl rounded-[2.5rem] overflow-hidden shadow-[0_25px_60px_-15px_rgba(0,0,0,0.3)] border border-white/60 flex h-40 ring-1 ring-primary/5">
               {/* Left: Image Section */}
               <div className="w-1/3 relative overflow-hidden group shrink-0">
-                <img className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" src={selectedEvent.thumbnail_url || 'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=800'} alt={selectedEvent.title} />
+                <img className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" src={selectedEvent.images?.[0] || selectedEvent.thumbnail_url || 'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=800'} alt={selectedEvent.title} />
                 <div className="absolute top-3 left-3">
                   <span
                     className="text-white text-[8px] font-black px-3 py-1 rounded-md uppercase tracking-wider"
@@ -280,7 +303,7 @@ const MapPage: React.FC = () => {
   );
 };
 
-const MapWrapper = ({ userLocation, selectedEventId, onSelectEvent, activeCategory, events }: any) => {
+const MapWrapper = ({ userLocation, selectedEventId, onSelectEvent, activeCategory, events, proximity, selectedDate }: any) => {
   const map = useMap();
   
   const handleZoomIn = useCallback(() => {
@@ -301,10 +324,34 @@ const MapWrapper = ({ userLocation, selectedEventId, onSelectEvent, activeCatego
     }
   }, [map, userLocation]);
 
+  const haversine = (lat1: number, lng1: number, lat2: number, lng2: number): number => {
+    const R = 6371;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLng = (lng2 - lng1) * Math.PI / 180;
+    const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLng / 2) ** 2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  };
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
   const filteredEvents = events.filter(e => {
-    if (activeCategory === 'Todos') return true;
-    const catName = e.interests?.[0]?.name;
-    return catName === activeCategory;
+    if (activeCategory !== 'Todos') {
+      const catName = e.interests?.[0]?.name;
+      if (catName !== activeCategory) return false;
+    }
+    if (selectedDate) {
+      const eventDate = new Date(e.date);
+      eventDate.setHours(0, 0, 0, 0);
+      const filterDate = new Date(selectedDate);
+      filterDate.setHours(0, 0, 0, 0);
+      if (eventDate < filterDate) return false;
+    }
+    if (userLocation && proximity < 100) {
+      const dist = haversine(userLocation.lat, userLocation.lng, Number(e.latitude), Number(e.longitude));
+      if (dist > proximity) return false;
+    }
+    return true;
   });
 
   return (
@@ -376,7 +423,7 @@ const CustomMarker = ({ event, isSelected, onSelect }: any) => {
             : "border-outline-variant/40 hover:border-primary hover:scale-110"
         )}>
           <div className="w-12 h-12 rounded-full overflow-hidden border border-outline-variant/30">
-            <img src={event.thumbnail_url || 'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=800'} className="w-full h-full object-cover" alt={event.title} />
+            <img src={event.images?.[0] || event.thumbnail_url || 'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=800'} className="w-full h-full object-cover" alt={event.title} />
           </div>
           
           <div className={cn(

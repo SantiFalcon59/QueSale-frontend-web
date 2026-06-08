@@ -94,7 +94,8 @@ const EventDetail: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
-  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [galleryIdx, setGalleryIdx] = useState<number | null>(null);
+  const galleryImages = event?.media || [];
   const [isSaved, setIsSaved] = useState(false);
   const [organizerEvents, setOrganizerEvents] = useState<any[]>([]);
   const [isModerator, setIsModerator] = useState(false);
@@ -187,6 +188,17 @@ const EventDetail: React.FC = () => {
     fetchEvent();
   }, [id]);
 
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (galleryIdx === null) return;
+      if (e.key === 'Escape') setGalleryIdx(null);
+      if (e.key === 'ArrowLeft') setGalleryIdx(i => i !== null ? Math.max(0, i - 1) : null);
+      if (e.key === 'ArrowRight') setGalleryIdx(i => i !== null ? Math.min(galleryImages.length - 1, i + 1) : null);
+    };
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+  }, [galleryIdx, galleryImages.length]);
+
   const handleToggleSave = async () => {
     if (handleInteraction()) return;
     if (!id) return;
@@ -225,7 +237,7 @@ const EventDetail: React.FC = () => {
   const eventDate = isNaN(rawDate.getTime()) ? new Date() : rawDate;
 
   return (
-    <div className="relative">
+    <div className="relative px-4 lg:px-8 xl:px-12 max-w-[1600px] mx-auto">
       <LoginPromptModal 
         isOpen={showLoginPrompt} 
         onClose={() => setShowLoginPrompt(false)} 
@@ -235,27 +247,51 @@ const EventDetail: React.FC = () => {
       
       {/* Image Gallery Modal */}
       <AnimatePresence>
-        {selectedImage && (
-          <motion.div 
+        {galleryIdx !== null && galleryImages.length > 0 && (
+          <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-xl flex items-center justify-center p-10"
-            onClick={() => setSelectedImage(null)}
+            className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-xl flex items-center justify-center select-none"
+            onClick={() => setGalleryIdx(null)}
           >
-            <button 
-              className="absolute top-10 right-10 w-16 h-16 rounded-full bg-white/10 text-white flex items-center justify-center hover:bg-white/20 transition-all"
-              onClick={() => setSelectedImage(null)}
+            <button
+              className="absolute top-6 right-6 lg:top-10 lg:right-10 w-12 h-12 lg:w-16 lg:h-16 rounded-full bg-white/10 text-white flex items-center justify-center hover:bg-white/20 transition-all z-10"
+              onClick={() => setGalleryIdx(null)}
             >
-              <X size={32} />
+              <X size={28} className="lg:size-8" />
             </button>
-            <motion.img 
+
+            {galleryIdx > 0 && (
+              <button
+                className="absolute left-4 lg:left-8 top-1/2 -translate-y-1/2 w-12 h-12 lg:w-14 lg:h-14 rounded-full bg-white/10 text-white flex items-center justify-center hover:bg-white/25 transition-all z-10"
+                onClick={(e) => { e.stopPropagation(); setGalleryIdx(i => i !== null ? Math.max(0, i - 1) : null); }}
+              >
+                <ChevronLeft size={28} className="lg:size-8" />
+              </button>
+            )}
+
+            {galleryIdx < galleryImages.length - 1 && (
+              <button
+                className="absolute right-4 lg:right-8 top-1/2 -translate-y-1/2 w-12 h-12 lg:w-14 lg:h-14 rounded-full bg-white/10 text-white flex items-center justify-center hover:bg-white/25 transition-all z-10"
+                onClick={(e) => { e.stopPropagation(); setGalleryIdx(i => i !== null ? Math.min(galleryImages.length - 1, i + 1) : null); }}
+              >
+                <ChevronRight size={28} className="lg:size-8" />
+              </button>
+            )}
+
+            <motion.img
+              key={galleryIdx}
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              src={selectedImage} 
-              className="max-w-full max-h-full object-contain rounded-3xl shadow-2xl"
+              src={galleryImages[galleryIdx]}
+              className="max-w-[90vw] max-h-[85vh] object-contain rounded-2xl lg:rounded-3xl shadow-2xl"
               onClick={(e) => e.stopPropagation()}
             />
+
+            <span className="absolute bottom-6 left-1/2 -translate-x-1/2 text-white/70 text-xs lg:text-sm font-bold tracking-widest bg-black/30 px-4 py-1.5 rounded-full">
+              {galleryIdx + 1} / {galleryImages.length}
+            </span>
           </motion.div>
         )}
       </AnimatePresence>
@@ -266,39 +302,45 @@ const EventDetail: React.FC = () => {
           {/* Gallery Header */}
           <section className="relative h-[300px] lg:h-[500px] rounded-[1.5rem] lg:rounded-[3.5rem] overflow-hidden group">
             <div className="grid grid-cols-4 grid-rows-2 h-full gap-1 lg:gap-2 cursor-pointer">
-              <div 
+              <div
                 className="col-span-4 lg:col-span-3 row-span-2 relative overflow-hidden"
-                onClick={() => setSelectedImage(event.media?.[0])}
+                onClick={() => setGalleryIdx(0)}
               >
-                <img 
-                  src={event.media?.[0]} 
-                  alt={event.title} 
+                <img
+                  src={event.media?.[0]}
+                  alt={event.title}
                   className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
                 />
               </div>
-              <div 
+              {event.media.length > 1 && (
+              <div
                 className="hidden lg:block col-span-1 row-span-1 overflow-hidden"
-                onClick={() => setSelectedImage(event.media?.[1] || "https://images.unsplash.com/photo-1561214078-f3247647fc5e?w=800")}
+                onClick={() => setGalleryIdx(1)}
               >
-                <img 
-                  src={event.media?.[1] || "https://images.unsplash.com/photo-1561214078-f3247647fc5e?w=800"} 
-                  alt="Gallery 1" 
+                <img
+                  src={event.media?.[1] || "https://images.unsplash.com/photo-1561214078-f3247647fc5e?w=800"}
+                  alt="Gallery 1"
                   className="w-full h-full object-cover hover:scale-110 transition-transform duration-500"
                 />
               </div>
-              <div 
+              )}
+              {event.media.length > 2 && (
+              <div
                 className="hidden lg:block col-span-1 row-span-1 relative overflow-hidden"
-                onClick={() => setSelectedImage(event.media?.[2] || "https://images.unsplash.com/photo-1552664730-d307ca884978?w=800")}
+                onClick={() => setGalleryIdx(event.media.length > 3 ? 3 : 2)}
               >
-                <img 
-                  src={event.media?.[2] || "https://images.unsplash.com/photo-1552664730-d307ca884978?w=800"} 
-                  alt="Gallery 2" 
+                <img
+                  src={event.media?.[2] || "https://images.unsplash.com/photo-1552664730-d307ca884978?w=800"}
+                  alt="Gallery 2"
                   className="w-full h-full object-cover hover:scale-110 transition-transform duration-500"
                 />
-                <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                  <span className="text-white font-bold text-sm">+{event.media?.length ? Math.max(0, event.media.length - 3) : 0} fotos</span>
+                {event.media.length > 3 && (
+                <div className="absolute inset-0 bg-black/40 flex items-center justify-center cursor-pointer hover:bg-black/50 transition-colors">
+                  <span className="text-white font-bold text-sm">+{event.media.length - 3} fotos</span>
                 </div>
+                )}
               </div>
+              )}
             </div>
             
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent pointer-events-none" />
@@ -942,7 +984,7 @@ const EventWall: React.FC<{ eventId: string; organizerOwnerId?: string; eventTit
           <div key={post.id_post} className="p-6 lg:p-10 rounded-[2.5rem] lg:rounded-[4rem] bg-white border border-outline-variant hover:border-primary/20 transition-all space-y-6 lg:space-y-8 group">
             <div className="flex justify-between items-start">
               <div className="flex gap-4 lg:gap-5">
-                <div className="relative">
+    <div className="relative px-4 lg:px-8 xl:px-12 max-w-[1600px] mx-auto">
                   <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${post.id_user}`} className="w-12 h-12 lg:w-14 lg:h-14 rounded-xl lg:rounded-2xl bg-surface-container-high" alt="Avatar" />
                   <div className="absolute -bottom-1 -right-1 w-5 h-5 lg:w-6 lg:h-6 rounded-full bg-primary border-4 border-white flex items-center justify-center">
                     <CheckCircle2 size={10} className="text-white" />

@@ -9,12 +9,22 @@ import { es } from 'date-fns/locale';
 import { api } from '../services/apiClient';
 import { Calendar, MapPin, Share2, Bookmark, Loader2 } from 'lucide-react';
 
+const CYCLE_MS = 4000;
+
 const Feed: React.FC = () => {
   const { user } = useAuth();
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
   const [events, setEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [savedEvents, setSavedEvents] = useState<Record<string, boolean>>({});
+  const [imageIndex, setImageIndex] = useState(0);
+
+  useEffect(() => {
+    const hasMulitpleImages = events.some(e => e.images?.length > 1);
+    if (!hasMulitpleImages) return;
+    const interval = setInterval(() => setImageIndex(i => i + 1), CYCLE_MS);
+    return () => clearInterval(interval);
+  }, [events]);
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -94,16 +104,29 @@ const Feed: React.FC = () => {
     <div className="h-[calc(100vh-64px)] overflow-y-auto snap-y snap-mandatory scroll-smooth hide-scrollbar">
       <LoginPromptModal isOpen={showLoginPrompt} onClose={() => setShowLoginPrompt(false)} />
 
-      {events.map((event, index) => (
+      {events.map((event, index) => {
+        const images = event.images?.length ? event.images : [];
+        const imgIdx = images.length > 1 ? imageIndex % images.length : 0;
+        const currentSrc = images.length > 0 ? images[imgIdx] : event.thumbnail_url || 'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=800';
+        return (
         <div key={event.id_event} className="w-full h-full snap-start p-4 lg:p-8">
           <div className="relative w-full h-full rounded-[40px] overflow-hidden bg-black shadow-2xl flex flex-col justify-end border border-white/5">
-            <div className="absolute inset-0 z-0">
-              <img
-                alt={event.title}
-                className="w-full h-full object-cover opacity-70 transition-transform duration-1000 hover:scale-105"
-                src={event.thumbnail_url || 'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=800'}
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
+            <div className="absolute inset-0 z-0 overflow-hidden">
+              <div className="w-full h-full transition-transform duration-1000 group-hover:scale-105">
+                <AnimatePresence mode="sync">
+                  <motion.img
+                    key={`${event.id_event}-${imgIdx}`}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 0.7 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 1.2, ease: "easeInOut" }}
+                    alt={event.title}
+                    className="w-full h-full object-cover"
+                    src={currentSrc}
+                  />
+                </AnimatePresence>
+              </div>
+              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent pointer-events-none" />
             </div>
 
             <div className="absolute right-6 bottom-8 lg:right-10 lg:bottom-12 flex flex-col gap-8 items-center z-10">
@@ -226,7 +249,8 @@ const Feed: React.FC = () => {
             )}
           </div>
         </div>
-      ))}
+        );
+      })}
 
       <style>{`
         .hide-scrollbar::-webkit-scrollbar { display: none; }
