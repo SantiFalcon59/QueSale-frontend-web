@@ -22,7 +22,8 @@ export const Navbar: React.FC<{ onMenuClick: () => void }> = ({ onMenuClick }) =
 
   useEffect(() => {
     if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
-    if (!searchQuery.trim()) {
+    const trimmed = searchQuery.trim();
+    if (!trimmed || trimmed.length < 2) {
       setSearchResults({ events: [], users: [], organizers: [] });
       setShowSearchResults(false);
       return;
@@ -31,8 +32,8 @@ export const Navbar: React.FC<{ onMenuClick: () => void }> = ({ onMenuClick }) =
       setSearchLoading(true);
       try {
         const [eventsRes, communityRes] = await Promise.all([
-          api.getEventsWithFilters(`search=${encodeURIComponent(searchQuery)}&limit=3`),
-          api.communitySearch(searchQuery),
+          api.getEventsWithFilters(`search=${encodeURIComponent(trimmed)}&limit=3`),
+          api.communitySearch(trimmed),
         ]);
         setSearchResults({
           events: eventsRes.events || [],

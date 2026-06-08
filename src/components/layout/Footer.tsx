@@ -60,7 +60,7 @@ export const Footer: React.FC = () => {
         </div>
 
         <div className="col-span-full pt-16 mt-8 border-t border-white/5 text-center opacity-30 text-[9px] font-black tracking-[0.5em] uppercase text-white">
-          © 2026 QUESALE • SISTEMA OPERATIVO v2.0
+          © 2026 QUESALE
         </div>
       </div>
     </footer>

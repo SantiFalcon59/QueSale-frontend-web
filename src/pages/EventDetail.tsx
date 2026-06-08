@@ -103,7 +103,6 @@ const EventDetail: React.FC = () => {
   const [organizerEvents, setOrganizerEvents] = useState<any[]>([]);
   const [isModerator, setIsModerator] = useState(false);
   const [isOrganizer, setIsOrganizer] = useState(false);
-  const [onlineCount, setOnlineCount] = useState(0);
   const [replyingTo, setReplyingTo] = useState<{ id: string; userId: string; displayName: string; message: string } | null>(null);
 
   const handleInteraction = (e?: React.MouseEvent) => {
@@ -456,10 +455,10 @@ const EventDetail: React.FC = () => {
                       <div className="space-y-6">
                         <h3 className="text-xl font-bold uppercase tracking-widest opacity-60">Organizador</h3>
                         <div className="p-6 lg:p-8 rounded-[1.5rem] lg:rounded-[2.5rem] bg-indigo-50/30 border border-indigo-100 flex flex-col gap-6">
-                          <div className="flex items-center gap-4">
+                          <Link to={`/organizer/${organizer.id}`} className="flex items-center gap-4 group/link">
                             <img src={organizer.logo} alt={organizer.name} className="w-12 h-12 lg:w-16 lg:h-16 rounded-xl lg:rounded-2xl object-cover" />
                             <div>
-                               <h4 className="text-lg lg:text-xl font-black italic">{organizer.name}</h4>
+                               <h4 className="text-lg lg:text-xl font-black italic group-hover/link:text-primary transition-colors">{organizer.name}</h4>
                                <div className="flex gap-2 mt-1">
                                   {organizer.socials?.instagram && (
                                     <a href={organizer.socials.instagram} target="_blank" className="p-1 rounded-lg bg-surface hover:text-primary transition-all shadow-sm">
@@ -477,10 +476,10 @@ const EventDetail: React.FC = () => {
                                     </a>
                                   )}
                                </div>
-                            </div>
-                          </div>
-                          <p className="text-xs lg:text-sm text-on-surface-variant leading-relaxed">{organizer.description}</p>
-                          <button onClick={() => navigate('/organizer/' + organizer.id_organizer)} className="w-full h-10 lg:h-12 rounded-xl lg:rounded-2xl bg-white border border-outline-variant font-bold text-[10px] lg:text-xs uppercase tracking-widest hover:bg-primary hover:text-white hover:border-primary transition-all">Ver Perfil Completo</button>
+                             </div>
+                           </Link>
+                           <p className="text-xs lg:text-sm text-on-surface-variant leading-relaxed">{organizer.description}</p>
+                          <button onClick={() => navigate('/organizer/' + organizer.id)} className="w-full h-10 lg:h-12 rounded-xl lg:rounded-2xl bg-white border border-outline-variant font-bold text-[10px] lg:text-xs uppercase tracking-widest hover:bg-primary hover:text-white hover:border-primary transition-all">Ver Perfil Completo</button>
                         </div>
                       </div>
                     )}
@@ -488,14 +487,14 @@ const EventDetail: React.FC = () => {
                     {organizerEvents.length > 0 && (
                       <div className="space-y-6">
                         <h3 className="text-xl font-bold uppercase tracking-widest opacity-60">Otros Eventos de {organizer?.name}</h3>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
                           {organizerEvents.slice(0, 4).map(orgEvent => (
                             <Link
                               key={orgEvent.id_event}
                               to={`/events/${orgEvent.id_event}`}
                               className="group bg-white rounded-[2rem] border border-outline-variant overflow-hidden hover:border-primary/50 transition-all hover:shadow-xl hover:-translate-y-1"
                             >
-                              <div className="relative aspect-[4/3] overflow-hidden">
+                              <div className="relative aspect-[16/10] overflow-hidden">
                                 <img
                                   src={orgEvent.images?.[0] || orgEvent.thumbnail_url || NO_EVENT_IMAGE}
                                   alt={orgEvent.title}
@@ -516,16 +515,16 @@ const EventDetail: React.FC = () => {
                                   </div>
                                 )}
                               </div>
-                              <div className="p-4 space-y-3">
+                              <div className="p-5 lg:p-6 space-y-3">
                                 <div className="flex items-center justify-between">
-                                  <span className="text-[10px] text-on-surface-variant font-bold flex items-center gap-1">
-                                    <CalendarDays size={12} className="text-primary shrink-0" />
+                                  <span className="text-[11px] text-on-surface-variant font-bold flex items-center gap-1">
+                                    <CalendarDays size={14} className="text-primary shrink-0" />
                                     {new Date(orgEvent.date).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}
                                   </span>
-                                  <span className="text-[10px] font-black text-primary">{formatPrice(orgEvent.price)}</span>
+                                  <span className="text-[11px] font-black text-primary">{formatPrice(orgEvent.price)}</span>
                                 </div>
-                                <div className="flex items-center gap-1 text-[9px] text-on-surface-variant font-bold">
-                                  <MapPin size={10} className="text-primary shrink-0" />
+                                <div className="flex items-center gap-1 text-[10px] text-on-surface-variant font-bold">
+                                  <MapPin size={12} className="text-primary shrink-0" />
                                   <span className="truncate">{orgEvent.ubication || 'Consultar ubicación'}</span>
                                 </div>
                                 {orgEvent.tags && orgEvent.tags.length > 0 && (
@@ -659,13 +658,10 @@ const EventDetail: React.FC = () => {
                     <p className="text-[10px] text-on-surface-variant font-bold uppercase tracking-widest">Canal Global de {event.title}</p>
                   </div>
                 </div>
-                {onlineCount > 0 && (
-                  <div className="px-3 py-1 rounded bg-primary/10 text-primary text-[10px] font-black uppercase">{onlineCount} ONLINE</div>
-                )}
               </div>
 
               <div className="flex-1 overflow-y-auto p-8 space-y-6 no-scrollbar">
-                <LiveChat eventId={event.id} isModerator={isModerator} organizerId={event.organizerId} onOnlineCountChange={setOnlineCount} onReply={setReplyingTo} />
+                <LiveChat eventId={event.id} isModerator={isModerator} organizerId={event.organizerId} onReply={setReplyingTo} />
               </div>
 
               <div className="p-8 border-t border-outline-variant bg-surface-container-low/50">
@@ -1047,7 +1043,7 @@ const EventWall: React.FC<{ eventId: string; organizerOwnerId?: string; eventTit
   );
 };
 
-const LiveChat: React.FC<{ eventId: string; isModerator: boolean; organizerId: string; onOnlineCountChange: (n: number) => void; onReply: (reply: { id: string; userId: string; displayName: string; message: string } | null) => void }> = ({ eventId, isModerator: propIsModerator, organizerId, onOnlineCountChange, onReply }) => {
+const LiveChat: React.FC<{ eventId: string; isModerator: boolean; organizerId: string; onReply: (reply: { id: string; userId: string; displayName: string; message: string } | null) => void }> = ({ eventId, isModerator: propIsModerator, organizerId, onReply }) => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [hasMore, setHasMore] = useState(true);
@@ -1088,16 +1084,8 @@ const LiveChat: React.FC<{ eventId: string; isModerator: boolean; organizerId: s
       setLoadingHistory(false);
     });
 
-    socket.on('user-joined', (data: { totalUsers: number }) => {
-      onOnlineCountChange(data.totalUsers);
-    });
-
-    socket.on('user-left', (data: { totalUsers: number }) => {
-      onOnlineCountChange(data.totalUsers);
-    });
-
-    socket.on('room-info', (data: { userCount: number }) => {
-      onOnlineCountChange(data.userCount);
+    socket.on('message-reactions-updated', (updated: ChatMessage) => {
+      setMessages(prev => prev.map(m => m.id === updated.id ? updated : m));
     });
 
     socket.on('connect_error', (err) => {
@@ -1111,7 +1099,7 @@ const LiveChat: React.FC<{ eventId: string; isModerator: boolean; organizerId: s
       socket.disconnect();
       socketRef.current = null;
     };
-  }, [eventId, getSocketToken, onOnlineCountChange]);
+  }, [eventId, getSocketToken]);
 
   const loadOlder = () => {
     if (loadingHistory || !hasMore || messages.length === 0) return;
@@ -1188,12 +1176,44 @@ const LiveChat: React.FC<{ eventId: string; isModerator: boolean; organizerId: s
                 )}
                 {msg.message}
               </div>
-              <button
-                onClick={() => onReply({ id: msg.id, userId: msg.userId, displayName: msg.displayName, message: msg.message })}
-                className="text-[10px] text-on-surface-variant/40 hover:text-secondary font-bold uppercase tracking-wider transition-colors"
-              >
-                Responder
-              </button>
+              {msg.reactions && Object.keys(msg.reactions).length > 0 && (
+                <div className="flex flex-wrap gap-1 pt-1">
+                  {Object.entries(msg.reactions).map(([emoji, data]: [string, any]) => (
+                    <button
+                      key={emoji}
+                      onClick={() => socketRef.current?.emit('react-to-message', { eventId, messageId: msg.id, emoji })}
+                      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs border transition-all cursor-pointer ${
+                        data.reacted
+                          ? 'bg-primary/10 border-primary/30 text-primary'
+                          : 'bg-surface-container-high border-outline-variant text-on-surface-variant hover:border-primary/30'
+                      }`}
+                    >
+                      <span className="text-sm leading-none">{emoji}</span>
+                      <span className="text-[10px] font-bold">{data.count}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+              <div className="flex items-center gap-2 pt-0.5">
+                <button
+                  onClick={() => onReply({ id: msg.id, userId: msg.userId, displayName: msg.displayName, message: msg.message })}
+                  className="text-[10px] text-on-surface-variant/40 hover:text-secondary font-bold uppercase tracking-wider transition-colors"
+                >
+                  Responder
+                </button>
+                <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-all">
+                  {['👍', '❤️', '😂', '😮', '😢', '🔥'].map(emoji => (
+                    <button
+                      key={emoji}
+                      onClick={() => socketRef.current?.emit('react-to-message', { eventId, messageId: msg.id, emoji })}
+                      className="w-6 h-6 flex items-center justify-center rounded-md hover:bg-surface-container-high transition-colors text-sm cursor-pointer"
+                      title={`Reaccionar con ${emoji}`}
+                    >
+                      {emoji}
+                    </button>
+                  ))}
+                </div>
+              </div>
              {showBlockMenu === msg.userId && modRoles && (
                <div className="mt-2 p-3 rounded-xl bg-white border border-red-200 shadow-lg space-y-2">
                  <p className="text-[10px] font-black uppercase tracking-widest text-red-600">Bloquear usuario</p>
@@ -1313,13 +1333,13 @@ const ChatMessageInput: React.FC<{ eventId: string; replyingTo: { id: string; us
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: -8, scale: 0.9 }}
                   transition={{ duration: 0.15 }}
-                  className="absolute bottom-full right-0 mb-2 p-2 rounded-xl bg-[#1a1a2e] border border-white/10 shadow-xl grid grid-cols-4 gap-1 z-50"
+                  className="absolute bottom-full right-0 mb-2 p-3 rounded-xl bg-[#1a1a2e] border border-white/10 shadow-xl grid grid-cols-4 gap-2 z-50 w-max"
                 >
                   {EMOJI_LIST.map(emoji => (
                     <button
                       key={emoji}
                       onClick={() => insertEmoji(emoji)}
-                      className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/10 transition-colors text-lg"
+                      className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-white/10 transition-colors text-xl"
                     >
                       {emoji}
                     </button>

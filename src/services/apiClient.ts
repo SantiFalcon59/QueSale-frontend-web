@@ -205,6 +205,9 @@ export const api = {
   getEventsWithFilters: (queryString: string) =>
     apiRequest(`/api/events?${queryString}`),
 
+  searchTags: (q: string) =>
+    apiRequest(`/api/events/tags/search?q=${encodeURIComponent(q)}`),
+
   deleteEvent: (eventId: string) =>
     apiRequest(`/api/events/${encodeURIComponent(eventId)}`, {
       method: 'DELETE',

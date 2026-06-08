@@ -102,6 +102,8 @@ const Discovery: React.FC = () => {
   const [activeQuickFilter, setActiveQuickFilter] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [tagInput, setTagInput] = useState('');
+  const [tagSuggestions, setTagSuggestions] = useState<string[]>([]);
   const [events, setEvents] = useState<any[]>([]);
   const [categories, setCategories] = useState<{ id: number; name: string; color?: string; icon_url?: string; events_count?: number }[]>([]);
   const [loading, setLoading] = useState(true);
@@ -187,11 +189,27 @@ const Discovery: React.FC = () => {
     setActiveQuickFilter(null);
   };
 
-  const toggleTag = (tag: string) => {
-    setSelectedTags(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]);
+  useEffect(() => {
+    if (tagInput.trim().length < 1) { setTagSuggestions([]); return; }
+    const t = setTimeout(async () => {
+      try {
+        const res = await api.searchTags(tagInput.trim());
+        setTagSuggestions(Array.isArray(res) ? res : []);
+      } catch { setTagSuggestions([]); }
+    }, 200);
+    return () => clearTimeout(t);
+  }, [tagInput]);
+
+  const addTag = (tag: string) => {
+    const t = tag.toLowerCase().replace(/[^a-z0-9áéíóúüñ\-_]/g, '');
+    if (t && !selectedTags.includes(t)) setSelectedTags(prev => [...prev, t]);
+    setTagInput('');
+    setTagSuggestions([]);
   };
 
-  const allTags = [...new Set(events.flatMap(e => e.tags || []))].sort();
+  const removeTag = (tag: string) => {
+    setSelectedTags(prev => prev.filter(t => t !== tag));
+  };
 
   const handleReset = () => {
     setSearchQuery('');
@@ -203,6 +221,8 @@ const Discovery: React.FC = () => {
     setActiveQuickFilter(null);
     setSelectedDate(null);
     setSelectedTags([]);
+    setTagInput('');
+    setTagSuggestions([]);
   };
 
   const hasActiveFilters = searchQuery || selectedCategory !== 'ALL' || priceType !== 'all' || activeQuickFilter || selectedDate || selectedTags.length > 0 || priceMin > 0 || priceMax < 50000;
@@ -319,29 +339,48 @@ const Discovery: React.FC = () => {
             </div>
 
             {/* Tags */}
-            {allTags.length > 0 && (
-              <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant ml-1 flex items-center gap-1.5">
-                  # Tags
-                </label>
-                <div className="flex flex-wrap gap-1.5">
-                  {allTags.slice(0, 20).map(tag => (
-                    <button
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant ml-1 flex items-center gap-1.5">
+                # Tags
+              </label>
+              <div className="relative">
+                <input
+                  value={tagInput}
+                  onChange={e => setTagInput(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addTag(tagInput); } }}
+                  placeholder="Escribí un tag y presioná Enter..."
+                  className="w-full h-10 px-4 rounded-xl bg-surface-container-low text-sm text-on-surface outline-none ring-1 ring-outline-variant focus:ring-primary/40 transition-all"
+                />
+                {tagSuggestions.length > 0 && (
+                  <div className="absolute top-full left-0 right-0 mt-1 rounded-xl bg-white border border-outline-variant shadow-xl z-20 max-h-48 overflow-y-auto">
+                    {tagSuggestions.map(tag => (
+                      <button
+                        key={tag}
+                        onClick={() => addTag(tag)}
+                        className="w-full px-4 py-2 text-left text-sm text-on-surface hover:bg-surface-container-low transition-colors flex items-center gap-2 cursor-pointer"
+                      >
+                        <span className="text-primary font-bold">#</span>{tag}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+              {selectedTags.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 pt-1">
+                  {selectedTags.map(tag => (
+                    <span
                       key={tag}
-                      onClick={() => toggleTag(tag)}
-                      className={cn(
-                        "px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all",
-                        selectedTags.includes(tag)
-                          ? "bg-primary text-white shadow-lg shadow-primary/20"
-                          : "bg-surface-container-high text-on-surface-variant hover:bg-primary/10 hover:text-primary"
-                      )}
+                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest bg-primary text-white shadow-lg shadow-primary/20"
                     >
                       #{tag}
-                    </button>
+                      <button onClick={() => removeTag(tag)} className="ml-0.5 hover:text-white/70 transition-colors cursor-pointer">
+                        <X size={12} />
+                      </button>
+                    </span>
                   ))}
                 </div>
-              </div>
-            )}
+              )}
+            </div>
 
             {/* Price */}
             <div className="space-y-2">
