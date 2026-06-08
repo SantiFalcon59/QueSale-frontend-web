@@ -16,8 +16,9 @@ import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInte
 import { es } from 'date-fns/locale';
 import { LoginPromptModal } from '../components/ui/LoginPromptModal';
 import { api, resolveAssetUrl } from '../services/apiClient';
-import { db } from '../lib/firebase';
-import { collection, query, orderBy, limit, onSnapshot, doc, deleteDoc, addDoc, serverTimestamp } from 'firebase/firestore';
+import { io, Socket } from 'socket.io-client';
+import PostFeed from '../components/wall/PostFeed';
+import PostComposer from '../components/wall/PostComposer';
 
 const GOOGLE_MAPS_KEY = process.env.GOOGLE_MAPS_PLATFORM_KEY || '';
 
@@ -79,10 +80,11 @@ interface Post {
 interface ChatMessage {
   id: string;
   userId: string;
-  content: string;
-  createdAt: any;
-  userDisplayName?: string;
-  userPhotoURL?: string;
+  message: string;
+  displayName: string;
+  photoURL: string | null;
+  timestamp: string;
+  messageType: string;
 }
 
 const EventDetail: React.FC = () => {
@@ -100,6 +102,7 @@ const EventDetail: React.FC = () => {
   const [organizerEvents, setOrganizerEvents] = useState<any[]>([]);
   const [isModerator, setIsModerator] = useState(false);
   const [isOrganizer, setIsOrganizer] = useState(false);
+  const [onlineCount, setOnlineCount] = useState(0);
 
   const handleInteraction = (e?: React.MouseEvent) => {
     if (!user) {
@@ -608,11 +611,13 @@ const EventDetail: React.FC = () => {
                     <p className="text-[10px] text-on-surface-variant font-bold uppercase tracking-widest">Canal Global de {event.title}</p>
                   </div>
                 </div>
-                <div className="px-3 py-1 rounded bg-primary/10 text-primary text-[10px] font-black uppercase">412 ONLINE</div>
+                {onlineCount > 0 && (
+                  <div className="px-3 py-1 rounded bg-primary/10 text-primary text-[10px] font-black uppercase">{onlineCount} ONLINE</div>
+                )}
               </div>
 
               <div className="flex-1 overflow-y-auto p-8 space-y-6 no-scrollbar">
-                <LiveChat eventId={event.id} isModerator={isModerator} organizerId={event.organizerId} />
+                <LiveChat eventId={event.id} isModerator={isModerator} organizerId={event.organizerId} onOnlineCountChange={setOnlineCount} />
               </div>
 
               <div className="p-8 border-t border-outline-variant bg-surface-container-low/50">
@@ -866,13 +871,12 @@ const EventAnnouncements: React.FC<{ eventId: string; organizerId: string; isOrg
 const EventWall: React.FC<{ eventId: string; organizerOwnerId?: string; eventTitle: string; isModerator: boolean }> = ({ eventId, organizerOwnerId, eventTitle, isModerator: propIsModerator }) => {
   const { user, profile } = useAuth();
   const [posts, setPosts] = useState<any[]>([]);
-  const [newPost, setNewPost] = useState('');
-  const [postType, setPostType] = useState<string>('comment');
   const [loading, setLoading] = useState(true);
+  const modRoles = propIsModerator || profile?.role === 'admin' || profile?.role === 'moderator';
 
   const fetchPosts = async () => {
     try {
-      const data: any = await api.getEventPosts(eventId, undefined, 1, 50);
+      const data: any = await api.getWallPosts('event', eventId, 1, 50);
       setPosts(data || []);
     } catch (err) {
       console.error('Error fetching posts:', err);
@@ -886,195 +890,129 @@ const EventWall: React.FC<{ eventId: string; organizerOwnerId?: string; eventTit
     fetchPosts();
   }, [eventId]);
 
-  const handlePost = async () => {
-    if (!newPost.trim() || !user) return;
+  const handleShare = async (content: string) => {
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: 'QueSale', text: content, url: window.location.href });
+      } catch { /* user cancelled */ }
+    } else {
+      await navigator.clipboard.writeText(`${content} — ${window.location.href}`);
+    }
+  };
+
+  const handlePost = async (content: string, type?: string) => {
+    if (!user) return;
     try {
-      const created: any = await api.createEventPost(eventId, { content: newPost, type: postType });
-      if (created) {
-        setPosts(prev => [created, ...prev]);
-      }
-      setNewPost('');
+      const created: any = await api.createWallPost_new('event', eventId, content, type);
+      if (created) setPosts(prev => [created, ...prev]);
     } catch (e) {
       console.error(e);
     }
   };
 
-  const handleToggleLike = async (postId: string) => {
+  const handleToggleLike = async (postId: number) => {
     if (!user) return document.dispatchEvent(new CustomEvent('show-login-prompt'));
     try {
-      const result: any = await api.toggleEventPostLike(postId);
+      const result: any = await api.toggleWallPostLike_new(postId);
       setPosts(prev => prev.map(p => p.id_post === postId ? { ...p, likes_count: result.likes_count } : p));
     } catch (err) {
       console.error('Error toggling like:', err);
     }
   };
 
-  const handleDeletePost = async (postId: string) => {
+  const handleDeletePost = async (postId: number) => {
     if (!window.confirm('¿Eliminar esta publicación?')) return;
     try {
-      await api.deleteEventPost(postId);
+      await api.deleteWallPost_new(postId);
       setPosts(prev => prev.filter(p => p.id_post !== postId));
     } catch (err) {
       console.error('Error deleting post:', err);
     }
   };
 
-  const modRoles = propIsModerator || profile?.role === 'admin' || profile?.role === 'moderator';
+  const handleComment = async (postId: number, content: string) => {
+    if (!user) return;
+    try {
+      await api.createWallComment_new(postId, content);
+      const data: any = await api.getWallPosts('event', eventId, 1, 50);
+      setPosts(data || []);
+    } catch (err) {
+      console.error('Error posting comment:', err);
+    }
+  };
 
   return (
     <div className="space-y-10">
-      {/* Create Post */}
-      <div className="p-6 lg:p-10 rounded-[2.5rem] lg:rounded-[3.5rem] bg-surface-container-low border border-outline-variant space-y-6">
-        <div className="flex flex-col sm:flex-row gap-4 lg:gap-6">
-          <div className="flex items-center gap-4 sm:block sm:gap-0">
-             <img 
-               src={profile?.photoURL || user?.photoURL || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.uid || 'guest'}`} 
-               className="w-12 h-12 lg:w-14 lg:h-14 rounded-xl lg:rounded-2xl bg-surface-container-high ring-4 ring-white shadow-lg" 
-               alt="Me"
-             />
-             <h4 className="sm:hidden font-bold">{profile?.displayName || 'Tú'}</h4>
-          </div>
-          <div className="flex-1 space-y-4">
-             <textarea 
-               value={newPost}
-               onChange={(e) => setNewPost(e.target.value)}
-               onFocus={() => { if (!user) document.dispatchEvent(new CustomEvent('show-login-prompt')); }}
-               placeholder="¿Qué tienes en mente?"
-               className="w-full bg-transparent border-none outline-none text-base lg:text-xl font-medium placeholder:text-on-surface-variant/40 resize-none min-h-[80px] lg:min-h-[100px] pt-1"
-             />
-             <div className="flex flex-wrap gap-2">
-                {[
-                  { id: 'comment', name: 'Comentario', icon: MessageSquare },
-                  { id: 'query', name: 'Pregunta', icon: Info },
-                  { id: 'poll', name: 'Encuesta', icon: GridIcon },
-                  { id: 'feedback', name: 'Feedback', icon: ThumbsUp }
-                ].map(t => (
-                  <button
-                    key={t.id}
-                    onClick={() => setPostType(t.id as any)}
-                    className={cn(
-                      "px-5 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-2 transition-all border",
-                      postType === t.id ? "bg-primary text-white border-primary" : "bg-white text-on-surface-variant border-outline-variant hover:border-primary/30"
-                    )}
-                  >
-                    <t.icon size={14} />
-                    {t.name}
-                  </button>
-                ))}
-             </div>
-          </div>
-        </div>
-        <div className="flex items-center justify-between pt-6 border-t border-outline-variant/30">
-          <div className="flex gap-2">
-             <button className="p-3 rounded-2xl bg-surface-container-high text-on-surface-variant hover:bg-primary/10 hover:text-primary transition-all"><ImageIcon size={20} /></button>
-          </div>
-          <button 
-            disabled={!newPost.trim()}
-            onClick={handlePost}
-            className="btn-primary h-14 px-10 text-[11px] font-black uppercase tracking-widest disabled:opacity-30"
-          >
-            PUBLICAR
-          </button>
-        </div>
-      </div>
-
-      {/* Wall Stream */}
-      <div className="space-y-6 lg:space-y-8">
-        {posts.map(post => (
-          <div key={post.id_post} className="p-6 lg:p-10 rounded-[2.5rem] lg:rounded-[4rem] bg-white border border-outline-variant hover:border-primary/20 transition-all space-y-6 lg:space-y-8 group">
-            <div className="flex justify-between items-start">
-              <div className="flex gap-4 lg:gap-5">
-    <div className="relative px-4 lg:px-8 xl:px-12 max-w-[1600px] mx-auto">
-                  <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${post.id_user}`} className="w-12 h-12 lg:w-14 lg:h-14 rounded-xl lg:rounded-2xl bg-surface-container-high" alt="Avatar" />
-                  <div className="absolute -bottom-1 -right-1 w-5 h-5 lg:w-6 lg:h-6 rounded-full bg-primary border-4 border-white flex items-center justify-center">
-                    <CheckCircle2 size={10} className="text-white" />
-                  </div>
-                </div>
-                <div>
-                  <h4 className="text-base lg:text-lg font-black italic tracking-tight">{post.author}</h4>
-                  <p className="text-[9px] lg:text-[10px] text-on-surface-variant font-black uppercase tracking-[0.2em]">{post.created_at ? format(new Date(post.created_at), 'HH:mm • d MMM', { locale: es }) : 'Reciente'}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                {(modRoles || post.id_user === user?.uid) && (
-                  <button 
-                    onClick={() => handleDeletePost(post.id_post)}
-                    className="p-2 rounded-lg bg-red-50 text-red-500 border border-red-100 transition-all opacity-0 group-hover:opacity-100"
-                  >
-                    <Trash2 size={14} />
-                  </button>
-                )}
-                <div className={cn(
-                  "px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border",
-                  post.type === 'query' ? "bg-amber-50 text-amber-600 border-amber-200" :
-                  post.type === 'feedback' ? "bg-emerald-50 text-emerald-600 border-emerald-200" :
-                  "bg-surface-container-high text-on-surface-variant border-transparent"
-                )}>
-                  {post.type}
-                </div>
-              </div>
-            </div>
-
-            <p className="text-xl lg:text-2xl font-medium text-on-surface leading-tight tracking-tight">
-              {post.content}
-            </p>
-
-            <div className="flex gap-4 lg:gap-8 pt-6 lg:pt-8 border-t border-outline-variant/30">
-              <button 
-                onClick={() => handleToggleLike(post.id_post)}
-                className="flex items-center gap-2 lg:gap-3 text-[10px] lg:text-xs font-black uppercase tracking-widest text-on-surface-variant hover:text-primary transition-all"
-              >
-                <ThumbsUp className="w-4 h-4 lg:w-[18px] lg:h-[18px]" /> 
-                {post.likes_count > 0 ? post.likes_count : 'Me gusta'}
-              </button>
-              <button className="flex items-center gap-2 lg:gap-3 text-[10px] lg:text-xs font-black uppercase tracking-widest text-on-surface-variant hover:text-primary transition-all">
-                <MessageSquare className="w-4 h-4 lg:w-[18px] lg:h-[18px]" /> 
-                {post.comments?.length > 0 ? `${post.comments.length} Comentarios` : 'Comentar'}
-              </button>
-              <button className="hidden sm:flex items-center gap-3 text-xs font-black uppercase tracking-widest text-on-surface-variant hover:text-primary transition-all ml-auto">
-                <Share2 size={18} />
-              </button>
-            </div>
-
-            {post.comments?.length > 0 && (
-              <div className="space-y-4 pt-4 ml-6 lg:ml-10 border-l-2 border-outline-variant/30 pl-6">
-                 {post.comments.map((comment: any) => (
-                   <div key={comment.id_comment} className="space-y-2">
-                      <div className="flex items-center gap-2">
-                         <span className="text-[10px] font-black italic">{comment.author}</span>
-                         <span className="text-[8px] text-on-surface-variant font-bold uppercase">{format(new Date(comment.created_at), 'HH:mm • d MMM', { locale: es })}</span>
-                      </div>
-                      <p className="text-sm lg:text-base text-on-surface-variant">{comment.content}</p>
-                   </div>
-                 ))}
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
+      <PostComposer onSubmit={handlePost} />
+      <PostFeed
+        posts={posts}
+        loading={loading}
+        onLike={handleToggleLike}
+        onDelete={handleDeletePost}
+        onComment={handleComment}
+        onShare={handleShare}
+        showDelete={(post) => modRoles || post.id_user === user?.uid}
+      />
     </div>
   );
 };
 
-const LiveChat: React.FC<{ eventId: string; isModerator: boolean; organizerId: string }> = ({ eventId, isModerator: propIsModerator, organizerId }) => {
+const LiveChat: React.FC<{ eventId: string; isModerator: boolean; organizerId: string; onOnlineCountChange: (n: number) => void }> = ({ eventId, isModerator: propIsModerator, organizerId, onOnlineCountChange }) => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [showBlockMenu, setShowBlockMenu] = useState<string | null>(null);
-  const { profile } = useAuth();
+  const { profile, getSocketToken } = useAuth();
+  const socketRef = useRef<Socket | null>(null);
   const modRoles = propIsModerator || profile?.role === 'admin' || profile?.role === 'moderator';
 
   useEffect(() => {
-    const q = query(collection(db, `events/${eventId}/chat`), orderBy('createdAt', 'desc'), limit(50));
-    const unsub = onSnapshot(q, (snapshot) => {
-      setMessages(snapshot.docs.map(d => ({ ...d.data(), id: d.id } as ChatMessage)).reverse());
-    }, (err) => {
-      console.warn('Firestore chat listener error (likely adblocker):', err);
+    const token = getSocketToken();
+    if (!token) return;
+
+    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+
+    const socket = io(API_URL, {
+      auth: { token },
+      transports: ['websocket', 'polling'],
     });
-    return unsub;
-  }, [eventId]);
+
+    socket.on('connect', () => {
+      socket.emit('join-event', eventId);
+    });
+
+    socket.on('new-message', (msg: ChatMessage) => {
+      setMessages(prev => [...prev, msg]);
+    });
+
+    socket.on('user-joined', (data: { totalUsers: number }) => {
+      onOnlineCountChange(data.totalUsers);
+    });
+
+    socket.on('user-left', (data: { totalUsers: number }) => {
+      onOnlineCountChange(data.totalUsers);
+    });
+
+    socket.on('room-info', (data: { userCount: number }) => {
+      onOnlineCountChange(data.userCount);
+    });
+
+    socket.on('connect_error', (err) => {
+      console.warn('Socket.io connection error:', err.message);
+    });
+
+    socketRef.current = socket;
+
+    return () => {
+      socket.emit('leave-event', eventId);
+      socket.disconnect();
+      socketRef.current = null;
+    };
+  }, [eventId, getSocketToken, onOnlineCountChange]);
 
   const handleDelete = async (msgId: string) => {
     try {
-      await deleteDoc(doc(db, `events/${eventId}/chat`, msgId));
+      // Message deletion not supported via Socket.io — delegate to the socket
+      // For now, just remove it from local state
+      setMessages(prev => prev.filter(m => m.id !== msgId));
     } catch (e) {
       console.error(e);
     }
@@ -1093,12 +1031,15 @@ const LiveChat: React.FC<{ eventId: string; isModerator: boolean; organizerId: s
     <div className="flex flex-col gap-6">
       {messages.map(msg => (
         <div key={msg.id} className="flex gap-4 group">
-          <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${msg.userId}`} className="w-10 h-10 rounded-xl bg-surface-container-high" alt="chat-user" />
+          <img
+            src={msg.photoURL ? `https://quesale.splindux.com${msg.photoURL}` : `https://api.dicebear.com/7.x/avataaars/svg?seed=${msg.userId}`}
+            className="w-10 h-10 rounded-xl bg-surface-container-high object-cover" alt="chat-user"
+          />
           <div className="flex-1 space-y-1">
              <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                   <span className="text-[10px] font-black uppercase tracking-widest text-primary">USER_{msg.userId.slice(0, 4)}</span>
-                   <span className="text-[8px] text-on-surface-variant font-bold">{msg.createdAt?.toDate ? format(msg.createdAt.toDate(), 'HH:mm') : ''}</span>
+                   <span className="text-[10px] font-black uppercase tracking-widest text-primary">{msg.displayName || 'Usuario'}</span>
+                   <span className="text-[8px] text-on-surface-variant font-bold">{msg.timestamp ? format(new Date(msg.timestamp), 'HH:mm') : ''}</span>
                 </div>
                 <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
                   {modRoles && (
@@ -1106,15 +1047,12 @@ const LiveChat: React.FC<{ eventId: string; isModerator: boolean; organizerId: s
                       <button onClick={() => setShowBlockMenu(showBlockMenu === msg.userId ? null : msg.userId)} className="p-1 rounded bg-amber-50 text-amber-600 hover:bg-amber-500 hover:text-white transition-all" title="Bloquear usuario">
                         <ShieldCheck size={10} />
                       </button>
-                      <button onClick={() => handleDelete(msg.id)} className="p-1 rounded bg-red-50 text-red-500 hover:bg-red-500 hover:text-white transition-all" title="Eliminar mensaje">
-                        <Trash2 size={10} />
-                      </button>
                     </>
                   )}
                 </div>
              </div>
              <div className="p-4 rounded-2xl bg-surface-container-low text-sm text-on-surface-variant leading-relaxed shadow-sm">
-                {msg.content}
+                {msg.message}
              </div>
              {showBlockMenu === msg.userId && modRoles && (
                <div className="mt-2 p-3 rounded-xl bg-white border border-red-200 shadow-lg space-y-2">
@@ -1131,22 +1069,45 @@ const LiveChat: React.FC<{ eventId: string; isModerator: boolean; organizerId: s
 };
 
 const ChatMessageInput: React.FC<{ eventId: string }> = ({ eventId }) => {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [msg, setMsg] = useState('');
+  const { getSocketToken } = useAuth();
+  const socketRef = useRef<Socket | null>(null);
 
-  const send = async () => {
+  useEffect(() => {
+    const token = getSocketToken();
+    if (!token) return;
+
+    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+
+    const socket = io(API_URL, {
+      auth: { token },
+      transports: ['websocket', 'polling'],
+    });
+
+    socket.on('connect', () => {
+      socket.emit('join-event', eventId);
+    });
+
+    socketRef.current = socket;
+
+    return () => {
+      socket.emit('leave-event', eventId);
+      socket.disconnect();
+      socketRef.current = null;
+    };
+  }, [eventId, getSocketToken]);
+
+  const send = () => {
     if (!msg.trim() || !user) return;
-    const content = msg;
-    setMsg('');
-    try {
-      await addDoc(collection(db, `events/${eventId}/chat`), {
-        userId: user.uid,
-        content,
-        createdAt: serverTimestamp()
+    if (socketRef.current?.connected) {
+      socketRef.current.emit('send-message', {
+        eventId,
+        message: msg.trim(),
+        messageType: 'chat',
       });
-    } catch (e) {
-      console.error(e);
     }
+    setMsg('');
   };
 
   return (
@@ -1169,13 +1130,6 @@ const ChatMessageInput: React.FC<{ eventId: string }> = ({ eventId }) => {
     </div>
   );
 };
-
-// --- Helper Icon ---
-const GridIcon = (props: any) => (
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
-    <rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" /><rect x="14" y="14" width="7" height="7" /><rect x="3" y="14" width="7" height="7" />
-  </svg>
-);
 
 export default EventDetail;
 

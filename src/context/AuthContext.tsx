@@ -20,9 +20,12 @@ interface AuthContextType {
   loginWithEmail: (email: string, pass: string) => Promise<void>;
   logout: () => Promise<void>;
   refreshProfile: () => Promise<void>;
+  getSocketToken: () => string | null;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+const SOCKET_TOKEN_KEY = 'quesale_socket_token';
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -70,7 +73,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (newUser) {
         try {
           const idToken = await newUser.getIdToken();
-          await api.loginWithFirebase(idToken, newUser.photoURL);
+          const result = await api.loginWithFirebase(idToken, newUser.photoURL);
+          if (result.token) {
+            localStorage.setItem(SOCKET_TOKEN_KEY, result.token);
+          }
         } catch (error) {
           console.error('Backend login failed', error);
         }
@@ -120,11 +126,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = async () => {
     try {
+      localStorage.removeItem(SOCKET_TOKEN_KEY);
       await signOut(auth);
     } catch (error) {
       console.error("Logout failed", error);
     }
   };
+
+  const getSocketToken = () => localStorage.getItem(SOCKET_TOKEN_KEY);
 
   const refreshProfile = async () => {
     if (user) await fetchProfile(user.uid);
@@ -138,7 +147,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       loginWithGoogle, 
       loginWithEmail, 
       logout,
-      refreshProfile 
+      refreshProfile,
+      getSocketToken
     }}>
       {children}
     </AuthContext.Provider>

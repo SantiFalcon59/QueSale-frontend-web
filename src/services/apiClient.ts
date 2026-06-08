@@ -60,7 +60,7 @@ export const apiRequest = async <T>(
 
 export const api = {
   loginWithFirebase: (idToken: string, photoURL?: string | null) =>
-    apiRequest('/api/auth/login-firebase', {
+    apiRequest<{ user: any; token: string }>('/api/auth/login-firebase', {
       method: 'POST',
       body: { idToken, photoURL },
     }),
@@ -358,4 +358,31 @@ export const api = {
 
   getBlockedUsers: (eventId: string) =>
     apiRequest(`/api/events/${encodeURIComponent(eventId)}/blocked-users`, { auth: true }),
+
+  // Unified wall API
+  getWallPosts: (wallType: string, wallId: string, page = 1, limit = 20) =>
+    apiRequest(`/api/wall/${encodeURIComponent(wallType)}/${encodeURIComponent(wallId)}?page=${page}&limit=${limit}`),
+
+  createWallPost_new: (wallType: string, wallId: string, content: string, type?: string) =>
+    apiRequest(`/api/wall/${encodeURIComponent(wallType)}/${encodeURIComponent(wallId)}`, {
+      method: 'POST',
+      body: { content, type: type || 'comment' },
+      auth: true,
+    }),
+
+  deleteWallPost_new: (postId: number) =>
+    apiRequest(`/api/wall/post/${postId}`, { method: 'DELETE', auth: true }),
+
+  createWallComment_new: (postId: number, content: string) =>
+    apiRequest(`/api/wall/post/${postId}/comments`, {
+      method: 'POST',
+      body: { content },
+      auth: true,
+    }),
+
+  toggleWallPostLike_new: (postId: number) =>
+    apiRequest(`/api/wall/post/${postId}/like`, {
+      method: 'POST',
+      auth: true,
+    }),
 };

@@ -11,6 +11,7 @@ import { createNotification } from '../services/notificationService';
 import { api, resolveAssetUrl } from '../services/apiClient';
 import EmojiPicker, { EmojiClickData } from 'emoji-picker-react';
 import { GifPicker } from '../components/post/GifPicker';
+import PostFeed from '../components/wall/PostFeed';
 
 const safeDate = (val: any) => {
   if (!val) return null;
@@ -81,8 +82,8 @@ const Profile: React.FC<{ usernameFromUrl?: string }> = ({ usernameFromUrl }) =>
 
     const fetchWall = async () => {
       try {
-        const data: any = await api.getUserWall(profileUser.id, 1, 50);
-        setPosts(data.posts || []);
+        const data: any = await api.getWallPosts('user_profile', profileUser.id, 1, 50);
+        setPosts(data || []);
       } catch (err) {
         console.error('Error fetching wall:', err);
         setPosts([]);
@@ -151,7 +152,7 @@ const Profile: React.FC<{ usernameFromUrl?: string }> = ({ usernameFromUrl }) =>
       const content = selectedGif
         ? `${newPost.trim()}\n[GIF:${selectedGif}]`
         : newPost.trim();
-      const created: any = await api.createWallPost(profileUser.id, content);
+      const created: any = await api.createWallPost_new('user_profile', profileUser.id, content);
       if (created) {
         setPosts(prev => [created, ...prev]);
       }
@@ -204,39 +205,32 @@ const Profile: React.FC<{ usernameFromUrl?: string }> = ({ usernameFromUrl }) =>
     setShowGifPicker(false);
   };
 
-  const handleLike = async (postId: string) => {
+  const handleLike = async (postId: number) => {
     if (!currentUser) return;
     try {
-      const result: any = await api.toggleWallPostLike(postId);
+      const result: any = await api.toggleWallPostLike_new(postId);
       setPosts(prev => prev.map(p => p.id_post === postId ? { ...p, likes_count: result.likes_count } : p));
     } catch (err) {
       console.error("Error toggling like:", err);
     }
   };
 
-  const handleComment = async (postId: string, content: string) => {
+  const handleComment = async (postId: number, content: string) => {
     if (!content.trim() || !currentUser || !profileUser) return;
 
     try {
-      const comment: any = await api.createWallComment(postId, content);
-      setPosts(prev =>
-        prev.map(post => {
-          if (post.id_post === postId || post.id === postId) {
-            const existing = post.comments || [];
-            return { ...post, comments: [...existing, comment] };
-          }
-          return post;
-        })
-      );
+      await api.createWallComment_new(postId, content);
+      const data: any = await api.getWallPosts('user_profile', profileUser.id, 1, 50);
+      setPosts(data || []);
     } catch (err) {
       console.error("Error commenting:", err);
     }
   };
 
-  const handleDeletePost = async (postId: string) => {
+  const handleDeletePost = async (postId: number) => {
     if (!window.confirm('¿Eliminar esta publicación?')) return;
     try {
-      await api.deleteWallPost(postId);
+      await api.deleteWallPost_new(postId);
       setPosts(prev => prev.filter(p => p.id_post !== postId));
     } catch (err) {
       console.error("Error deleting post:", err);
@@ -596,153 +590,20 @@ const Profile: React.FC<{ usernameFromUrl?: string }> = ({ usernameFromUrl }) =>
                     </motion.form>
                   )}
 
-                  {/* Wall Posts */}
-                  <div className="space-y-6">
-                    {posts.length === 0 ? (
-                      <motion.div
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ delay: 0.1 }}
-                        className="text-center py-20 border-2 border-dashed border-outline-variant rounded-[3rem]"
-                      >
-                        <motion.div
-                          animate={{ y: [0, -5, 0] }}
-                          transition={{ repeat: Infinity, duration: 2 }}
-                          className="w-16 h-16 bg-surface-container-low rounded-full flex items-center justify-center mx-auto mb-4"
-                        >
-                          <MessageCircle size={24} className="text-on-surface-variant opacity-40" />
-                        </motion.div>
-                        <p className="text-on-surface-variant font-medium">No hay publicaciones aún.</p>
-                        <p className="text-[10px] text-on-surface-variant/60 uppercase font-black tracking-widest mt-1">¡Sé el primero en decir hola!</p>
-                      </motion.div>
-                    ) : (
-                      posts.map((post, i) => (
-                        <motion.div
-                          key={post.id_post}
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: i * 0.05 }}
-                          className="p-6 lg:p-8 rounded-[2.5rem] bg-white border border-outline-variant hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300 space-y-4 group"
-                        >
-                          <div className="flex justify-between items-start">
-                            <Link
-                              to={`/@${post.author_username}`}
-                              className="flex gap-4 group/author cursor-pointer"
-                            >
-                               <img
-                                src={post.author_photo || `https://api.dicebear.com/7.x/avataaars/svg?seed=${post.author_username}`}
-                                className="w-12 h-12 shrink-0 rounded-xl bg-surface-container-low object-cover transition-transform group-hover/author:scale-110"
-                                alt="Author"
-                               />
-                               <div className="space-y-0.5">
-                                  <h4 className="text-base font-black italic tracking-tight group-hover/author:text-primary transition-colors">{post.author_username}</h4>
-                                  <p className="text-[10px] text-on-surface-variant font-black uppercase tracking-[0.1em]">
-                                    {safeDate(post.created_at) ? format(safeDate(post.created_at)!, 'HH:mm • d MMM', { locale: es }) : 'Reciente'}
-                                  </p>
-                               </div>
-                            </Link>
-                            <div className="flex items-center gap-2">
-                               {(isOwnProfile || isModerator || post.id_author_user === currentUser?.uid) && (
-                                 <button
-                                   onClick={() => handleDeletePost(post.id_post)}
-                                   className="p-2 rounded-xl bg-red-50 text-red-500 opacity-0 group-hover:opacity-100 transition-all duration-200 hover:bg-red-500 hover:text-white hover:scale-110 active:scale-95 cursor-pointer"
-                                 >
-                                   <Trash2 size={16} />
-                                 </button>
-                               )}
-                               <button className="text-on-surface-variant hover:text-on-surface transition-colors cursor-pointer p-2 rounded-xl hover:bg-surface-container-low">
-                                 <MoreHorizontal size={20} />
-                               </button>
-                            </div>
-                           </div>
-                           {(() => {
-                             const gifMatch = post.content?.match(/\[GIF:(https?:\/\/[^\]]+)\]/);
-                             const textContent = post.content?.replace(/\[GIF:https?:\/\/[^\]]+\]/g, '').trim();
-                             return (
-                               <>
-                                 {textContent && (
-                                   <p className="text-lg lg:text-xl font-medium text-on-surface leading-tight tracking-tight whitespace-pre-wrap">
-                                     {textContent}
-                                   </p>
-                                 )}
-                                 {gifMatch && (
-                                   <motion.div
-                                     initial={{ opacity: 0, scale: 0.97 }}
-                                     animate={{ opacity: 1, scale: 1 }}
-                                     className="rounded-xl overflow-hidden max-h-80 bg-black/5"
-                                   >
-                                     <img src={gifMatch[1]} alt="GIF" className="w-full max-h-80 object-cover mx-auto" />
-                                   </motion.div>
-                                 )}
-                               </>
-                             );
-                           })()}
-
-                          <div className="flex gap-6 pt-4 border-t border-outline-variant/30">
-                            <button
-                              onClick={() => handleLike(post.id_post)}
-                              className={cn(
-                                "flex items-center gap-2 text-[10px] font-black uppercase tracking-widest transition-all duration-200 cursor-pointer px-3 py-1.5 rounded-full",
-                                "text-on-surface-variant hover:text-primary hover:bg-primary/5 active:scale-95"
-                              )}
-                            >
-                              <ThumbsUp size={16} />
-                              {post.likes_count > 0 ? post.likes_count : 'Me gusta'}
-                            </button>
-                            <button
-                              onClick={() => setSelectedPostForComment(selectedPostForComment === post.id_post ? null : post.id_post)}
-                              className={cn(
-                                "flex items-center gap-2 text-[10px] font-black uppercase tracking-widest transition-all duration-200 cursor-pointer px-3 py-1.5 rounded-full",
-                                selectedPostForComment === post.id_post
-                                  ? "text-primary bg-primary/5"
-                                  : "text-on-surface-variant hover:text-primary hover:bg-primary/5 active:scale-95"
-                              )}
-                            >
-                              <MessageCircle size={16} />
-                              {post.comments?.length > 0 ? post.comments.length : 'Comentar'}
-                            </button>
-                          </div>
-
-                          {/* Comments Section */}
-                          <AnimatePresence>
-                            {selectedPostForComment === post.id_post && (
-                              <motion.div
-                                initial={{ opacity: 0, height: 0 }}
-                                animate={{ opacity: 1, height: 'auto' }}
-                                exit={{ opacity: 0, height: 0 }}
-                                transition={{ duration: 0.2 }}
-                                className="overflow-hidden bg-surface-container-low/50 rounded-2xl"
-                              >
-                                <div className="p-4 space-y-4">
-                                  <PostComments comments={post.comments || []} isModerator={isModerator} profileUserId={profileUser.id} />
-                                  {currentUser && (
-                                    <form
-                                      className="flex gap-2"
-                                      onSubmit={(e) => {
-                                        e.preventDefault();
-                                        const input = (e.target as any).comment;
-                                        handleComment(post.id_post, input.value);
-                                        input.value = '';
-                                      }}
-                                    >
-                                      <input
-                                        name="comment"
-                                        placeholder="Escribe un comentario..."
-                                        className="flex-1 bg-white border border-outline-variant rounded-xl px-4 py-2 text-sm outline-none focus:border-primary/30 transition-all font-medium"
-                                      />
-                                      <button className="btn-primary w-10 h-10 p-0 flex items-center justify-center shrink-0">
-                                        <Send size={16} />
-                                      </button>
-                                    </form>
-                                  )}
-                                </div>
-                              </motion.div>
-                            )}
-                          </AnimatePresence>
-                        </motion.div>
-                      ))
-                    )}
-                  </div>
+                  <PostFeed
+                    posts={posts}
+                    onLike={handleLike}
+                    onDelete={handleDeletePost}
+                    onComment={handleComment}
+                    onShare={(content) => {
+                      if (navigator.share) {
+                        navigator.share({ title: 'QueSale', text: content, url: window.location.href }).catch(() => {});
+                      } else {
+                        navigator.clipboard.writeText(`${content} — ${window.location.href}`);
+                      }
+                    }}
+                    showDelete={(post) => isOwnProfile || isModerator || post.id_user === currentUser?.uid}
+                  />
                 </motion.div>
               )}
 
