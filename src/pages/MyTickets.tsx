@@ -141,12 +141,20 @@ const MyTickets: React.FC = () => {
                   <p className="text-white/50 text-sm">Muestra este código al ingresar al evento</p>
                 </div>
 
-                <div className="bg-white p-6 rounded-2xl mb-8 flex justify-center shadow-[0_0_50px_rgba(255,255,255,0.1)]">
+                <div className="bg-white p-6 rounded-2xl mb-8 flex flex-col items-center shadow-[0_0_50px_rgba(255,255,255,0.1)]">
                   {qrDataUrl ? (
-                    <img src={qrDataUrl} alt="QR Code" className="w-full max-w-[200px]" />
+                    <img src={qrDataUrl} alt="QR Code" className="w-full max-w-[200px] mb-4" />
                   ) : (
-                    <div className="w-[200px] h-[200px] bg-gray-100 animate-pulse rounded-lg" />
+                    <div className="w-[200px] h-[200px] bg-gray-100 animate-pulse rounded-lg mb-4" />
                   )}
+                  <div className="w-full space-y-3 pt-4 border-t border-gray-100">
+                    <div className="flex justify-between text-[10px] uppercase font-bold tracking-widest text-gray-400">
+                      <span>ID de Entrada</span>
+                    </div>
+                    <div className="text-black font-mono text-sm break-all bg-gray-50 p-2 rounded-lg border border-gray-100 text-center">
+                      {selectedTicket.uuid}
+                    </div>
+                  </div>
                 </div>
 
                 <div className="space-y-4 border-t border-white/10 pt-6">
@@ -157,10 +165,6 @@ const MyTickets: React.FC = () => {
                   <div className="flex justify-between text-sm">
                     <span className="text-white/40">Ubicación</span>
                     <span className="text-white font-bold text-right">{selectedTicket.ubication}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-white/40">ID de Entrada</span>
-                    <span className="text-white font-mono bg-black/50 px-2 py-1 rounded">{selectedTicket.uuid}</span>
                   </div>
                 </div>
               </div>

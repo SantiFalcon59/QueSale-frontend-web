@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Users, Ticket, DollarSign, Calendar, Plus, Edit, Trash, BarChart3, TrendingUp, Users as UsersIcon, Sparkles, Building, ArrowRight, Upload, X, Camera, Loader2, Search, Shield, UserPlus } from 'lucide-react';
+import { Users, Ticket, DollarSign, Calendar, Plus, Edit, Trash, BarChart3, TrendingUp, Users as UsersIcon, Sparkles, Building, ArrowRight, Upload, X, Camera, Loader2, Search, Shield, UserPlus, Check, Link } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
@@ -64,8 +64,13 @@ const OrganizerDashboard: React.FC = () => {
           logo_url: org.logo_url,
           verified: org.verified,
           id_creator: org.id_creator,
+          mp_public_key: org.mp_public_key,
+          mp_access_token: org.mp_access_token,
         });
-        setEditOrgData({ name: org.name, description: org.description || '' });
+        setEditOrgData({ 
+          name: org.name, 
+          description: org.description || '',
+        });
 
         const eventsData: any = await api.getOrganizerEvents(org.id_organizer, 1, 50);
         const eventList = eventsData?.data || eventsData || [];
@@ -144,7 +149,11 @@ const OrganizerDashboard: React.FC = () => {
       if (logoFile) {
         await api.uploadOrganizerLogo(logoFile, organization.id);
       }
-      setOrganization(prev => ({ ...prev, name: editOrgData.name, description: editOrgData.description }));
+      setOrganization(prev => ({ 
+        ...prev, 
+        name: editOrgData.name, 
+        description: editOrgData.description,
+      }));
       setEditingOrg(false);
       await fetchAll();
     } catch (err: any) {
@@ -454,6 +463,76 @@ const OrganizerDashboard: React.FC = () => {
                   <label className="text-[10px] uppercase font-black tracking-widest text-on-surface-variant ml-4">Descripción</label>
                   <textarea value={editOrgData.description} onChange={e => setEditOrgData(prev => ({ ...prev, description: e.target.value }))} className="w-full bg-surface-container-low border border-outline-variant rounded-xl px-4 py-3 text-sm outline-none focus:border-primary/50 transition-all font-medium resize-none min-h-[80px]" />
                 </div>
+
+                {organization?.verified ? (
+                  <div className="pt-4 border-t border-outline-variant space-y-4">
+                    <div className="flex items-center gap-2 mb-1">
+                       <img src="https://www.mercadopago.com/instore/merchant/bundles/mptheme/images/logo-mercadopago.png" alt="MP" className="h-3" />
+                       <h4 className="text-[9px] font-black uppercase tracking-[0.2em] text-on-surface-variant">Configuración de Cobros</h4>
+                    </div>
+                    
+                    {organization.mp_access_token ? (
+                      <div className="p-4 rounded-xl bg-green-50 border border-green-200">
+                        <p className="text-xs text-green-800 font-bold flex items-center gap-2">
+                          <Check size={16} /> Cuenta de Mercado Pago Conectada
+                        </p>
+                        <p className="text-[10px] text-green-700 mt-1">
+                          Los pagos de tus eventos irán directamente a tu cuenta.
+                        </p>
+                        <button 
+                          type="button"
+                          onClick={async () => {
+                             if(confirm('¿Seguro que quieres desconectar tu cuenta de Mercado Pago?')) {
+                                try {
+                                   await api.delete(`/organizers/${organization.id}/oauth/mercadopago`);
+                                   await fetchAll();
+                                } catch (e) {
+                                   alert('Error al desconectar');
+                                }
+                             }
+                          }}
+                          className="mt-3 text-[10px] font-bold text-red-600 hover:underline"
+                        >
+                          Desconectar cuenta
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        <p className="text-xs text-on-surface-variant font-medium">
+                          Conecta tu cuenta de Mercado Pago para recibir el dinero de las entradas directamente.
+                        </p>
+                        <button
+                          type="button"
+                          onClick={async () => {
+                             try {
+                               const res: any = await api.get(`/organizers/${organization.id}/oauth/mercadopago`);
+                               if (res.url) {
+                                 window.location.href = res.url;
+                               }
+                             } catch (e) {
+                               alert('Error al iniciar la conexión con Mercado Pago');
+                             }
+                          }}
+                          className="w-full bg-[#009EE3] hover:bg-[#0089C5] text-white rounded-xl px-4 py-3 text-sm font-bold transition-colors flex items-center justify-center gap-2"
+                        >
+                          <Link size={18} />
+                          Conectar con Mercado Pago
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="pt-4 border-t border-outline-variant space-y-4">
+                    <div className="p-4 rounded-xl bg-amber-50 border border-amber-200">
+                      <p className="text-[10px] text-amber-800 font-bold uppercase tracking-widest flex items-center gap-2">
+                        <Shield size={14} /> Función de Pagos Bloqueada
+                      </p>
+                      <p className="text-xs text-amber-700 mt-2 font-medium">
+                        La integración con Mercado Pago está disponible solo para organizaciones verificadas. Contáctate con soporte para verificar tu organización.
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
               <div className="flex gap-3 p-6 border-t border-outline-variant">
                 <button onClick={() => setEditingOrg(false)} className="btn-secondary flex-1">CANCELAR</button>

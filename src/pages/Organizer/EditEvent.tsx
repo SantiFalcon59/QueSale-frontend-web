@@ -108,7 +108,7 @@ const EditEvent: React.FC = () => {
     lng: -58.3816,
     price: 0,
     capacity: '',
-    ticketType: 'free' as 'free' | 'external' | 'door',
+    ticketType: 'free' as 'free' | 'external' | 'door' | 'mercadopago',
     ticketUrl: '',
     qr_enabled: false,
     tags: [] as string[],
@@ -513,7 +513,7 @@ const EditEvent: React.FC = () => {
 
               <div className="space-y-3">
                 <label className="text-[10px] uppercase font-black tracking-widest text-on-surface-variant ml-2">Tipo de entrada</label>
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                   <button
                     type="button"
                     onClick={() => setFormData(prev => ({ ...prev, ticketType: 'free', price: 0 }))}
@@ -534,7 +534,7 @@ const EditEvent: React.FC = () => {
                     )}
                   >
                     <Link size={20} className={cn(formData.ticketType === 'external' ? "text-primary" : "text-on-surface-variant")} />
-                    <span className="text-[10px] font-black uppercase tracking-widest">Link externo</span>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-center">Link externo</span>
                   </button>
                   <button
                     type="button"
@@ -546,6 +546,17 @@ const EditEvent: React.FC = () => {
                   >
                     <DoorOpen size={20} className={cn(formData.ticketType === 'door' ? "text-primary" : "text-on-surface-variant")} />
                     <span className="text-[10px] font-black uppercase tracking-widest">En puerta</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setFormData(prev => ({ ...prev, ticketType: 'mercadopago' }))}
+                    className={cn(
+                      "p-4 rounded-xl border-2 flex flex-col items-center gap-2 transition-all",
+                      formData.ticketType === 'mercadopago' ? "border-primary bg-primary/5" : "border-outline-variant hover:border-primary/30"
+                    )}
+                  >
+                    <DollarSign size={20} className={cn(formData.ticketType === 'mercadopago' ? "text-primary" : "text-on-surface-variant")} />
+                    <span className="text-[10px] font-black uppercase tracking-widest text-center">Mercado Pago</span>
                   </button>
                 </div>
               </div>
@@ -587,7 +598,7 @@ const EditEvent: React.FC = () => {
                 </div>
               )}
 
-              {(formData.ticketType === 'external' || formData.ticketType === 'door') && (
+              {(formData.ticketType === 'external' || formData.ticketType === 'door' || formData.ticketType === 'mercadopago') && (
                 <div className="space-y-2">
                   <label className="text-[10px] uppercase font-black tracking-widest text-on-surface-variant ml-2">Precio</label>
                   <div className="relative">

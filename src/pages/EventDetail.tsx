@@ -19,7 +19,7 @@ import { api, resolveAssetUrl } from '../services/apiClient';
 import { io, Socket } from 'socket.io-client';
 import PostFeed from '../components/wall/PostFeed';
 import PostComposer from '../components/wall/PostComposer';
-import { TicketSuccessModal } from '../components/ui/TicketSuccessModal';
+import { TicketFeedbackModal, TicketModalMode } from '../components/ui/TicketFeedbackModal';
 
 const GOOGLE_MAPS_KEY = process.env.GOOGLE_MAPS_PLATFORM_KEY || '';
 
@@ -100,7 +100,12 @@ const EventDetail: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [feedbackModal, setFeedbackModal] = useState<{
+    isOpen: boolean;
+    mode: TicketModalMode;
+    title?: string;
+    message?: string;
+  }>({ isOpen: false, mode: 'success' });
   const [galleryIdx, setGalleryIdx] = useState<number | null>(null);
   const galleryImages = event?.media || [];
   const [isSaved, setIsSaved] = useState(false);
@@ -230,11 +235,29 @@ const EventDetail: React.FC = () => {
     if (!id) return;
     try {
       setLoading(true);
-      await api.purchaseTicket(id);
-      setShowSuccessModal(true);
+      const res: any = await api.purchaseTicket(id);
+      
+      if (res.payment_required && res.init_point) {
+        // Redirect to Mercado Pago
+        window.location.href = res.init_point;
+        return;
+      }
+
+      setFeedbackModal({
+        isOpen: true,
+        mode: 'success',
+        title: '¡Entrada Lista!',
+        message: 'Tu acceso ha sido procesado correctamente.'
+      });
       setEvent(prev => prev ? { ...prev, attendeesCount: prev.attendeesCount + 1 } : null);
     } catch (err: any) {
-      alert(err.message || 'Error al adquirir la entrada');
+      const isAlreadyHas = err.message?.toLowerCase().includes('already has') || err.message?.toLowerCase().includes('ya tienes');
+      setFeedbackModal({
+        isOpen: true,
+        mode: isAlreadyHas ? 'info' : 'error',
+        title: isAlreadyHas ? 'Ya tienes tu entrada' : 'Ups, algo salió mal',
+        message: isAlreadyHas ? 'Ya registramos tu acceso para este evento. Puedes ver tu entrada en la sección correspondiente.' : (err.message || 'No pudimos procesar tu entrada en este momento.')
+      });
     } finally {
       setLoading(false);
     }
@@ -270,9 +293,12 @@ const EventDetail: React.FC = () => {
       />
 
       {event && (
-        <TicketSuccessModal
-          isOpen={showSuccessModal}
-          onClose={() => setShowSuccessModal(false)}
+        <TicketFeedbackModal
+          isOpen={feedbackModal.isOpen}
+          mode={feedbackModal.mode}
+          title={feedbackModal.title}
+          message={feedbackModal.message}
+          onClose={() => setFeedbackModal(prev => ({ ...prev, isOpen: false }))}
           event={event}
         />
       )}
@@ -616,7 +642,7 @@ const EventDetail: React.FC = () => {
                   <button
                     onClick={() => { 
                       if (handleInteraction()) return; 
-                      if (event.qr_enabled || event.price === 0) {
+                      if (event.ticket_type === 'mercadopago' || event.qr_enabled || event.price === 0) {
                         handlePurchaseTicket();
                       } else {
                         window.open(event.ticket_url || 'https://mercadopago.com.ar', '_blank'); 
