@@ -200,25 +200,6 @@ const Home: React.FC = () => {
          </div>
       </section>
 
-      {/* Quick Events (Upcoming) */}
-      <section className="w-full max-w-7xl mx-auto px-6 py-12 space-y-8">
-         <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-               <div className="w-10 h-10 rounded-2xl bg-blue-500/10 text-blue-600 flex items-center justify-center">
-                  <Zap size={20} />
-               </div>
-               <div>
-                  <h3 className="text-2xl font-black italic uppercase tracking-tighter">Eventos Rápidos</h3>
-                  <p className="text-[10px] text-on-surface-variant font-bold uppercase tracking-widest">Próximos a realizarse</p>
-               </div>
-            </div>
-            <Link to="/events" className="text-xs font-black text-primary hover:underline uppercase tracking-widest">Ver Todos</Link>
-         </div>
-         <div className="flex gap-6 overflow-x-auto pb-8 no-scrollbar">
-            {quickEvents.map(event => <EventCard key={event.id_event} event={event} />)}
-         </div>
-      </section>
-
       {/* Features Bento Grid */}
       <section className="w-full max-w-7xl mx-auto px-6 py-24">
         <div className="grid grid-cols-12 gap-6 min-h-[600px]">

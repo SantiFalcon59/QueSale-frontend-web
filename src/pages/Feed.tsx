@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import { cn, NO_EVENT_IMAGE } from '../lib/utils';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -8,6 +8,7 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { api } from '../services/apiClient';
 import { Calendar, MapPin, Share2, Bookmark, Loader2 } from 'lucide-react';
+import { AdBanner } from '../components/ui/AdBanner';
 
 const CYCLE_MS = 4000;
 
@@ -131,160 +132,98 @@ const Feed: React.FC = () => {
         const imgIdx = images.length > 1 ? imageIndex % images.length : 0;
         const currentSrc = images.length > 0 ? images[imgIdx] : event.thumbnail_url || NO_EVENT_IMAGE;
         return (
-        <div key={event.id_event} className="w-full h-full snap-start p-4 lg:p-8">
-          <div className="relative w-full h-full rounded-[40px] overflow-hidden bg-black shadow-2xl flex flex-col justify-end border border-white/5">
-            <div className="absolute inset-0 z-0 overflow-hidden">
-              <div className="w-full h-full transition-transform duration-1000 group-hover:scale-105">
-                {/* Current image — always present underneath */}
-                <img src={currentSrc} className="absolute inset-0 w-full h-full object-cover opacity-70" alt={event.title} />
-                {/* Previous image — fading out on top, revealing current underneath */}
-                {fadingMap[event.id_event] && (
-                  <motion.img
-                    initial={{ opacity: 0.7 }}
-                    animate={{ opacity: 0 }}
-                    transition={{ duration: 1.2, ease: "easeInOut" }}
-                    onAnimationComplete={() => setFadingMap(prev => {
-                      const next = { ...prev };
-                      delete next[event.id_event];
-                      return next;
-                    })}
-                    src={fadingMap[event.id_event]}
-                    className="absolute inset-0 w-full h-full object-cover"
-                    alt=""
-                  />
-                )}
-              </div>
-              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent pointer-events-none" />
-            </div>
+          <React.Fragment key={event.id_event}>
+            <div className="w-full h-full snap-start p-4 lg:p-8">
+              <div className="relative w-full h-full rounded-[40px] overflow-hidden bg-black shadow-2xl flex flex-col justify-end border border-white/5 group">
+                <div className="absolute inset-0 z-0 overflow-hidden">
+                  <div className="w-full h-full transition-transform duration-1000 group-hover:scale-105">
+                    <img src={currentSrc} className="absolute inset-0 w-full h-full object-cover opacity-70" alt={event.title} />
+                    {fadingMap[event.id_event] && (
+                      <motion.img
+                        initial={{ opacity: 0.7 }}
+                        animate={{ opacity: 0 }}
+                        transition={{ duration: 1.2, ease: "easeInOut" }}
+                        onAnimationComplete={() => setFadingMap(prev => {
+                          const next = { ...prev };
+                          delete next[event.id_event];
+                          return next;
+                        })}
+                        src={fadingMap[event.id_event]}
+                        className="absolute inset-0 w-full h-full object-cover z-10"
+                      />
+                    )}
+                  </div>
+                </div>
 
-            <div className="absolute right-6 bottom-8 lg:right-10 lg:bottom-12 flex flex-col gap-8 items-center z-10">
-              <div
-                className="flex flex-col items-center group cursor-pointer"
-                onClick={(e) => toggleSave(e, event.id_event)}
-              >
-                <motion.div
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                  className={cn(
-                    "w-14 h-14 rounded-full backdrop-blur-md border border-white/20 flex items-center justify-center text-white transition-all shadow-lg",
-                    savedEvents[event.id_event] ? "bg-primary border-primary shadow-primary/40" : "bg-white/10 group-hover:bg-primary-container"
-                  )}
-                >
-                  <Bookmark size={24} fill={savedEvents[event.id_event] ? 'currentColor' : 'none'} />
-                </motion.div>
-                <span className="text-[10px] font-bold text-white mt-1.5 uppercase tracking-widest text-shadow-sm">
-                  {savedEvents[event.id_event] ? 'Guardado' : 'Guardar'}
-                </span>
-              </div>
+                <div className="relative z-20 p-8 lg:p-12 space-y-6 max-w-4xl">
+                  <div className="flex gap-3">
+                     <span className="px-4 py-1.5 rounded-full bg-primary/20 backdrop-blur-md border border-white/10 text-primary text-[10px] font-black uppercase tracking-widest">{event.interests?.[0]?.name || 'Evento'}</span>
+                     <span className="px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/10 text-white text-[10px] font-black uppercase tracking-widest">
+                       {format(new Date(event.date), 'EEEE dd', { locale: es })}
+                     </span>
+                  </div>
 
-              <div
-                className="flex flex-col items-center group cursor-pointer"
-                onClick={(e) => handleShare(e, event)}
-              >
-                <motion.div
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                  className="w-14 h-14 rounded-full backdrop-blur-md border border-white/20 bg-white/10 flex items-center justify-center text-white group-hover:bg-primary-container transition-all shadow-lg"
-                >
-                  <Share2 size={24} />
-                </motion.div>
-                <span className="text-[10px] font-bold text-white mt-1.5 uppercase tracking-widest text-shadow-sm">Share</span>
-              </div>
+                  <div className="space-y-4">
+                    <h2 className="text-4xl lg:text-7xl font-black italic tracking-tighter text-white uppercase leading-[0.9]">{event.title}</h2>
+                    <p className="text-base lg:text-lg text-white/70 font-medium leading-relaxed line-clamp-2 max-w-2xl">{event.description}</p>
+                  </div>
 
-              <div className="flex flex-col items-center group cursor-pointer">
-                <Link to={`/events/${event.id_event}`} className="relative">
-                  <motion.div
-                    whileHover={{ scale: 1.05, rotate: 5 }}
-                    whileTap={{ scale: 0.95 }}
-                    className="w-16 h-16 rounded-2xl bg-primary-container text-white flex items-center justify-center shadow-xl shadow-primary/40"
-                  >
-                    <span className="material-symbols-outlined text-[32px]" style={{ fontVariationSettings: "'FILL' 1" }}>confirmation_number</span>
-                  </motion.div>
-                  <div className="absolute inset-0 rounded-2xl bg-primary-container animate-ping opacity-20 -z-10" />
-                </Link>
-                <span className="text-[10px] font-extrabold text-primary-container mt-2 uppercase tracking-[0.2em] bg-white px-2 py-0.5 rounded shadow-sm">Tickets</span>
+                  <div className="flex flex-wrap items-center gap-6 lg:gap-10 pt-4">
+                    <div className="flex items-center gap-3">
+                       <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center text-white"><MapPin size={24} /></div>
+                       <div>
+                          <p className="text-[10px] text-white/40 font-black uppercase tracking-widest">Ubicación</p>
+                          <p className="text-sm lg:text-base text-white font-bold">{event.ubication}</p>
+                       </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                       <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center text-white"><Calendar size={24} /></div>
+                       <div>
+                          <p className="text-[10px] text-white/40 font-black uppercase tracking-widest">Horario</p>
+                          <p className="text-sm lg:text-base text-white font-bold">{format(new Date(event.date), 'HH:mm')} HS</p>
+                       </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-4 pt-8">
+                     <Link to={`/events/${event.id_event}`} className="h-16 px-10 rounded-2xl bg-white text-black font-black uppercase tracking-widest text-sm hover:scale-105 transition-all flex items-center justify-center">Ver Detalles</Link>
+                     <button onClick={(e) => toggleSave(e, event.id_event)} className={cn("w-16 h-16 rounded-2xl border flex items-center justify-center transition-all", savedEvents[event.id_event] ? "bg-primary border-primary text-white" : "bg-white/10 border-white/10 text-white hover:bg-white hover:text-black")}>
+                        <Bookmark size={24} fill={savedEvents[event.id_event] ? "currentColor" : "none"} />
+                     </button>
+                     <button onClick={(e) => handleShare(e, event)} className="w-16 h-16 rounded-2xl bg-white/10 border border-white/10 text-white flex items-center justify-center hover:bg-white hover:text-black transition-all">
+                        <Share2 size={24} />
+                     </button>
+                  </div>
+                </div>
+
+                <div className="absolute top-0 right-0 w-1/2 h-full bg-linear-to-l from-black/20 to-transparent pointer-events-none" />
+                <div className="absolute top-0 left-0 w-full h-1/2 bg-linear-to-b from-black/40 to-transparent pointer-events-none" />
               </div>
             </div>
 
-            <Link to={`/events/${event.id_event}`} className="relative z-10 p-8 lg:p-14 w-full max-w-4xl">
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: false }}
-                transition={{ duration: 0.5 }}
-                className="flex items-center gap-2 mb-4 pointer-events-none"
-              >
-                <div className="w-2.5 h-2.5 rounded-full bg-primary animate-pulse shadow-[0_0_10px_#732ee4]" />
-                <span className="text-primary font-black text-xs lg:text-sm tracking-[0.2em] uppercase bg-white/10 backdrop-blur-md px-3 py-1 rounded-full border-2 border-primary/30 shadow-sm shadow-primary/20">
-                  {event.organizer?.name || event.interests?.[0]?.name || event.tags?.[0] || 'Evento'}
-                </span>
-              </motion.div>
-
-              <motion.h2
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: false }}
-                transition={{ duration: 0.5, delay: 0.1 }}
-                className="font-display text-4xl lg:text-7xl text-white mb-6 leading-[1.1] uppercase font-black tracking-tighter pointer-events-none"
-                style={{ textShadow: '0 4px 20px rgba(0, 0, 0, 0.5), 0 0 40px rgba(115, 46, 228, 0.3)' }}
-              >
-                {event.title}
-              </motion.h2>
-
-              <motion.p
-                initial={{ opacity: 0 }}
-                whileInView={{ opacity: 1 }}
-                viewport={{ once: false }}
-                transition={{ duration: 0.5, delay: 0.2 }}
-                className="text-white/90 text-sm lg:text-lg mb-8 max-w-2xl line-clamp-2 lg:line-clamp-none font-medium leading-relaxed pointer-events-none"
-              >
-                {event.description}
-              </motion.p>
-
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: false }}
-                transition={{ duration: 0.5, delay: 0.3 }}
-                className="flex flex-wrap gap-4 items-center pointer-events-none"
-              >
-                {event.date && (
-                  <div className="flex items-center gap-3 px-5 py-2.5 bg-white/10 backdrop-blur-xl rounded-2xl border border-white/10 shadow-lg group hover:bg-white/20 transition-all">
-                    <Calendar size={16} className="text-primary" />
-                    <span className="text-white font-bold text-xs lg:text-sm tracking-wide">
-                      {format(new Date(event.date), "d MMM • HH:mm", { locale: es }).toUpperCase()}
-                    </span>
+            {/* Show an Ad after every 4 events */}
+            {(index + 1) % 4 === 0 && (
+              <div className="w-full h-full snap-start p-4 lg:p-8 flex items-center justify-center">
+                <div className="max-w-4xl w-full h-full glass-card rounded-[40px] p-12 border border-white/10 flex flex-col items-center justify-center gap-6">
+                  <div className="text-center space-y-2">
+                    <p className="text-[10px] font-black uppercase tracking-[0.4em] text-primary">Publicidad Sugerida</p>
+                    <h3 className="text-2xl font-black text-white uppercase italic tracking-tighter">Contenido Patrocinado</h3>
                   </div>
-                )}
-                {event.ubication && (
-                  <div className="flex items-center gap-3 px-5 py-2.5 bg-white/10 backdrop-blur-xl rounded-2xl border border-white/10 shadow-lg group hover:bg-white/20 transition-all">
-                    <MapPin size={16} className="text-primary" />
-                    <span className="text-white font-bold text-xs lg:text-sm tracking-wide">{event.ubication}</span>
+                  <div className="w-full bg-white/5 rounded-3xl p-4 min-h-[250px] flex items-center justify-center overflow-hidden">
+                    <AdBanner 
+                      client="ca-pub-YOUR_ADSENSE_CLIENT_ID" 
+                      slot="YOUR_FEED_AD_SLOT" 
+                      format="fluid" 
+                      className="w-full" 
+                    />
                   </div>
-                )}
-              </motion.div>
-            </Link>
-
-            {index < events.length - 1 && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 0.5 }}
-                transition={{ delay: 1, duration: 1 }}
-                className="absolute bottom-6 left-1/2 -translate-x-1/2 animate-bounce"
-              >
-                <span className="material-symbols-outlined text-white text-[32px]">keyboard_double_arrow_down</span>
-              </motion.div>
+                  <p className="text-[9px] text-white/20 font-bold uppercase tracking-widest">Gracias por apoyar a QueSale</p>
+                </div>
+              </div>
             )}
-          </div>
-        </div>
+          </React.Fragment>
         );
       })}
-
-      <style>{`
-        .hide-scrollbar::-webkit-scrollbar { display: none; }
-        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        .text-shadow-sm { text-shadow: 0 1px 2px rgba(0,0,0,0.5); }
-      `}</style>
     </div>
   );
 };

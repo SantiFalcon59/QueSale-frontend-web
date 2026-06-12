@@ -5,6 +5,7 @@ import { MapPin, Calendar, Plus, Minus, Target, ChevronRight, X, Share2, Loader2
 import { cn, formatPrice, NO_EVENT_IMAGE } from '../lib/utils';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../services/apiClient';
+import { AdBanner } from '../components/ui/AdBanner';
 
 const API_KEY =
   process.env.GOOGLE_MAPS_PLATFORM_KEY ||
@@ -274,6 +275,19 @@ const MapPage: React.FC = () => {
               </div>
             </div>
           )}
+
+          {/* Ad Slot in Map Filters */}
+          <div className="pt-4 mt-4 border-t border-outline-variant/20">
+            <p className="text-[8px] font-black uppercase tracking-widest text-on-surface-variant/40 text-center mb-2">Publicidad</p>
+            <div className="rounded-xl overflow-hidden bg-surface-container-low border border-outline-variant/10 min-h-[100px] flex items-center justify-center">
+              <AdBanner 
+                client="ca-pub-YOUR_ADSENSE_CLIENT_ID" 
+                slot="YOUR_MAP_AD_SLOT" 
+                format="fluid" 
+                className="w-full"
+              />
+            </div>
+          </div>
 
           {/* Advanced Filters Toggle */}
           <button onClick={() => setShowAdvanced(!showAdvanced)}
