@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Users, Ticket, DollarSign, Calendar, Plus, Edit, Trash, BarChart3, TrendingUp, Users as UsersIcon, Sparkles, Building, ArrowRight, Upload, X, Camera, Loader2, Search, Shield, UserPlus, Check, Link } from 'lucide-react';
+import { Users, Ticket, DollarSign, Calendar, Plus, Edit, Trash, BarChart3, TrendingUp, Users as UsersIcon, Sparkles, Building, ArrowRight, Upload, X, Camera, Loader2, Search, Shield, UserPlus, Check, Link, Copy, Star } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
@@ -33,6 +33,12 @@ const OrganizerDashboard: React.FC = () => {
   const [selectedStaffRole, setSelectedStaffRole] = useState('admin');
   const [searchingUsers, setSearchingUsers] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Featured Events State
+  const [showFeaturedModal, setShowFeaturedModal] = useState(false);
+  const [selectedEventToFeature, setSelectedEventToFeature] = useState<any>(null);
+  const [featuredPricing, setFeaturedPricing] = useState<any>(null);
+  const [isProcessingFeatured, setIsProcessingFeatured] = useState(false);
 
   const handleLogoSelect = (file: File) => {
     if (!file.type.startsWith('image/')) return;
@@ -99,6 +105,14 @@ const OrganizerDashboard: React.FC = () => {
           setDashboardData(analytics);
         } catch {
           setDashboardData(null);
+        }
+
+        // Fetch pricing
+        try {
+          const pricing = await api.getFeaturedPricing();
+          setFeaturedPricing(pricing);
+        } catch (err) {
+          console.error("Error fetching featured pricing:", err);
         }
       }
     } catch (err) {
@@ -228,6 +242,32 @@ const OrganizerDashboard: React.FC = () => {
       setStaffList(prev => prev.filter(s => s.id !== memberId));
     } catch (err: any) {
       setError(err.message || 'Error al eliminar staff');
+    }
+  };
+
+  const handleConfirmFeature = async (level: number) => {
+    if (!selectedEventToFeature || !organization) return;
+    setIsProcessingFeatured(true);
+    try {
+      const result: any = await api.createFeaturedEvent(
+        selectedEventToFeature.id_event,
+        level,
+        organization.id
+      );
+
+      const paymentLink: any = await api.generateFeaturedPaymentLink(
+        result.featured.id_featured_event,
+        organization.name,
+        profile?.email || user?.email || 'contact@quesale.com'
+      );
+
+      if (paymentLink.payment_url) {
+        window.location.href = paymentLink.payment_url;
+      }
+    } catch (err: any) {
+      alert(err.message || 'Error al procesar el destacado');
+    } finally {
+      setIsProcessingFeatured(false);
     }
   };
 
@@ -570,6 +610,77 @@ const OrganizerDashboard: React.FC = () => {
         )}
       </AnimatePresence>
 
+      {/* Featured Modal */}
+      <AnimatePresence>
+        {showFeaturedModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-md p-4"
+            onClick={() => setShowFeaturedModal(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-xl bg-white rounded-[3rem] shadow-2xl overflow-hidden"
+            >
+              <div className="p-8 border-b border-outline-variant relative">
+                <button onClick={() => setShowFeaturedModal(false)} className="absolute top-8 right-8 p-2 rounded-xl hover:bg-surface-container-low transition-colors"><X size={20} /></button>
+                <div className="w-16 h-16 rounded-[1.5rem] bg-primary/10 flex items-center justify-center text-primary mb-6 transform -rotate-6">
+                  <Star size={32} className="fill-primary" />
+                </div>
+                <h2 className="text-3xl font-black italic tracking-tighter uppercase">Destacar Evento</h2>
+                <p className="text-on-surface-variant font-medium mt-2">Aumenta la visibilidad de "{selectedEventToFeature?.title}" y llega a más personas.</p>
+              </div>
+
+              <div className="p-8 space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {featuredPricing && Object.values(featuredPricing).map((tier: any) => (
+                    <button
+                      key={tier.level}
+                      onClick={() => handleConfirmFeature(tier.level)}
+                      disabled={isProcessingFeatured}
+                      className="group p-6 rounded-[2rem] border border-outline-variant hover:border-primary/50 hover:bg-primary/5 transition-all text-left space-y-4 relative overflow-hidden"
+                    >
+                      <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                         <ArrowRight size={20} className="text-primary" />
+                      </div>
+                      <div>
+                        <h4 className="text-lg font-black italic tracking-tight">{tier.name}</h4>
+                        <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">{tier.duration_days} días de visibilidad</p>
+                      </div>
+                      <p className="text-xs text-on-surface-variant font-medium leading-relaxed">{tier.description}</p>
+                      <div className="pt-2">
+                        <span className="text-2xl font-black">${tier.price}</span>
+                        <span className="text-[10px] font-bold text-on-surface-variant uppercase ml-2">ARS</span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+
+                <div className="p-6 rounded-2xl bg-surface-container-low border border-outline-variant flex items-start gap-4">
+                  <div className="w-10 h-10 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-600 shrink-0">
+                    <Sparkles size={20} />
+                  </div>
+                  <div>
+                    <h5 className="text-[10px] font-black uppercase tracking-widest text-amber-800">Impulsado por IA</h5>
+                    <p className="text-xs text-amber-700 font-medium mt-1">Los eventos destacados tienen prioridad en el feed de descubrimiento y en las recomendaciones personalizadas.</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-8 bg-surface-container-low border-t border-outline-variant flex items-center justify-center gap-2">
+                <img src="https://www.mercadopago.com/instore/merchant/bundles/mptheme/images/logo-mercadopago.png" alt="Mercado Pago" className="h-4 opacity-50" />
+                <span className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant opacity-50">Pagos seguros y rápidos</span>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Followers Modal */}
       <AnimatePresence>
         {showFollowersModal && (
@@ -869,11 +980,18 @@ const OrganizerDashboard: React.FC = () => {
                   <div className="w-16 h-16 rounded-2xl bg-surface-container-high border border-outline-variant flex items-center justify-center">
                     <Calendar size={24} className="text-on-surface-variant" />
                   </div>
-                  <div className={cn(
-                    "px-3 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest border",
-                    event.status === 'active' ? "bg-green-50 text-green-600 border-green-100" : "bg-red-50 text-red-600 border-red-100"
-                  )}>
-                    {event.status === 'active' ? 'Publicado' : 'Finalizado'}
+                  <div className="flex flex-col items-end gap-2">
+                    <div className={cn(
+                      "px-3 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest border",
+                      event.status === 'active' ? "bg-green-50 text-green-600 border-green-100" : "bg-red-50 text-red-600 border-red-100"
+                    )}>
+                      {event.status === 'active' ? 'Publicado' : 'Finalizado'}
+                    </div>
+                    {event.featured_level > 0 && (
+                      <div className="px-3 py-1 rounded-lg bg-amber-50 text-amber-600 border border-amber-100 text-[8px] font-black uppercase tracking-widest flex items-center gap-1">
+                        <Star size={10} className="fill-amber-500" /> Destacado
+                      </div>
+                    )}
                   </div>
                 </div>
                 <div className="space-y-2">
@@ -891,36 +1009,54 @@ const OrganizerDashboard: React.FC = () => {
                     </p>
                   )}
                 </div>
-                <div className="pt-4 flex gap-2 border-t border-outline-variant/30">
+                <div className="pt-4 flex flex-wrap gap-2 border-t border-outline-variant/30">
                   <button
                     onClick={() => navigate(`/events/${event.id_event}`)}
-                    className="flex-1 h-10 rounded-xl bg-surface-container-high text-[9px] font-black uppercase tracking-widest hover:bg-on-surface hover:text-white transition-all"
+                    className="flex-1 h-10 rounded-xl bg-surface-container-high text-[9px] font-black uppercase tracking-widest hover:bg-on-surface hover:text-white transition-all min-w-[60px]"
                   >
                     Ver
                   </button>
                   <button
-                    onClick={() => navigate('/organizer/new', { state: { copyData: event } })}
-                    className="h-10 w-10 rounded-xl bg-surface text-primary border border-outline-variant flex items-center justify-center hover:bg-primary/10 transition-all"
-                    title="Copiar Evento"
+                    onClick={() => {
+                      setSelectedEventToFeature(event);
+                      setShowFeaturedModal(true);
+                    }}
+                    className={cn(
+                      "h-10 px-4 rounded-xl text-[9px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all border",
+                      event.featured_level > 0 
+                        ? "bg-amber-50 text-amber-600 border-amber-200"
+                        : "bg-surface text-primary border-outline-variant hover:bg-primary/10"
+                    )}
+                    disabled={event.featured_level > 0}
                   >
-                    <Copy size={14} />
+                    <Star size={14} className={event.featured_level > 0 ? "fill-amber-500" : ""} />
+                    {event.featured_level > 0 ? 'Destacado' : 'Destacar'}
                   </button>
-                  <button
-                    onClick={() => navigate(`/organizer/edit/${event.id_event}`)}
-                    className="h-10 w-10 rounded-xl bg-surface text-primary text-[9px] font-black uppercase tracking-widest hover:bg-primary hover:text-white transition-all flex items-center justify-center border border-outline-variant"
-                    title="Editar Evento"
-                  >
-                    <Edit size={14} />
-                  </button>
-                  {isCreator && (
+                  <div className="flex gap-2 w-full md:w-auto">
                     <button
-                      onClick={() => handleDeleteEvent(event.id_event)}
-                      className="h-10 w-10 rounded-xl bg-red-50 text-red-500 text-[9px] font-black uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all flex items-center justify-center"
-                      title="Eliminar Evento"
+                      onClick={() => navigate('/organizer/new', { state: { copyData: event } })}
+                      className="h-10 w-10 rounded-xl bg-surface text-primary border border-outline-variant flex items-center justify-center hover:bg-primary/10 transition-all"
+                      title="Copiar Evento"
                     >
-                      <Trash size={14} />
+                      <Copy size={14} />
                     </button>
-                  )}
+                    <button
+                      onClick={() => navigate(`/organizer/edit/${event.id_event}`)}
+                      className="h-10 w-10 rounded-xl bg-surface text-primary text-[9px] font-black uppercase tracking-widest hover:bg-primary hover:text-white transition-all flex items-center justify-center border border-outline-variant"
+                      title="Editar Evento"
+                    >
+                      <Edit size={14} />
+                    </button>
+                    {isCreator && (
+                      <button
+                        onClick={() => handleDeleteEvent(event.id_event)}
+                        className="h-10 w-10 rounded-xl bg-red-50 text-red-500 text-[9px] font-black uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all flex items-center justify-center"
+                        title="Eliminar Evento"
+                      >
+                        <Trash size={14} />
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             ))

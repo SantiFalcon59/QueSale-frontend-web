@@ -472,4 +472,25 @@ export const api = {
       auth: true,
       body: { optionId, wallId },
     }),
+
+  // Featured Events
+  getFeaturedPricing: () =>
+    apiRequest('/api/featured/pricing'),
+
+  createFeaturedEvent: (eventId: string, level: number, organizerId: string) =>
+    apiRequest('/api/featured', {
+      method: 'POST',
+      body: { eventId, level, organizerId },
+      auth: true,
+    }),
+
+  generateFeaturedPaymentLink: (featuredEventId: string, organizerName: string, organizerEmail: string) =>
+    apiRequest(`/api/featured/${encodeURIComponent(featuredEventId)}/payment-link`, {
+      method: 'POST',
+      body: { organizerName, organizerEmail },
+      auth: true,
+    }),
+
+  getOrganizerFeaturedEvents: (organizerId: string, page = 1, limit = 20) =>
+    apiRequest(`/api/featured/organizer/${encodeURIComponent(organizerId)}?page=${page}&limit=${limit}`, { auth: true }),
 };
