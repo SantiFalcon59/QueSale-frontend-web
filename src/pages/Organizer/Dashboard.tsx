@@ -572,8 +572,8 @@ const OrganizerDashboard: React.FC = () => {
                           type="button"
                           onClick={async () => {
                              try {
-                               const res: any = await api.get(`/organizers/${organization.id}/oauth/mercadopago`);
-                               if (res.url) {
+                               const res: any = await api.get(`/api/organizers/${organization.id}/oauth/mercadopago`);
+                               if (res && res.url) {
                                  window.location.href = res.url;
                                }
                              } catch (e) {

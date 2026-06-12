@@ -59,15 +59,15 @@ const Home: React.FC = () => {
   useEffect(() => {
     const fetchHomeData = async () => {
       try {
-        const [trending, recommended, upcoming] = await Promise.all([
-          api.get('/recommendations/trending?limit=6'),
-          user ? api.get('/recommendations?limit=6') : Promise.resolve({ data: [] }),
+        const [trending, recommended, upcoming]: any = await Promise.all([
+          api.get('/api/recommendations/trending?limit=6'),
+          user ? api.get('/api/recommendations?limit=6') : Promise.resolve([]),
           api.getEvents(1, 6)
         ]);
 
-        setTrendingEvents(trending.data || []);
-        setRecommendedEvents(recommended.data || []);
-        setQuickEvents(upcoming.data || []);
+        setTrendingEvents(Array.isArray(trending) ? trending : (trending?.data || []));
+        setRecommendedEvents(Array.isArray(recommended) ? recommended : (recommended?.data || []));
+        setQuickEvents(Array.isArray(upcoming) ? upcoming : (upcoming?.data || []));
       } catch (err) {
         console.error('Error fetching home data:', err);
       } finally {
