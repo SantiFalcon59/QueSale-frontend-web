@@ -91,6 +91,7 @@ const CreateEvent: React.FC = () => {
   const navigate = useNavigate();
   const locationState = useLocation();
   const copyData = locationState.state?.copyData;
+  const initialIsExternal = locationState.state?.isExternal || !!copyData?.is_external;
   const { eventId } = useParams<{ eventId?: string }>();
   const isEditing = !!eventId;
   const { user, profile } = useAuth();
@@ -111,12 +112,12 @@ const CreateEvent: React.FC = () => {
     lng: Number(copyData?.longitude) || -58.3816,
     price: Number(copyData?.price) || 0,
     capacity: copyData?.capacity ? String(copyData.capacity) : '',
-    ticketType: (copyData?.ticket_type as any) || 'free',
+    ticketType: (copyData?.ticket_type as any) || (initialIsExternal ? 'external' : 'free'),
     ticketUrl: copyData?.ticket_url || '',
     qr_enabled: !!copyData?.qr_enabled,
     tags: copyData?.tags || [] as string[],
     customTag: '',
-    isExternal: !!copyData?.is_external,
+    isExternal: initialIsExternal,
     externalOrganizerName: copyData?.external_organizer_name || '',
     externalOrganizerUrl: copyData?.external_organizer_url || '',
     externalInstagram: copyData?.external_instagram || '',

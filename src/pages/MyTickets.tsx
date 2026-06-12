@@ -57,8 +57,8 @@ const MyTickets: React.FC = () => {
   return (
     <div className="min-h-screen pt-24 pb-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
       <header className="mb-12">
-        <h1 className="text-4xl font-black text-white mb-2 tracking-tight">Mis Entradas</h1>
-        <p className="text-white/50">Aquí puedes ver y gestionar las entradas de tus próximos eventos.</p>
+        <h1 className="text-4xl font-black text-on-surface mb-2 tracking-tight">Mis Entradas</h1>
+        <p className="text-on-surface-variant font-medium">Aquí puedes ver y gestionar las entradas de tus próximos eventos.</p>
       </header>
 
       {loading ? (
@@ -66,13 +66,13 @@ const MyTickets: React.FC = () => {
           <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
         </div>
       ) : tickets.length === 0 ? (
-        <div className="text-center py-20 bg-white/5 rounded-3xl border border-white/10">
-          <span className="material-symbols-outlined text-6xl text-white/20 mb-4">confirmation_number</span>
-          <h3 className="text-xl font-bold text-white mb-2">No tienes entradas aún</h3>
-          <p className="text-white/50 mb-8">¡Explora eventos y adquiere tu primera entrada!</p>
+        <div className="text-center py-20 bg-surface-container-low rounded-3xl border border-outline-variant">
+          <span className="material-symbols-outlined text-6xl text-on-surface-variant/20 mb-4">confirmation_number</span>
+          <h3 className="text-xl font-bold text-on-surface mb-2">No tienes entradas aún</h3>
+          <p className="text-on-surface-variant mb-8">¡Explora eventos y adquiere tu primera entrada!</p>
           <button 
-            onClick={() => window.location.href = '/discovery'}
-            className="bg-primary text-white px-8 py-3 rounded-xl font-bold hover:bg-primary/90 transition-all"
+            onClick={() => window.location.href = '/events'}
+            className="btn-primary"
           >
             Explorar Eventos
           </button>
@@ -84,34 +84,38 @@ const MyTickets: React.FC = () => {
               key={ticket.id_ticket}
               layoutId={ticket.id_ticket}
               onClick={() => handleSelectTicket(ticket)}
-              className="bg-[#1a1a2e] border border-white/10 rounded-2xl overflow-hidden hover:border-primary/50 transition-all cursor-pointer group"
-              whileHover={{ y: -4 }}
+              className="bg-white border border-outline-variant rounded-[2rem] overflow-hidden hover:border-primary/50 transition-all cursor-pointer group shadow-sm hover:shadow-xl"
+              whileHover={{ y: -6 }}
             >
-              <div className="p-6">
-                <div className="flex justify-between items-start mb-4">
-                  <div className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                    ticket.state === 1 ? 'bg-green-500/20 text-green-400' : 
-                    ticket.state === 2 ? 'bg-white/10 text-white/50' : 'bg-red-500/20 text-red-400'
+              <div className="p-8">
+                <div className="flex justify-between items-start mb-6">
+                  <div className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border ${
+                    ticket.state === 1 ? 'bg-green-500/10 text-green-600 border-green-500/20' : 
+                    ticket.state === 2 ? 'bg-surface-container text-on-surface-variant border-outline-variant' : 'bg-red-500/10 text-red-600 border-red-500/20'
                   }`}>
                     {ticket.state === 1 ? 'Activa' : ticket.state === 2 ? 'Usada' : 'Cancelada'}
                   </div>
-                  <span className="text-white/20 font-mono text-xs">#{ticket.uuid.slice(0, 8)}</span>
+                  <span className="text-on-surface-variant/30 font-mono text-[10px] font-bold">#{ticket.uuid.slice(0, 8).toUpperCase()}</span>
                 </div>
-                <h3 className="text-xl font-bold text-white mb-2 group-hover:text-secondary transition-colors line-clamp-1">{ticket.title}</h3>
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-white/60 text-sm">
-                    <span className="material-symbols-outlined text-lg">calendar_today</span>
+                <h3 className="text-xl font-black text-on-surface mb-4 group-hover:text-primary transition-colors line-clamp-2 uppercase italic tracking-tighter leading-tight">{ticket.title}</h3>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3 text-on-surface-variant text-xs font-bold">
+                    <div className="w-8 h-8 rounded-lg bg-surface-container flex items-center justify-center text-primary">
+                       <span className="material-symbols-outlined text-lg">calendar_today</span>
+                    </div>
                     {format(new Date(ticket.date), "EEEE d 'de' MMMM", { locale: es })}
                   </div>
-                  <div className="flex items-center gap-2 text-white/60 text-sm">
-                    <span className="material-symbols-outlined text-lg">location_on</span>
+                  <div className="flex items-center gap-3 text-on-surface-variant text-xs font-bold">
+                    <div className="w-8 h-8 rounded-lg bg-surface-container flex items-center justify-center text-primary">
+                       <span className="material-symbols-outlined text-lg">location_on</span>
+                    </div>
                     <span className="truncate">{ticket.ubication}</span>
                   </div>
                 </div>
               </div>
-              <div className="bg-white/5 p-4 border-t border-white/10 flex justify-between items-center">
-                <span className="text-[10px] text-white/30 font-bold uppercase tracking-widest">Ver entrada</span>
-                <span className="material-symbols-outlined text-white/30 group-hover:text-secondary group-hover:translate-x-1 transition-all">arrow_forward</span>
+              <div className="bg-surface-container-low p-5 border-t border-outline-variant flex justify-between items-center">
+                <span className="text-[10px] text-on-surface-variant font-black uppercase tracking-widest">Ver entrada digital</span>
+                <span className="material-symbols-outlined text-on-surface-variant group-hover:text-primary group-hover:translate-x-1 transition-all">arrow_forward</span>
               </div>
             </motion.div>
           ))}
@@ -126,54 +130,54 @@ const MyTickets: React.FC = () => {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setSelectedTicket(null)}
-              className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+              className="absolute inset-0 bg-on-surface/40 backdrop-blur-md"
             />
             <motion.div
               layoutId={selectedTicket.id_ticket}
-              className="relative w-full max-w-md bg-[#1a1a2e] border border-white/20 rounded-3xl overflow-hidden shadow-2xl"
+              className="relative w-full max-w-md bg-white border border-outline-variant rounded-[3rem] overflow-hidden shadow-2xl"
             >
-              <div className="p-8">
-                <div className="text-center mb-8">
-                  <div className="inline-block px-4 py-1.5 rounded-full bg-primary/20 border border-primary/30 text-secondary text-xs font-bold uppercase tracking-widest mb-4">
+              <div className="p-10">
+                <div className="text-center mb-10">
+                  <div className="inline-block px-4 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-[10px] font-black uppercase tracking-widest mb-6">
                     Entrada Digital
                   </div>
-                  <h2 className="text-2xl font-black text-white mb-2">{selectedTicket.title}</h2>
-                  <p className="text-white/50 text-sm">Muestra este código al ingresar al evento</p>
+                  <h2 className="text-3xl font-black text-on-surface mb-3 uppercase italic tracking-tighter leading-none">{selectedTicket.title}</h2>
+                  <p className="text-on-surface-variant text-xs font-medium">Muestra este código al ingresar al evento</p>
                 </div>
 
-                <div className="bg-white p-6 rounded-2xl mb-8 flex flex-col items-center shadow-[0_0_50px_rgba(255,255,255,0.1)]">
+                <div className="bg-white p-8 rounded-[2.5rem] mb-10 flex flex-col items-center border border-outline-variant shadow-sm">
                   {qrDataUrl ? (
-                    <img src={qrDataUrl} alt="QR Code" className="w-full max-w-[200px] mb-4" />
+                    <img src={qrDataUrl} alt="QR Code" className="w-full max-w-[220px] mb-6 mix-blend-multiply" />
                   ) : (
-                    <div className="w-[200px] h-[200px] bg-gray-100 animate-pulse rounded-lg mb-4" />
+                    <div className="w-[220px] h-[220px] bg-surface-container animate-pulse rounded-2xl mb-6" />
                   )}
-                  <div className="w-full space-y-3 pt-4 border-t border-gray-100">
-                    <div className="flex justify-between text-[10px] uppercase font-bold tracking-widest text-gray-400">
+                  <div className="w-full space-y-3 pt-6 border-t border-outline-variant/30">
+                    <div className="flex justify-between text-[10px] uppercase font-black tracking-widest text-on-surface-variant">
                       <span>ID de Entrada</span>
                     </div>
-                    <div className="text-black font-mono text-sm break-all bg-gray-50 p-2 rounded-lg border border-gray-100 text-center">
-                      {selectedTicket.uuid}
+                    <div className="text-on-surface font-mono text-xs break-all bg-surface-container-low p-3 rounded-xl border border-outline-variant text-center font-bold">
+                      {selectedTicket.uuid.toUpperCase()}
                     </div>
                   </div>
                 </div>
 
-                <div className="space-y-4 border-t border-white/10 pt-6">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-white/40">Fecha</span>
-                    <span className="text-white font-bold">{format(new Date(selectedTicket.date), "d 'de' MMMM, HH:mm", { locale: es })}</span>
+                <div className="space-y-4 border-t border-outline-variant/30 pt-8">
+                  <div className="flex justify-between items-center">
+                    <span className="text-[10px] uppercase font-black tracking-widest text-on-surface-variant">Fecha</span>
+                    <span className="text-sm text-on-surface font-black">{format(new Date(selectedTicket.date), "d 'de' MMMM, HH:mm", { locale: es })}</span>
                   </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-white/40">Ubicación</span>
-                    <span className="text-white font-bold text-right">{selectedTicket.ubication}</span>
+                  <div className="flex justify-between items-start gap-4">
+                    <span className="text-[10px] uppercase font-black tracking-widest text-on-surface-variant mt-1">Ubicación</span>
+                    <span className="text-sm text-on-surface font-black text-right">{selectedTicket.ubication}</span>
                   </div>
                 </div>
               </div>
 
               <button
                 onClick={() => setSelectedTicket(null)}
-                className="w-full py-4 bg-white/5 hover:bg-white/10 text-white font-bold border-t border-white/10 transition-colors"
+                className="w-full py-6 bg-surface-container-low hover:bg-surface-container text-on-surface font-black uppercase tracking-[0.2em] text-[10px] border-t border-outline-variant transition-colors"
               >
-                Cerrar
+                Cerrar Entrada
               </button>
             </motion.div>
           </div>

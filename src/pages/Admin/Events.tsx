@@ -5,7 +5,9 @@ import { cn } from '../../lib/utils';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Link } from 'react-router-dom';
-import { api } from '../../services/apiClient';
+import { api, resolveAssetUrl } from '../../services/apiClient';
+
+const NO_EVENT_IMAGE = 'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?q=80&w=1000&auto=format&fit=crop';
 
 const AdminEvents: React.FC = () => {
   const [events, setEvents] = useState<any[]>([]);
@@ -23,7 +25,7 @@ const AdminEvents: React.FC = () => {
                location: event.ubication,
                category: event.interests?.[0]?.name || 'General',
                organizerId: event.id_organizer,
-               image: event.thumbnail_url,
+               image: resolveAssetUrl(event.thumbnail_url) || NO_EVENT_IMAGE,
             }));
             setEvents(mapped);
       } catch (err) {
@@ -76,7 +78,8 @@ const AdminEvents: React.FC = () => {
         </div>
 
         <Link 
-          to="/organizer/create" 
+          to="/organizer/new" 
+          state={{ isExternal: true }}
           className="h-14 px-8 rounded-2xl bg-primary text-white font-black uppercase text-xs tracking-widest flex items-center gap-3 shadow-lg shadow-primary/20 hover:scale-105 transition-all w-full md:w-auto text-center justify-center"
         >
           <Calendar size={18} />
@@ -92,7 +95,12 @@ const AdminEvents: React.FC = () => {
             className="p-6 rounded-[2rem] bg-surface-container-low border border-outline-variant flex items-center justify-between gap-6 hover:border-primary/30 transition-all group"
            >
               <div className="flex items-center gap-6 flex-1 min-w-0">
-                 <img src={event.image} alt={event.title} className="w-24 h-24 rounded-2xl object-cover bg-white shadow-sm flex-shrink-0" />
+                 <img 
+                   src={event.image} 
+                   alt={event.title} 
+                   className="w-24 h-24 rounded-2xl object-cover bg-white shadow-sm flex-shrink-0" 
+                   onError={(e) => { (e.target as HTMLImageElement).src = NO_EVENT_IMAGE; }}
+                 />
                  <div className="space-y-1 min-w-0">
                     <div className="flex items-center gap-3">
                        <h3 className="text-xl font-bold truncate group-hover:text-primary transition-colors">{event.title}</h3>
