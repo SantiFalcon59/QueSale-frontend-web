@@ -61,7 +61,7 @@ const Home: React.FC = () => {
       try {
         const [trending, recommended, upcoming]: any = await Promise.all([
           api.get('/api/recommendations/trending?limit=6'),
-          user ? api.get('/api/recommendations?limit=6') : Promise.resolve([]),
+          api.get('/api/recommendations?limit=6', { auth: true }),
           api.getEvents(1, 6)
         ]);
 
