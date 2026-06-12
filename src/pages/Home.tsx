@@ -1,9 +1,81 @@
-import React, { useRef, useEffect } from 'react';
-import { motion } from 'motion/react';
-import { Link } from 'react-router-dom';
+import React, { useRef, useEffect, useState } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Search, MapPin, Sparkles, TrendingUp, Calendar, ArrowRight, Zap, Ticket, Users } from 'lucide-react';
+import { api, resolveAssetUrl } from '../services/apiClient';
+import { useAuth } from '../context/AuthContext';
+import { cn } from '../lib/utils';
+
+const NO_EVENT_IMAGE = 'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?q=80&w=1000&auto=format&fit=crop';
+
+const EventCard = ({ event }: { event: any }) => (
+  <Link 
+    to={`/events/${event.id_event}`}
+    className="group flex-shrink-0 w-72 bg-white rounded-3xl border border-outline-variant overflow-hidden hover:border-primary/50 transition-all hover:shadow-2xl hover:-translate-y-1"
+  >
+    <div className="relative aspect-[16/10] overflow-hidden">
+      <img 
+        src={resolveAssetUrl(event.thumbnail_url) || NO_EVENT_IMAGE} 
+        alt={event.title}
+        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+      />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
+      <div className="absolute top-3 left-3">
+        <span className="px-2.5 py-1 rounded-lg bg-white/20 backdrop-blur-md text-white text-[8px] font-black uppercase tracking-wider border border-white/10">
+          {event.interests?.[0]?.name || event.tags?.[0] || 'Evento'}
+        </span>
+      </div>
+      {event.score && (
+        <div className="absolute top-3 right-3 px-2.5 py-1 rounded-lg bg-primary/90 text-white text-[8px] font-black tracking-widest uppercase shadow-lg flex items-center gap-1">
+          <Sparkles size={10} /> {Math.round(event.score)}% Match
+        </div>
+      )}
+    </div>
+    <div className="p-5 space-y-3">
+      <h4 className="text-sm font-black text-on-surface leading-tight truncate uppercase">{event.title}</h4>
+      <div className="flex items-center justify-between text-[10px] text-on-surface-variant font-bold">
+        <span className="flex items-center gap-1">
+          <Calendar size={12} className="text-primary" />
+          {new Date(event.date).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}
+        </span>
+        <span className="text-primary font-black">
+          {event.price && Number(event.price) > 0 ? `$${event.price}` : 'GRATIS'}
+        </span>
+      </div>
+    </div>
+  </Link>
+);
 
 const Home: React.FC = () => {
   const heroImageRef = useRef<HTMLImageElement>(null);
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  
+  const [trendingEvents, setTrendingEvents] = useState<any[]>([]);
+  const [recommendedEvents, setRecommendedEvents] = useState<any[]>([]);
+  const [quickEvents, setQuickEvents] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchHomeData = async () => {
+      try {
+        const [trending, recommended, upcoming] = await Promise.all([
+          api.get('/recommendations/trending?limit=6'),
+          user ? api.get('/recommendations?limit=6') : Promise.resolve({ data: [] }),
+          api.getEvents(1, 6)
+        ]);
+
+        setTrendingEvents(trending.data || []);
+        setRecommendedEvents(recommended.data || []);
+        setQuickEvents(upcoming.data || []);
+      } catch (err) {
+        console.error('Error fetching home data:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchHomeData();
+  }, [user]);
 
   useEffect(() => {
     const heroContainer = heroImageRef.current?.parentElement;
@@ -78,7 +150,7 @@ const Home: React.FC = () => {
             className="bg-primary text-on-primary font-display font-bold px-10 py-4 rounded-xl flex items-center gap-3 neon-glow transition-all shadow-lg hover:translate-y-[-2px] active:translate-y-[0px]"
           >
             DESCUBRIR EVENTOS
-            <span className="material-symbols-outlined">arrow_forward</span>
+            <ArrowRight size={20} />
           </Link>
           <Link 
             to="/map"
@@ -87,81 +159,124 @@ const Home: React.FC = () => {
             VER MAPA
           </Link>
         </motion.div>
+      </section>
 
-        {/* Hero Image Preview */}
-        <motion.div 
-          initial={{ opacity: 0, y: 40 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4, duration: 0.8 }}
-          className="mt-16 w-full max-w-5xl aspect-video rounded-3xl overflow-hidden glass-card p-2 border border-outline-variant/30 shadow-xl"
-        >
-          <img 
-            ref={heroImageRef}
-            alt="Gaming tournament event" 
-            className="w-full h-full object-cover rounded-2xl transition-transform duration-200 ease-out" 
-            src="https://lh3.googleusercontent.com/aida-public/AB6AXuABhI57qMNzpRBy9-w9qf1rGaLcbd5Mu3Wp8emWBtBxxlLky-igQYYJc-hZDLRsI18R7YSJMfNR8zCp0LNyJUNMx4AB2dOeJSa4auoeKMfUVHCiNHla_jHmVcnamimytNWGQXMsqsg-MDLGBE86yuDuJ5pNVZVU7pbmmyF93RpPK8eb6zvIvwy6A2zwhAsyOYM9RvrkSWLwAm-jJs86Jin8zdJmMQ-98_nCBnZ5lLIEaEx6tJFBipy0O7GcTt5u1OKIc6ec44gaPt4A"
-          />
-        </motion.div>
+      {/* Recommended for You (AI powered) */}
+      {recommendedEvents.length > 0 && (
+        <section className="w-full max-w-7xl mx-auto px-6 py-12 space-y-8">
+           <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                 <div className="w-10 h-10 rounded-2xl bg-primary/10 text-primary flex items-center justify-center">
+                    <Sparkles size={20} />
+                 </div>
+                 <div>
+                    <h3 className="text-2xl font-black italic uppercase tracking-tighter">Para Ti</h3>
+                    <p className="text-[10px] text-on-surface-variant font-bold uppercase tracking-widest">Basado en tus gustos con IA</p>
+                 </div>
+              </div>
+              <Link to="/feed" className="text-xs font-black text-primary hover:underline uppercase tracking-widest">Ver Feed Completo</Link>
+           </div>
+           <div className="flex gap-6 overflow-x-auto pb-8 no-scrollbar">
+              {recommendedEvents.map(event => <EventCard key={event.id_event} event={event} />)}
+           </div>
+        </section>
+      )}
+
+      {/* Trending Events */}
+      <section className="w-full max-w-7xl mx-auto px-6 py-12 space-y-8">
+         <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+               <div className="w-10 h-10 rounded-2xl bg-orange-500/10 text-orange-600 flex items-center justify-center">
+                  <TrendingUp size={20} />
+               </div>
+               <div>
+                  <h3 className="text-2xl font-black italic uppercase tracking-tighter">Tendencias</h3>
+                  <p className="text-[10px] text-on-surface-variant font-bold uppercase tracking-widest">Lo más hablado de la semana</p>
+               </div>
+            </div>
+         </div>
+         <div className="flex gap-6 overflow-x-auto pb-8 no-scrollbar">
+            {trendingEvents.map(event => <EventCard key={event.id_event} event={event} />)}
+         </div>
+      </section>
+
+      {/* Quick Events (Upcoming) */}
+      <section className="w-full max-w-7xl mx-auto px-6 py-12 space-y-8">
+         <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+               <div className="w-10 h-10 rounded-2xl bg-blue-500/10 text-blue-600 flex items-center justify-center">
+                  <Zap size={20} />
+               </div>
+               <div>
+                  <h3 className="text-2xl font-black italic uppercase tracking-tighter">Eventos Rápidos</h3>
+                  <p className="text-[10px] text-on-surface-variant font-bold uppercase tracking-widest">Próximos a realizarse</p>
+               </div>
+            </div>
+            <Link to="/events" className="text-xs font-black text-primary hover:underline uppercase tracking-widest">Ver Todos</Link>
+         </div>
+         <div className="flex gap-6 overflow-x-auto pb-8 no-scrollbar">
+            {quickEvents.map(event => <EventCard key={event.id_event} event={event} />)}
+         </div>
       </section>
 
       {/* Features Bento Grid */}
       <section className="w-full max-w-7xl mx-auto px-6 py-24">
-        <div className="bento-grid min-h-[600px]">
+        <div className="grid grid-cols-12 gap-6 min-h-[600px]">
           {/* Feed Personalizado */}
-          <div className="col-span-12 md:col-span-7 glass-card rounded-3xl p-10 lg:p-12 flex flex-col justify-end relative overflow-hidden group border-outline-variant/50 min-h-[400px]">
+          <div className="col-span-12 md:col-span-7 glass-card rounded-[2.5rem] p-10 lg:p-12 flex flex-col justify-end relative overflow-hidden group border border-outline-variant/30 min-h-[400px]">
             <img 
               className="absolute inset-0 w-full h-full object-cover opacity-10 group-hover:scale-105 transition-transform duration-700 -z-10" 
-              src="https://lh3.googleusercontent.com/aida-public/AB6AXuD5nYX-1zFmnV8u20b6cL7RuGEvAeNDFQKIX_W37vOgh7pV3vusXRCG8OqtJoZ3-gNULbgM1FwrpJqf1B_B3oC6CFMtCkYqjCvFlZLaAOPe7ZziuY480LmEkVyYeO4KV6Ug-iPKHshNWgR2fdGF0_lW6gw8QpjgqDRgEpfgmFfLko7RKHkTsUE7UwgGyWtItSaVofg2p3op7hE_7qV6Mq0m8MUo9OgnHsZYr5jsjUgdv8Ohrn4xaDOtIk15RZyS0PozHDp6udPDHpgJ"
+              src="https://images.unsplash.com/photo-1540575861501-7c0011e74504?q=80&w=1000&auto=format&fit=crop"
               alt="Background"
             />
-            <div className="bg-primary/10 w-12 h-12 rounded-xl flex items-center justify-center mb-6">
-              <span className="material-symbols-outlined text-primary text-[28px]">trending_up</span>
+            <div className="bg-primary/10 w-12 h-12 rounded-xl flex items-center justify-center mb-6 text-primary">
+              <Sparkles size={28} />
             </div>
-            <h3 className="text-3xl font-display font-extrabold text-on-surface mb-4">Feed Personalizado.</h3>
-            <p className="text-base text-on-surface-variant max-w-md font-medium leading-relaxed">Encuentra eventos de tus nichos favoritos. Desde festivales urbanos hasta proyecciones exclusivas.</p>
+            <h3 className="text-3xl font-display font-extrabold text-on-surface mb-4 uppercase italic">Feed con Inteligencia Artificial.</h3>
+            <p className="text-base text-on-surface-variant max-w-md font-medium leading-relaxed">Nuestra red neuronal analiza tus interacciones para mostrarte solo lo que realmente te apasiona.</p>
           </div>
 
           {/* Entradas Digitales */}
-          <div className="col-span-12 md:col-span-5 bg-primary rounded-3xl p-10 lg:p-12 flex flex-col items-center justify-center text-center shadow-lg relative overflow-hidden min-h-[400px]">
-            <div className="absolute top-4 right-4 opacity-10">
-              <span className="material-symbols-outlined text-white text-[120px] font-thin" style={{ fontVariationSettings: "'FILL' 1" }}>qr_code_2</span>
+          <div className="col-span-12 md:col-span-5 bg-primary rounded-[2.5rem] p-10 lg:p-12 flex flex-col items-center justify-center text-center shadow-lg relative overflow-hidden min-h-[400px]">
+            <div className="absolute top-4 right-4 opacity-10 text-white">
+              <Ticket size={120} strokeWidth={1} />
             </div>
-            <span className="material-symbols-outlined text-on-primary text-6xl mb-6">auto_awesome</span>
-            <h3 className="text-3xl font-display font-extrabold text-on-primary mb-4">Entradas Digitales.</h3>
+            <Zap size={64} className="text-on-primary mb-6" />
+            <h3 className="text-3xl font-display font-extrabold text-on-primary mb-4 uppercase italic">Entradas Digitales.</h3>
             <p className="text-base text-on-primary/90 font-medium leading-relaxed">Gestiona tus entradas de forma segura y rápida. Sin complicaciones, directo en tu móvil.</p>
           </div>
 
           {/* Mapa de Eventos */}
-          <div className="col-span-12 md:col-span-5 glass-card rounded-3xl p-10 lg:p-12 flex flex-col justify-between border-primary/10 min-h-[400px]">
+          <div className="col-span-12 md:col-span-5 glass-card rounded-[2.5rem] p-10 lg:p-12 flex flex-col justify-between border border-outline-variant/30 min-h-[400px]">
             <div>
-              <div className="bg-surface-container-highest w-12 h-12 rounded-xl flex items-center justify-center mb-6 border border-outline-variant">
-                <span className="material-symbols-outlined text-primary text-[28px]">map</span>
+              <div className="bg-surface-container-highest w-12 h-12 rounded-xl flex items-center justify-center mb-6 border border-outline-variant text-primary">
+                <MapPin size={28} />
               </div>
-              <h3 className="text-3xl font-display font-extrabold text-on-surface mb-4">Mapa de Eventos.</h3>
+              <h3 className="text-3xl font-display font-extrabold text-on-surface mb-4 uppercase italic">Mapa de Eventos.</h3>
               <p className="text-base text-on-surface-variant font-medium leading-relaxed">Visualiza dónde están ocurriendo los mejores encuentros en tiempo real.</p>
             </div>
-            <div className="w-full h-40 rounded-2xl bg-surface-container-low mt-8 overflow-hidden grayscale opacity-40 border border-outline-variant relative">
+            <div className="w-full h-40 rounded-3xl bg-surface-container-low mt-8 overflow-hidden grayscale opacity-40 border border-outline-variant relative">
               <div className="absolute inset-0 flex items-center justify-center bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-primary/20 to-transparent">
-                <span className="material-symbols-outlined text-primary animate-bounce text-4xl">location_on</span>
+                <MapPin size={48} className="text-primary animate-bounce" />
               </div>
             </div>
           </div>
 
           {/* Comunidad Segura */}
-          <div className="col-span-12 md:col-span-7 glass-card rounded-3xl p-10 lg:p-12 flex items-center gap-12 border-outline-variant/50 min-h-[400px]">
+          <div className="col-span-12 md:col-span-7 glass-card rounded-[2.5rem] p-10 lg:p-12 flex items-center gap-12 border border-outline-variant/30 min-h-[400px]">
             <div className="flex-1">
-              <div className="bg-surface-container-highest w-12 h-12 rounded-xl flex items-center justify-center mb-6">
-                <span className="material-symbols-outlined text-primary text-[28px]">verified_user</span>
+              <div className="bg-surface-container-highest w-12 h-12 rounded-xl flex items-center justify-center mb-6 text-primary">
+                <Users size={28} />
               </div>
-              <h3 className="text-3xl font-display font-extrabold text-on-surface mb-4">Comunidad Segura.</h3>
+              <h3 className="text-3xl font-display font-extrabold text-on-surface mb-4 uppercase italic">Comunidad Segura.</h3>
               <p className="text-base text-on-surface-variant font-medium leading-relaxed">Conéctate con otros de forma segura. Privacidad total en tus interacciones y asistencia.</p>
             </div>
             <div className="hidden lg:grid grid-cols-2 gap-4 flex-1">
-              <div className="aspect-square bg-surface-container-highest rounded-2xl border border-outline-variant/30 overflow-hidden shadow-sm">
-                <img className="w-full h-full object-cover opacity-60" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAqR4g3ftzQq3C0LbGC1vCrBjyF-Ddm03q4Xnirog06T7Nax-PZLLSyrDbRY1K82xDBiSdt10nPBObefT6ex8M0QlB5RhaDpvnIsA2MbhorkGGt3-jJJ3vmxh0TQkYEeuwfP4MGC14tJakbjw3c60pe9fUwgIcbXBRkoj30KeCCvSZmfSUJX3f8CPb34QzxCmlq8_WoCcaPN9jUv9llukZUiB72_n5GQcO8kmscBWry_DBUExGUQ604CCR7UiUL-IzCWbgpHeGaKAP3" alt="Community" />
+              <div className="aspect-square bg-surface-container-highest rounded-3xl border border-outline-variant/30 overflow-hidden shadow-sm">
+                <img className="w-full h-full object-cover opacity-60" src="https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?q=80&w=500&auto=format&fit=crop" alt="Community" />
               </div>
-              <div className="aspect-square bg-surface-container-highest rounded-2xl border border-outline-variant/30 overflow-hidden shadow-sm translate-y-6">
-                <img className="w-full h-full object-cover opacity-60" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDuFdv-Ot5Tr9VrkPLq72dim2fWCldPzD-a0avXN6ZczCTyvZiD2kzdeR-JkXTuDGS9JzuDTvxMcz_PPdNoT5rJpxoOdwj_7SUvizqCJNRHMzJ1PZ7vncXb3Obry57b8wRqSYtfnGGNXifjZPC-g0iQMFspOJvnboS-KVELSuSFzKrCtiKwKVdgzt-7q3mWX4aiOR-OlgJgOpBUxmNxt3QVkXAJ4O0r_7u8-iWNoYSv9K1NNAV3j8agAhItuNLM4EGkJXC58sZihRwA" alt="Community 2" />
+              <div className="aspect-square bg-surface-container-highest rounded-3xl border border-outline-variant/30 overflow-hidden shadow-sm translate-y-6">
+                <img className="w-full h-full object-cover opacity-60" src="https://images.unsplash.com/photo-1492684223066-81342ee5ff30?q=80&w=500&auto=format&fit=crop" alt="Community 2" />
               </div>
             </div>
           </div>
@@ -176,10 +291,10 @@ const Home: React.FC = () => {
           className="bg-surface-container-highest rounded-[3rem] p-12 lg:p-20 text-center space-y-10 border border-outline-variant shadow-lg overflow-hidden relative"
         >
           <div className="absolute top-0 left-0 w-full h-full bg-primary/5 -z-10 blur-3xl rounded-full"></div>
-          <h2 className="text-4xl lg:text-6xl font-display font-extrabold tracking-tight italic text-on-surface">¿Listo para salir?</h2>
+          <h2 className="text-4xl lg:text-6xl font-display font-extrabold tracking-tight italic text-on-surface uppercase leading-tight">¿Listo para <br /> vivir tu ciudad?</h2>
           <Link 
             to="/register" 
-            className="bg-primary text-on-primary font-display font-bold h-16 px-12 rounded-2xl text-lg flex items-center justify-center mx-auto hover:opacity-90 transition-all shadow-xl hover:translate-y-[-2px]"
+            className="bg-primary text-on-primary font-display font-bold h-16 px-12 rounded-2xl text-lg flex items-center justify-center mx-auto hover:opacity-90 transition-all shadow-xl hover:translate-y-[-2px] tracking-widest uppercase"
           >
             CREAR MI CUENTA
           </Link>

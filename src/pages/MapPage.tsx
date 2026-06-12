@@ -77,6 +77,8 @@ const MapPage: React.FC = () => {
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [events, setEvents] = useState<any[]>([]);
+  const [totalActive, setTotalActive] = useState(0);
+  const [totalMatches, setTotalMatches] = useState(0);
   const [categories, setCategories] = useState<{ id: number | string; name: string; color?: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
@@ -112,9 +114,13 @@ const MapPage: React.FC = () => {
           api.getEvents(1, 100),
           api.getCategories(),
         ]);
-        const apiEvents = Array.isArray(eventsRes) ? eventsRes : (eventsRes?.data || []);
+        
+        const apiEvents = eventsRes?.events || eventsRes?.data || eventsRes || [];
         const apiCats = Array.isArray(catsRes) ? catsRes : (catsRes?.data || []);
+        
         setEvents(apiEvents);
+        setTotalMatches(eventsRes?.total || apiEvents.length);
+        setTotalActive(eventsRes?.totalActive || eventsRes?.total || apiEvents.length);
         setCategories([{ id: 'Todos', name: 'Todos' }, ...apiCats]);
       } catch (err) {
         console.error('Error fetching map data:', err);
@@ -178,6 +184,15 @@ const MapPage: React.FC = () => {
 
       {/* Floating Filter Panel */}
       <div className="absolute top-24 left-4 lg:left-8 w-72 flex flex-col gap-3 z-30 pointer-events-none">
+        {/* Stats Notice */}
+        <div className="bg-black/80 backdrop-blur-2xl px-5 py-3 rounded-2xl border border-white/10 shadow-2xl flex flex-col gap-1 pointer-events-auto">
+           <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+              <span className="text-[10px] text-white font-black uppercase tracking-widest">{events.length} Eventos mostrados</span>
+           </div>
+           <p className="text-[9px] text-white/40 font-bold uppercase tracking-[0.1em]">De un total de {totalActive} activos</p>
+        </div>
+
         <div className="bg-white/90 backdrop-blur-2xl p-5 lg:p-6 rounded-[2rem] shadow-2xl border border-white/50 ring-1 ring-primary/10 pointer-events-auto">
           {/* Header */}
           <div className="flex items-center justify-between mb-5">
