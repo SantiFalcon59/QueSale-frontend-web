@@ -495,194 +495,160 @@ const EventDetail: React.FC = () => {
           <section className="min-h-[400px]">
             <AnimatePresence mode="wait">
               {activeTab === 'info' && (
-                <motion.div 
-                  key="info"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12"
-                >
-                  <div className="space-y-8 lg:space-y-10">
-                    <div className="space-y-3 lg:space-y-4">
-                      <h3 className="text-lg lg:text-xl font-bold uppercase tracking-widest opacity-60">Sobre el Evento</h3>
-                      <p className="text-base lg:text-lg text-on-surface-variant leading-relaxed">
-                        {event.description}
-                      </p>
-                    </div>
-
-                    {/* Tags */}
-                    {(event as any).tags?.length > 0 && (
-                      <div className="space-y-3">
-                        <h3 className="text-lg lg:text-xl font-bold uppercase tracking-widest opacity-60">Tags</h3>
-                        <div className="flex flex-wrap gap-2">
-                          {(event as any).tags.map((tag: string) => (
-                            <Link
-                              key={tag}
-                              to={`/events?tags=${encodeURIComponent(tag)}`}
-                              className="px-3 py-1.5 rounded-full bg-primary/5 text-primary text-[10px] font-bold uppercase tracking-wider hover:bg-primary hover:text-white transition-all border border-primary/10"
-                            >
-                              #{tag}
-                            </Link>
-                          ))}
-                        </div>
+                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+                    {/* Main Description Column */}
+                    <div className="lg:col-span-7 space-y-12">
+                      <div className="space-y-4">
+                        <h3 className="text-xl font-black italic uppercase tracking-tighter text-primary">Sobre el Evento</h3>
+                        <p className="text-base lg:text-lg text-on-surface-variant leading-relaxed font-medium">
+                          {event.description}
+                        </p>
                       </div>
-                    )}
 
-                    <div className="space-y-4">
-                      <EventMapControls event={event} GOOGLE_MAPS_KEY={GOOGLE_MAPS_KEY} />
+                      {/* Tags */}
+                      {(event as any).tags?.length > 0 && (
+                        <div className="space-y-4">
+                          <h3 className="text-xs font-black uppercase tracking-[0.3em] opacity-40">Categorías y Tags</h3>
+                          <div className="flex flex-wrap gap-2">
+                            {(event as any).tags.map((tag: string) => (
+                              <Link
+                                key={tag}
+                                to={`/events?tags=${encodeURIComponent(tag)}`}
+                                className="px-4 py-2 rounded-xl bg-surface-container-low text-on-surface-variant text-[10px] font-black uppercase tracking-widest hover:bg-primary hover:text-white transition-all border border-outline-variant/30"
+                              >
+                                #{tag}
+                              </Link>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="space-y-6 pt-6 border-t border-outline-variant/30">
+                        <EventMapControls event={event} GOOGLE_MAPS_KEY={GOOGLE_MAPS_KEY} />
+                      </div>
                     </div>
-                  </div>
 
-                  <div className="space-y-8 lg:space-y-10">
-                    <CalendarWidget eventDate={eventDate} />
+                    {/* Sidebar Info Column */}
+                    <div className="lg:col-span-5 space-y-12">
+                      <CalendarWidget eventDate={eventDate} />
 
-                    {event.is_external ? (
-                      <div className="space-y-6">
-                        <h3 className="text-xl font-bold uppercase tracking-widest opacity-60">Organizador Externo</h3>
-                        <div className="p-6 lg:p-8 rounded-[1.5rem] lg:rounded-[2.5rem] bg-amber-50/50 border border-amber-100 flex flex-col gap-6 relative overflow-hidden">
-                          <div className="flex items-center gap-4 relative z-10">
-                            <div className="w-12 h-12 lg:w-16 lg:h-16 rounded-xl lg:rounded-2xl bg-amber-100 flex items-center justify-center text-amber-600">
-                               <Users size={32} />
+                      {event.is_external ? (
+                        <div className="space-y-6">
+                          <h3 className="text-xs font-black uppercase tracking-[0.3em] opacity-40">Organizador Externo</h3>
+                          <div className="p-8 rounded-[2.5rem] bg-amber-50/50 border border-amber-100 flex flex-col gap-6 relative overflow-hidden">
+                            <div className="flex items-center gap-4 relative z-10">
+                              <div className="w-16 h-16 rounded-2xl bg-amber-100 flex items-center justify-center text-amber-600">
+                                 <Users size={32} />
+                              </div>
+                              <div>
+                                 <h4 className="text-xl font-black italic text-amber-900 leading-none">{event.external_organizer_name || 'Organizador Externo'}</h4>
+                                 <div className="flex gap-2 mt-2">
+                                    {event.external_instagram && (
+                                      <a href={`https://instagram.com/${event.external_instagram.replace('@', '')}`} target="_blank" className="p-2 rounded-xl bg-white hover:text-primary transition-all shadow-sm">
+                                        <Instagram size={14} />
+                                      </a>
+                                    )}
+                                    {event.external_tiktok && (
+                                      <a href={`https://tiktok.com/@${event.external_tiktok.replace('@', '')}`} target="_blank" className="p-2 rounded-xl bg-white hover:text-primary transition-all shadow-sm">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5" /></svg>
+                                      </a>
+                                    )}
+                                    {event.external_twitter && (
+                                      <a href={`https://twitter.com/${event.external_twitter.replace('@', '')}`} target="_blank" className="p-2 rounded-xl bg-white hover:text-primary transition-all shadow-sm">
+                                        <Twitter size={14} />
+                                      </a>
+                                    )}
+                                    {event.external_organizer_url && (
+                                      <a href={event.external_organizer_url} target="_blank" className="p-2 rounded-xl bg-white hover:text-primary transition-all shadow-sm">
+                                        <Globe size={14} />
+                                      </a>
+                                    )}
+                                 </div>
+                               </div>
                             </div>
-                            <div>
-                               <h4 className="text-lg lg:text-xl font-black italic text-amber-900">{event.external_organizer_name || 'Organizador Externo'}</h4>
-                               <div className="flex gap-2 mt-1">
-                                  {event.external_instagram && (
-                                    <a href={`https://instagram.com/${event.external_instagram.replace('@', '')}`} target="_blank" className="p-1.5 rounded-lg bg-white hover:text-primary transition-all shadow-sm">
-                                      <Instagram size={14} />
-                                    </a>
-                                  )}
-                                  {event.external_tiktok && (
-                                    <a href={`https://tiktok.com/@${event.external_tiktok.replace('@', '')}`} target="_blank" className="p-1.5 rounded-lg bg-white hover:text-primary transition-all shadow-sm">
-                                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5" /></svg>
-                                    </a>
-                                  )}
-                                  {event.external_twitter && (
-                                    <a href={`https://twitter.com/${event.external_twitter.replace('@', '')}`} target="_blank" className="p-1.5 rounded-lg bg-white hover:text-primary transition-all shadow-sm">
-                                      <Twitter size={14} />
-                                    </a>
-                                  )}
-                                  {event.external_organizer_url && (
-                                    <a href={event.external_organizer_url} target="_blank" className="p-1.5 rounded-lg bg-white hover:text-primary transition-all shadow-sm">
-                                      <Globe size={14} />
-                                    </a>
-                                  )}
-                               </div>
-                             </div>
+                            <p className="text-xs text-amber-800/80 leading-relaxed font-medium relative z-10">
+                              Este evento ha sido indexado por los moderadores de QueSale. La información es de carácter público y externo a nuestra plataforma oficial de gestión.
+                            </p>
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-amber-200/20 blur-3xl rounded-full translate-x-10 -translate-y-10" />
                           </div>
-                          <p className="text-xs lg:text-sm text-amber-800/80 leading-relaxed font-medium relative z-10">
-                            Este evento ha sido indexado por los moderadores de QueSale. La información es de carácter público y externo a nuestra plataforma oficial de gestión.
-                          </p>
-                          
-                          <div className="pt-4 border-t border-amber-200/50 flex flex-col gap-3 relative z-10">
-                             <p className="text-[10px] font-black uppercase tracking-widest text-amber-900">¿Eres el organizador?</p>
-                             <div className="flex gap-2">
-                               <button 
-                                onClick={() => window.open(`mailto:soporte@quesale.com?subject=Reclamar Evento: ${event.title}`, '_blank')}
-                                className="flex-1 h-10 rounded-xl bg-amber-600 text-white font-bold text-[10px] uppercase tracking-widest hover:bg-amber-700 transition-all shadow-sm"
-                               >
-                                 Reclamar Evento
-                               </button>
-                               <button 
-                                onClick={() => navigate('/register')}
-                                className="flex-1 h-10 rounded-xl bg-white border border-amber-200 text-amber-700 font-bold text-[10px] uppercase tracking-widest hover:bg-amber-100 transition-all"
-                               >
-                                 Registrarme
-                               </button>
-                             </div>
-                          </div>
-                          
-                          <div className="absolute top-0 right-0 w-32 h-32 bg-amber-200/20 blur-3xl rounded-full translate-x-10 -translate-y-10" />
                         </div>
-                      </div>
-                    ) : organizer && (
-                      <div className="space-y-6">
-                        <h3 className="text-xl font-bold uppercase tracking-widest opacity-60">Organizador</h3>
-                        <div className="p-6 lg:p-8 rounded-[1.5rem] lg:rounded-[2.5rem] bg-indigo-50/30 border border-indigo-100 flex flex-col gap-6">
-                          <Link to={`/organizer/${organizer.id}`} className="flex items-center gap-4 group/link">
-                            <img src={organizer.logo} alt={organizer.name} className="w-12 h-12 lg:w-16 lg:h-16 rounded-xl lg:rounded-2xl object-cover" />
-                            <div>
-                               <h4 className="text-lg lg:text-xl font-black italic group-hover/link:text-primary transition-colors">{organizer.name}</h4>
-                               <div className="flex gap-2 mt-1">
-                                  {organizer.socials?.instagram && (
-                                    <a href={`https://instagram.com/${organizer.socials.instagram.replace('@', '')}`} target="_blank" className="p-1 rounded-lg bg-surface hover:text-primary transition-all shadow-sm">
-                                      <Instagram size={12} />
-                                    </a>
-                                  )}
-                                  {organizer.socials?.tiktok && (
-                                    <a href={`https://tiktok.com/@${organizer.socials.tiktok.replace('@', '')}`} target="_blank" className="p-1 rounded-lg bg-surface hover:text-primary transition-all shadow-sm">
-                                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5" /></svg>
-                                    </a>
-                                  )}
-                                  {organizer.socials?.twitter && (
-                                    <a href={`https://twitter.com/${organizer.socials.twitter.replace('@', '')}`} target="_blank" className="p-1 rounded-lg bg-surface hover:text-primary transition-all shadow-sm">
-                                      <Twitter size={12} />
-                                    </a>
-                                  )}
-                                  {organizer.socials?.website && (
-                                    <a href={organizer.socials.website} target="_blank" className="p-1 rounded-lg bg-surface hover:text-primary transition-all shadow-sm">
-                                      <Globe size={12} />
-                                    </a>
-                                  )}
+                      ) : organizer && (
+                        <div className="space-y-6">
+                          <h3 className="text-xs font-black uppercase tracking-[0.3em] opacity-40">Organizador</h3>
+                          <div className="p-8 rounded-[2.5rem] bg-indigo-50/30 border border-indigo-100 flex flex-col gap-6 shadow-sm">
+                            <Link to={`/organizer/${organizer.id}`} className="flex items-center gap-5 group/link">
+                              <img src={organizer.logo} alt={organizer.name} className="w-16 h-16 rounded-2xl object-cover shadow-sm" />
+                              <div className="min-w-0">
+                                 <h4 className="text-xl font-black italic group-hover/link:text-primary transition-colors truncate uppercase tracking-tighter">{organizer.name}</h4>
+                                 <div className="flex gap-2 mt-2">
+                                    {organizer.socials?.instagram && (
+                                      <a href={`https://instagram.com/${organizer.socials.instagram.replace('@', '')}`} target="_blank" className="p-1.5 rounded-lg bg-white hover:text-primary transition-all shadow-sm text-on-surface-variant">
+                                        <Instagram size={12} />
+                                      </a>
+                                    )}
+                                    {organizer.socials?.website && (
+                                      <a href={organizer.socials.website} target="_blank" className="p-1.5 rounded-lg bg-white hover:text-primary transition-all shadow-sm text-on-surface-variant">
+                                        <Globe size={12} />
+                                      </a>
+                                    )}
+                                 </div>
                                </div>
-                             </div>
-                           </Link>
-                           <p className="text-xs lg:text-sm text-on-surface-variant leading-relaxed">{organizer.description}</p>
-                          <button onClick={() => navigate('/organizer/' + organizer.id)} className="w-full h-10 lg:h-12 rounded-xl lg:rounded-2xl bg-white border border-outline-variant font-bold text-[10px] lg:text-xs uppercase tracking-widest hover:bg-primary hover:text-white hover:border-primary transition-all">Ver Perfil Completo</button>
+                             </Link>
+                             <p className="text-xs lg:text-sm text-on-surface-variant leading-relaxed font-medium">{organizer.description}</p>
+                            <button onClick={() => navigate('/organizer/' + organizer.id)} className="w-full h-12 rounded-2xl bg-white border border-outline-variant font-black text-[10px] uppercase tracking-widest hover:bg-primary hover:text-white hover:border-primary transition-all shadow-sm">Ver Perfil Completo</button>
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      )}
+                    </div>
 
+                    {/* Full Width Bottom Section for Other Events */}
                     {organizerEvents.length > 0 && (
-                      <div className="space-y-6">
-                        <h3 className="text-xl font-bold uppercase tracking-widest opacity-60">Otros Eventos de {organizer?.name}</h3>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
+                      <div className="col-span-12 space-y-8 pt-12 border-t border-outline-variant/30">
+                        <div className="flex items-center justify-between">
+                          <h3 className="text-2xl font-black italic uppercase tracking-tighter">Más de {organizer?.name}</h3>
+                          <Link to={`/organizer/${organizer?.id}`} className="text-[10px] font-black uppercase tracking-widest text-primary hover:underline">Ver todo</Link>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
                           {organizerEvents.slice(0, 4).map(orgEvent => (
                             <Link
                               key={orgEvent.id_event}
                               to={`/events/${orgEvent.id_event}`}
-                              className="group bg-white rounded-[2rem] border border-outline-variant overflow-hidden hover:border-primary/50 transition-all hover:shadow-xl hover:-translate-y-1"
+                              className="group bg-white rounded-[2.5rem] border border-outline-variant overflow-hidden hover:border-primary/50 transition-all hover:shadow-2xl hover:-translate-y-2"
                             >
                               <div className="relative aspect-[16/10] overflow-hidden">
                                 <img
-                                  src={orgEvent.images?.[0] || orgEvent.thumbnail_url || NO_EVENT_IMAGE}
+                                  src={resolveAssetUrl(orgEvent.images?.[0] || orgEvent.thumbnail_url) || NO_EVENT_IMAGE}
                                   alt={orgEvent.title}
-                                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000"
+                                  onError={(e) => { (e.target as HTMLImageElement).src = NO_EVENT_IMAGE; }}
                                 />
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
-                                <div className="absolute bottom-3 left-4 right-4">
-                                  <p className="text-base font-black text-white leading-tight truncate drop-shadow-lg">{orgEvent.title}</p>
-                                </div>
-                                <div className="absolute top-3 left-3">
-                                  <span className="px-2 py-1 rounded-lg bg-white/20 backdrop-blur-md text-white text-[8px] font-black uppercase tracking-wider border border-white/10">
+                                <div className="absolute top-4 left-4">
+                                  <span className="px-2.5 py-1 rounded-xl bg-white/20 backdrop-blur-md text-white text-[9px] font-black uppercase tracking-widest border border-white/10">
                                     {orgEvent.interests?.[0]?.name || orgEvent.tags?.[0] || 'Evento'}
                                   </span>
                                 </div>
                                 {(!orgEvent.price || Number(orgEvent.price) === 0) && (
-                                  <div className="absolute top-3 right-3 px-2 py-1 rounded-lg bg-green-500 text-white text-[8px] font-black tracking-widest uppercase shadow-lg">
+                                  <div className="absolute top-4 right-4 px-2.5 py-1 rounded-xl bg-green-500 text-white text-[9px] font-black tracking-widest uppercase shadow-lg">
                                     Gratis
                                   </div>
                                 )}
                               </div>
-                              <div className="p-5 lg:p-6 space-y-3">
-                                <div className="flex items-center justify-between">
-                                  <span className="text-[11px] text-on-surface-variant font-bold flex items-center gap-1">
-                                    <CalendarDays size={14} className="text-primary shrink-0" />
-                                    {new Date(orgEvent.date).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}
-                                  </span>
-                                  <span className="text-[11px] font-black text-primary">{formatPrice(orgEvent.price)}</span>
-                                </div>
-                                <div className="flex items-center gap-1 text-[10px] text-on-surface-variant font-bold">
-                                  <MapPin size={12} className="text-primary shrink-0" />
-                                  <span className="truncate">{orgEvent.ubication || 'Consultar ubicación'}</span>
-                                </div>
-                                {orgEvent.tags && orgEvent.tags.length > 0 && (
-                                  <div className="flex gap-1 flex-wrap pt-1">
-                                    {orgEvent.tags.slice(0, 2).map((t: string) => (
-                                      <span key={t} className="px-1.5 py-0.5 rounded bg-primary/5 text-primary text-[7px] font-bold uppercase tracking-wider">#{t}</span>
-                                    ))}
+                              <div className="p-8 space-y-4">
+                                <h4 className="text-lg font-black text-on-surface leading-tight group-hover:text-primary transition-colors line-clamp-1 uppercase italic tracking-tighter">{orgEvent.title}</h4>
+                                <div className="flex items-center justify-between pt-2 border-t border-outline-variant/30">
+                                  <div className="flex flex-col gap-1">
+                                    <span className="text-[10px] text-on-surface-variant font-black uppercase tracking-widest flex items-center gap-1.5">
+                                      <CalendarDays size={12} className="text-primary" />
+                                      {new Date(orgEvent.date).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}
+                                    </span>
+                                    <span className="text-[10px] text-on-surface-variant font-black uppercase tracking-widest flex items-center gap-1.5">
+                                      <MapPin size={12} className="text-primary" />
+                                      {orgEvent.ubication || 'Ubicación'}
+                                    </span>
                                   </div>
-                                )}
+                                  <span className="text-sm font-black text-primary italic">{formatPrice(orgEvent.price)}</span>
+                                </div>
                               </div>
                             </Link>
                           ))}
@@ -690,7 +656,6 @@ const EventDetail: React.FC = () => {
                       </div>
                     )}
                   </div>
-                </motion.div>
               )}
 
               {activeTab === 'announcements' && (

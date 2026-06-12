@@ -198,7 +198,10 @@ const Home: React.FC = () => {
              <div className="flex gap-6 overflow-x-auto pb-8 no-scrollbar snap-x snap-mandatory">
                 {recommendedEvents.map(event => (
                   <div key={event.id_event} className="snap-center">
-                    <EventCard event={event} />
+                    <EventCard event={{
+                      ...event,
+                      thumbnail_url: resolveAssetUrl(event.thumbnail_url)
+                    }} />
                   </div>
                 ))}
              </div>
@@ -228,7 +231,10 @@ const Home: React.FC = () => {
             {trendingEvents.length > 0 ? (
               trendingEvents.map(event => (
                 <div key={event.id_event} className="snap-center">
-                  <EventCard event={event} />
+                  <EventCard event={{
+                    ...event,
+                    thumbnail_url: resolveAssetUrl(event.thumbnail_url)
+                  }} />
                 </div>
               ))
             ) : (
@@ -276,7 +282,12 @@ const Home: React.FC = () => {
               <h3 className="text-3xl font-display font-extrabold text-on-surface mb-4 uppercase italic">Mapa de Eventos.</h3>
               <p className="text-base text-on-surface-variant font-medium leading-relaxed">Visualiza dónde están ocurriendo los mejores encuentros en tiempo real.</p>
             </div>
-            <div className="w-full h-40 rounded-3xl bg-surface-container-low mt-8 overflow-hidden grayscale opacity-40 border border-outline-variant relative">
+            <div className="w-full h-40 rounded-3xl bg-surface-container-low mt-8 overflow-hidden border border-outline-variant relative">
+              <img 
+                src="https://images.unsplash.com/photo-1526778548025-fa2f459cd5c1?q=80&w=1000&auto=format&fit=crop"
+                className="absolute inset-0 w-full h-full object-cover grayscale opacity-20"
+                alt="Map Background"
+              />
               <div className="absolute inset-0 flex items-center justify-center bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-primary/20 to-transparent">
                 <MapPin size={48} className="text-primary animate-bounce" />
               </div>
@@ -305,22 +316,24 @@ const Home: React.FC = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="w-full max-w-4xl mx-auto px-6 py-24 mb-12">
-        <motion.div 
-          whileInView={{ opacity: 1, scale: 1 }}
-          initial={{ opacity: 0, scale: 0.95 }}
-          className="bg-surface-container-highest rounded-[3rem] p-12 lg:p-20 text-center space-y-10 border border-outline-variant shadow-lg overflow-hidden relative"
-        >
-          <div className="absolute top-0 left-0 w-full h-full bg-primary/5 -z-10 blur-3xl rounded-full"></div>
-          <h2 className="text-4xl lg:text-6xl font-display font-extrabold tracking-tight italic text-on-surface uppercase leading-tight">¿Listo para <br /> vivir tu ciudad?</h2>
-          <Link 
-            to="/register" 
-            className="bg-primary text-on-primary font-display font-bold h-16 px-12 rounded-2xl text-lg flex items-center justify-center mx-auto hover:opacity-90 transition-all shadow-xl hover:translate-y-[-2px] tracking-widest uppercase"
+      {!user && (
+        <section className="w-full max-w-4xl mx-auto px-6 py-24 mb-12">
+          <motion.div 
+            whileInView={{ opacity: 1, scale: 1 }}
+            initial={{ opacity: 0, scale: 0.95 }}
+            className="bg-surface-container-highest rounded-[3rem] p-12 lg:p-20 text-center space-y-10 border border-outline-variant shadow-lg overflow-hidden relative"
           >
-            CREAR MI CUENTA
-          </Link>
-        </motion.div>
-      </section>
+            <div className="absolute top-0 left-0 w-full h-full bg-primary/5 -z-10 blur-3xl rounded-full"></div>
+            <h2 className="text-4xl lg:text-6xl font-display font-extrabold tracking-tight italic text-on-surface uppercase leading-tight">¿Listo para <br /> vivir tu ciudad?</h2>
+            <Link 
+              to="/register" 
+              className="bg-primary text-on-primary font-display font-bold h-16 px-12 rounded-2xl text-lg flex items-center justify-center mx-auto hover:opacity-90 transition-all shadow-xl hover:translate-y-[-2px] tracking-widest uppercase"
+            >
+              CREAR MI CUENTA
+            </Link>
+          </motion.div>
+        </section>
+      )}
     </div>
   );
 };

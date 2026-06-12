@@ -549,9 +549,10 @@ const Discovery: React.FC = () => {
                     view === 'grid' ? "aspect-[4/3]" : "aspect-[16/9] md:w-80 md:h-full shrink-0"
                   )}>
                     <img
-                       src={event.thumbnail_url || NO_EVENT_IMAGE}
+                       src={resolveAssetUrl(event.thumbnail_url) || NO_EVENT_IMAGE}
                       alt={event.title}
                       className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
+                      onError={(e) => { (e.target as HTMLImageElement).src = NO_EVENT_IMAGE; }}
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 

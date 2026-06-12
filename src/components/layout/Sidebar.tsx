@@ -4,6 +4,7 @@ import { cn } from '../../lib/utils';
 import { useAuth } from '../../context/AuthContext';
 import { motion, AnimatePresence } from 'motion/react';
 import { X } from 'lucide-react';
+import { AdBanner } from '../ui/AdBanner';
 
 export const Sidebar: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen, onClose }) => {
   const { user } = useAuth();
@@ -34,7 +35,7 @@ export const Sidebar: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ is
         "fixed left-0 top-0 h-full w-64 sidebar-gradient border-r border-primary/20 shadow-[10px_0_30px_rgba(0,0,0,0.3)] flex flex-col p-6 z-[70] transition-all duration-300",
         isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
       )}>
-        <div className="flex items-center justify-between mb-10">
+        <div className="flex items-center justify-between mb-10 shrink-0">
           <Link to="/" className="cursor-pointer">
             <h1 className="text-3xl font-display font-extrabold text-white leading-tight tracking-tighter">
               QueSale<span className="text-secondary">.</span>
@@ -46,7 +47,7 @@ export const Sidebar: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ is
           </button>
         </div>
 
-        <nav className="flex flex-col gap-3 flex-1">
+        <nav className="flex flex-col gap-3 flex-1 overflow-y-auto no-scrollbar">
           {navItems.map((item) => (
             <NavLink
               key={item.name}
@@ -67,6 +68,19 @@ export const Sidebar: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ is
             </NavLink>
           ))}
         </nav>
+
+        {/* Sidebar Ad Slot */}
+        <div className="mt-auto pt-6 border-t border-white/10">
+          <p className="text-[8px] font-black uppercase tracking-[0.3em] text-white/30 text-center mb-2">Publicidad</p>
+          <div className="rounded-xl overflow-hidden bg-black/20 border border-white/5 min-h-[150px] flex items-center justify-center">
+            <AdBanner 
+              client="ca-pub-YOUR_ADSENSE_CLIENT_ID" 
+              slot="YOUR_SIDEBAR_AD_SLOT" 
+              format="rectangle"
+              style={{ display: 'block' }}
+            />
+          </div>
+        </div>
 
       </aside>
     </>
