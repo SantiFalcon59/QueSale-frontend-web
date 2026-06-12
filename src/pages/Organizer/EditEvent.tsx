@@ -113,6 +113,12 @@ const EditEvent: React.FC = () => {
     qr_enabled: false,
     tags: [] as string[],
     customTag: '',
+    isExternal: false,
+    externalOrganizerName: '',
+    externalOrganizerUrl: '',
+    externalInstagram: '',
+    externalTikTok: '',
+    externalTwitter: '',
   });
 
   const [categories, setCategories] = useState<{ id: number; name: string }[]>([]);
@@ -129,9 +135,6 @@ const EditEvent: React.FC = () => {
         const org = data?.[0];
         if (org) {
           setOrganization({ id: org.id_organizer, name: org.name, verified: org.verified });
-        } else {
-          navigate('/organizer');
-          return;
         }
 
         const catsData: any = await api.getCategories();
@@ -158,6 +161,12 @@ const EditEvent: React.FC = () => {
               qr_enabled: !!eventData.qr_enabled,
               tags: eventData.tags || [],
               customTag: '',
+              isExternal: !!eventData.is_external,
+              externalOrganizerName: eventData.external_organizer_name || '',
+              externalOrganizerUrl: eventData.external_organizer_url || '',
+              externalInstagram: eventData.external_instagram || '',
+              externalTikTok: eventData.external_tiktok || '',
+              externalTwitter: eventData.external_twitter || '',
             });
             
             // Set existing media previews (assuming images is an array of paths/urls)
@@ -215,7 +224,7 @@ const EditEvent: React.FC = () => {
   };
 
   const handleSubmit = async () => {
-    if (!user || !organization) return;
+    if (!user || (!organization && !formData.isExternal)) return;
     setError(null);
     setSubmitting(true);
 
@@ -227,16 +236,22 @@ const EditEvent: React.FC = () => {
         description: formData.description,
         date: eventDate.toISOString(),
         location: formData.address,
-        organizerId: organization.id,
+        organizerId: formData.isExternal ? null : organization.id,
         interestIds: [],
         latitude: formData.lat,
         longitude: formData.lng,
         price: formData.price,
         capacity: formData.capacity ? parseInt(formData.capacity) : undefined,
-        ticket_type: formData.ticketType,
-        ticket_url: formData.ticketType === 'external' ? formData.ticketUrl : undefined,
-        qr_enabled: formData.qr_enabled,
+        ticket_type: formData.isExternal ? 'external' : formData.ticketType,
+        ticket_url: formData.isExternal ? formData.externalOrganizerUrl : (formData.ticketType === 'external' ? formData.ticketUrl : undefined),
+        qr_enabled: formData.isExternal ? false : formData.qr_enabled,
         tags: formData.tags,
+        is_external: formData.isExternal,
+        external_organizer_name: formData.isExternal ? formData.externalOrganizerName : null,
+        external_organizer_url: formData.isExternal ? formData.externalOrganizerUrl : null,
+        external_instagram: formData.isExternal ? formData.externalInstagram : null,
+        external_tiktok: formData.isExternal ? formData.externalTikTok : null,
+        external_twitter: formData.isExternal ? formData.externalTwitter : null,
       };
 
       if (isEditing && eventId) {
@@ -278,11 +293,22 @@ const EditEvent: React.FC = () => {
     }
   };
 
-  if (loading && !organization) {
+  if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
       </div>
+    );
+  }
+
+  const isGlobalStaff = profile?.role === 'admin' || profile?.role === 'moderator';
+
+  if (!organization && !isGlobalStaff) {
+    return (
+       <div className="max-w-md mx-auto text-center py-20 space-y-4">
+          <p className="font-bold text-on-surface-variant uppercase tracking-widest italic">No tenés ninguna organización activa.</p>
+          <button onClick={() => navigate('/organizer')} className="btn-primary">IR AL PANEL</button>
+       </div>
     );
   }
 
@@ -385,6 +411,83 @@ const EditEvent: React.FC = () => {
                   {categories.length > 0 ? categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>) : <option value="">Cargando...</option>}
                 </select>
               </div>
+
+              {/* External Event Toggle for Moderators/Admins */}
+              {(profile?.role === 'admin' || profile?.role === 'moderator') && (
+                <div className="pt-4 border-t border-outline-variant/30 space-y-4">
+                  <div className="flex items-center justify-between p-4 rounded-2xl bg-primary/5 border border-primary/10">
+                    <div>
+                      <p className="text-xs font-black uppercase tracking-widest text-primary">Modo Evento Externo</p>
+                      <p className="text-[10px] text-on-surface-variant mt-0.5">El evento no pertenece a un organizador de QueSale.</p>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input 
+                        type="checkbox" 
+                        className="sr-only peer" 
+                        checked={formData.isExternal}
+                        onChange={e => setFormData({ ...formData, isExternal: e.target.checked })}
+                      />
+                      <div className="w-11 h-6 bg-outline-variant peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                    </label>
+                  </div>
+
+                  {formData.isExternal && (
+                    <motion.div 
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      className="space-y-4"
+                    >
+                      <div className="space-y-2">
+                        <label className="text-[10px] uppercase font-black tracking-widest text-on-surface-variant ml-2">Nombre del Organizador Real</label>
+                        <input
+                          value={formData.externalOrganizerName}
+                          onChange={e => setFormData({ ...formData, externalOrganizerName: e.target.value })}
+                          placeholder="Ej: Cinerama, Teatro Gran Rex..."
+                          className="w-full bg-white border border-outline-variant rounded-xl h-12 px-5 focus:border-primary outline-none font-bold"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] uppercase font-black tracking-widest text-on-surface-variant ml-2">Link Oficial / Tickets Externos (Opcional)</label>
+                        <input
+                          value={formData.externalOrganizerUrl}
+                          onChange={e => setFormData({ ...formData, externalOrganizerUrl: e.target.value })}
+                          placeholder="https://..."
+                          className="w-full bg-white border border-outline-variant rounded-xl h-12 px-5 focus:border-primary outline-none font-bold text-xs"
+                        />
+                      </div>
+                      <div className="grid grid-cols-3 gap-3">
+                        <div className="space-y-2">
+                          <label className="text-[10px] uppercase font-black tracking-widest text-on-surface-variant ml-2">Instagram</label>
+                          <input
+                            value={formData.externalInstagram}
+                            onChange={e => setFormData({ ...formData, externalInstagram: e.target.value })}
+                            placeholder="@usuario"
+                            className="w-full bg-white border border-outline-variant rounded-xl h-12 px-4 focus:border-primary outline-none font-bold text-xs"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-[10px] uppercase font-black tracking-widest text-on-surface-variant ml-2">TikTok</label>
+                          <input
+                            value={formData.externalTikTok}
+                            onChange={e => setFormData({ ...formData, externalTikTok: e.target.value })}
+                            placeholder="@usuario"
+                            className="w-full bg-white border border-outline-variant rounded-xl h-12 px-4 focus:border-primary outline-none font-bold text-xs"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-[10px] uppercase font-black tracking-widest text-on-surface-variant ml-2">Twitter / X</label>
+                          <input
+                            value={formData.externalTwitter}
+                            onChange={e => setFormData({ ...formData, externalTwitter: e.target.value })}
+                            placeholder="@usuario"
+                            className="w-full bg-white border border-outline-variant rounded-xl h-12 px-4 focus:border-primary outline-none font-bold text-xs"
+                          />
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </div>
+              )}
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">

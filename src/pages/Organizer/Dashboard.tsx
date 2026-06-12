@@ -70,6 +70,10 @@ const OrganizerDashboard: React.FC = () => {
         setEditOrgData({ 
           name: org.name, 
           description: org.description || '',
+          instagram: org.instagram || '',
+          tiktok: org.tiktok || '',
+          twitter: org.twitter || '',
+          website: org.website || '',
         });
 
         const eventsData: any = await api.getOrganizerEvents(org.id_organizer, 1, 50);
@@ -145,6 +149,10 @@ const OrganizerDashboard: React.FC = () => {
       await api.updateOrganizer(organization.id, {
         name: editOrgData.name,
         description: editOrgData.description,
+        instagram: editOrgData.instagram,
+        tiktok: editOrgData.tiktok,
+        twitter: editOrgData.twitter,
+        website: editOrgData.website,
       });
       if (logoFile) {
         await api.uploadOrganizerLogo(logoFile, organization.id);
@@ -462,6 +470,25 @@ const OrganizerDashboard: React.FC = () => {
                 <div>
                   <label className="text-[10px] uppercase font-black tracking-widest text-on-surface-variant ml-4">Descripción</label>
                   <textarea value={editOrgData.description} onChange={e => setEditOrgData(prev => ({ ...prev, description: e.target.value }))} className="w-full bg-surface-container-low border border-outline-variant rounded-xl px-4 py-3 text-sm outline-none focus:border-primary/50 transition-all font-medium resize-none min-h-[80px]" />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                   <div className="space-y-1">
+                      <label className="text-[10px] uppercase font-black tracking-widest text-on-surface-variant ml-4">Instagram</label>
+                      <input value={editOrgData.instagram} onChange={e => setEditOrgData(prev => ({ ...prev, instagram: e.target.value }))} placeholder="@usuario" className="w-full bg-surface-container-low border border-outline-variant rounded-xl px-4 py-3 text-sm outline-none focus:border-primary/50 transition-all font-medium" />
+                   </div>
+                   <div className="space-y-1">
+                      <label className="text-[10px] uppercase font-black tracking-widest text-on-surface-variant ml-4">TikTok</label>
+                      <input value={editOrgData.tiktok} onChange={e => setEditOrgData(prev => ({ ...prev, tiktok: e.target.value }))} placeholder="@usuario" className="w-full bg-surface-container-low border border-outline-variant rounded-xl px-4 py-3 text-sm outline-none focus:border-primary/50 transition-all font-medium" />
+                   </div>
+                   <div className="space-y-1">
+                      <label className="text-[10px] uppercase font-black tracking-widest text-on-surface-variant ml-4">Twitter / X</label>
+                      <input value={editOrgData.twitter} onChange={e => setEditOrgData(prev => ({ ...prev, twitter: e.target.value }))} placeholder="@usuario" className="w-full bg-surface-container-low border border-outline-variant rounded-xl px-4 py-3 text-sm outline-none focus:border-primary/50 transition-all font-medium" />
+                   </div>
+                   <div className="space-y-1">
+                      <label className="text-[10px] uppercase font-black tracking-widest text-on-surface-variant ml-4">Sitio Web</label>
+                      <input value={editOrgData.website} onChange={e => setEditOrgData(prev => ({ ...prev, website: e.target.value }))} placeholder="https://..." className="w-full bg-surface-container-low border border-outline-variant rounded-xl px-4 py-3 text-sm outline-none focus:border-primary/50 transition-all font-medium" />
+                   </div>
                 </div>
 
                 {organization?.verified ? (

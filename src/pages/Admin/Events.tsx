@@ -64,14 +64,24 @@ const AdminEvents: React.FC = () => {
          <p className="text-on-surface-variant font-medium ml-1">Supervisión y Limpieza del Feed</p>
       </header>
 
-      <div className="relative max-w-md">
-         <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-on-surface-variant" size={20} />
-         <input 
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            placeholder="Buscar por título, categoría o ID org..."
-            className="w-full bg-surface-container-low border border-outline-variant h-14 pl-14 pr-6 rounded-2xl outline-none focus:border-primary transition-all font-bold"
-         />
+      <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
+        <div className="relative w-full max-w-md">
+           <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-on-surface-variant" size={20} />
+           <input 
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Buscar por título, categoría o ID org..."
+              className="w-full bg-surface-container-low border border-outline-variant h-14 pl-14 pr-6 rounded-2xl outline-none focus:border-primary transition-all font-bold"
+           />
+        </div>
+
+        <Link 
+          to="/organizer/create" 
+          className="h-14 px-8 rounded-2xl bg-primary text-white font-black uppercase text-xs tracking-widest flex items-center gap-3 shadow-lg shadow-primary/20 hover:scale-105 transition-all w-full md:w-auto text-center justify-center"
+        >
+          <Calendar size={18} />
+          Nuevo Evento Externo
+        </Link>
       </div>
 
       <div className="grid grid-cols-1 gap-4">

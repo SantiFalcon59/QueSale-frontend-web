@@ -42,7 +42,14 @@ interface Event {
   image: string;
   status: string;
   qr_enabled: boolean;
+  ticket_type?: string;
   ticket_url?: string;
+  is_external?: boolean;
+  external_organizer_name?: string;
+  external_organizer_url?: string;
+  external_instagram?: string;
+  external_tiktok?: string;
+  external_twitter?: string;
 }
 
 interface Organizer {
@@ -53,6 +60,7 @@ interface Organizer {
   ownerId?: string;
   socials?: {
     instagram?: string;
+    tiktok?: string;
     twitter?: string;
     website?: string;
   };
@@ -161,6 +169,13 @@ const EventDetail: React.FC = () => {
           status: data.status || 'active',
           qr_enabled: !!data.qr_enabled,
           ticket_url: data.ticket_url,
+          ticket_type: data.ticket_type,
+          is_external: !!data.is_external,
+          external_organizer_name: data.external_organizer_name,
+          external_organizer_url: data.external_organizer_url,
+          external_instagram: data.external_instagram,
+          external_tiktok: data.external_tiktok,
+          external_twitter: data.external_twitter,
         };
         setEvent(mappedEvent);
         setIsSaved(!!data.isFavorited);
@@ -173,7 +188,12 @@ const EventDetail: React.FC = () => {
             description: organizerData.description || '',
             logo: resolveAssetUrl(organizerData.logo_url) || `https://api.dicebear.com/7.x/initials/svg?seed=${organizerData.name}`,
             ownerId: organizerData.id_creator,
-            socials: {},
+            socials: {
+              instagram: organizerData.instagram,
+              tiktok: organizerData.tiktok,
+              twitter: organizerData.twitter,
+              website: organizerData.website,
+            },
           });
 
           try {
@@ -505,7 +525,66 @@ const EventDetail: React.FC = () => {
                   <div className="space-y-8 lg:space-y-10">
                     <CalendarWidget eventDate={eventDate} />
 
-                    {organizer && (
+                    {event.is_external ? (
+                      <div className="space-y-6">
+                        <h3 className="text-xl font-bold uppercase tracking-widest opacity-60">Organizador Externo</h3>
+                        <div className="p-6 lg:p-8 rounded-[1.5rem] lg:rounded-[2.5rem] bg-amber-50/50 border border-amber-100 flex flex-col gap-6 relative overflow-hidden">
+                          <div className="flex items-center gap-4 relative z-10">
+                            <div className="w-12 h-12 lg:w-16 lg:h-16 rounded-xl lg:rounded-2xl bg-amber-100 flex items-center justify-center text-amber-600">
+                               <Users size={32} />
+                            </div>
+                            <div>
+                               <h4 className="text-lg lg:text-xl font-black italic text-amber-900">{event.external_organizer_name || 'Organizador Externo'}</h4>
+                               <div className="flex gap-2 mt-1">
+                                  {event.external_instagram && (
+                                    <a href={`https://instagram.com/${event.external_instagram.replace('@', '')}`} target="_blank" className="p-1.5 rounded-lg bg-white hover:text-primary transition-all shadow-sm">
+                                      <Instagram size={14} />
+                                    </a>
+                                  )}
+                                  {event.external_tiktok && (
+                                    <a href={`https://tiktok.com/@${event.external_tiktok.replace('@', '')}`} target="_blank" className="p-1.5 rounded-lg bg-white hover:text-primary transition-all shadow-sm">
+                                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5" /></svg>
+                                    </a>
+                                  )}
+                                  {event.external_twitter && (
+                                    <a href={`https://twitter.com/${event.external_twitter.replace('@', '')}`} target="_blank" className="p-1.5 rounded-lg bg-white hover:text-primary transition-all shadow-sm">
+                                      <Twitter size={14} />
+                                    </a>
+                                  )}
+                                  {event.external_organizer_url && (
+                                    <a href={event.external_organizer_url} target="_blank" className="p-1.5 rounded-lg bg-white hover:text-primary transition-all shadow-sm">
+                                      <Globe size={14} />
+                                    </a>
+                                  )}
+                               </div>
+                             </div>
+                          </div>
+                          <p className="text-xs lg:text-sm text-amber-800/80 leading-relaxed font-medium relative z-10">
+                            Este evento ha sido indexado por los moderadores de QueSale. La información es de carácter público y externo a nuestra plataforma oficial de gestión.
+                          </p>
+                          
+                          <div className="pt-4 border-t border-amber-200/50 flex flex-col gap-3 relative z-10">
+                             <p className="text-[10px] font-black uppercase tracking-widest text-amber-900">¿Eres el organizador?</p>
+                             <div className="flex gap-2">
+                               <button 
+                                onClick={() => window.open(`mailto:soporte@quesale.com?subject=Reclamar Evento: ${event.title}`, '_blank')}
+                                className="flex-1 h-10 rounded-xl bg-amber-600 text-white font-bold text-[10px] uppercase tracking-widest hover:bg-amber-700 transition-all shadow-sm"
+                               >
+                                 Reclamar Evento
+                               </button>
+                               <button 
+                                onClick={() => navigate('/register')}
+                                className="flex-1 h-10 rounded-xl bg-white border border-amber-200 text-amber-700 font-bold text-[10px] uppercase tracking-widest hover:bg-amber-100 transition-all"
+                               >
+                                 Registrarme
+                               </button>
+                             </div>
+                          </div>
+                          
+                          <div className="absolute top-0 right-0 w-32 h-32 bg-amber-200/20 blur-3xl rounded-full translate-x-10 -translate-y-10" />
+                        </div>
+                      </div>
+                    ) : organizer && (
                       <div className="space-y-6">
                         <h3 className="text-xl font-bold uppercase tracking-widest opacity-60">Organizador</h3>
                         <div className="p-6 lg:p-8 rounded-[1.5rem] lg:rounded-[2.5rem] bg-indigo-50/30 border border-indigo-100 flex flex-col gap-6">
@@ -515,12 +594,17 @@ const EventDetail: React.FC = () => {
                                <h4 className="text-lg lg:text-xl font-black italic group-hover/link:text-primary transition-colors">{organizer.name}</h4>
                                <div className="flex gap-2 mt-1">
                                   {organizer.socials?.instagram && (
-                                    <a href={organizer.socials.instagram} target="_blank" className="p-1 rounded-lg bg-surface hover:text-primary transition-all shadow-sm">
+                                    <a href={`https://instagram.com/${organizer.socials.instagram.replace('@', '')}`} target="_blank" className="p-1 rounded-lg bg-surface hover:text-primary transition-all shadow-sm">
                                       <Instagram size={12} />
                                     </a>
                                   )}
+                                  {organizer.socials?.tiktok && (
+                                    <a href={`https://tiktok.com/@${organizer.socials.tiktok.replace('@', '')}`} target="_blank" className="p-1 rounded-lg bg-surface hover:text-primary transition-all shadow-sm">
+                                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5" /></svg>
+                                    </a>
+                                  )}
                                   {organizer.socials?.twitter && (
-                                    <a href={organizer.socials.twitter} target="_blank" className="p-1 rounded-lg bg-surface hover:text-primary transition-all shadow-sm">
+                                    <a href={`https://twitter.com/${organizer.socials.twitter.replace('@', '')}`} target="_blank" className="p-1 rounded-lg bg-surface hover:text-primary transition-all shadow-sm">
                                       <Twitter size={12} />
                                     </a>
                                   )}
@@ -628,63 +712,87 @@ const EventDetail: React.FC = () => {
         {/* Right Column: Interaction & Tickets */}
         <div className="col-span-12 lg:col-span-4 space-y-6 lg:space-y-8 relative lg:sticky lg:top-28 self-start lg:pl-8">
            <section className="p-6 lg:p-10 rounded-[2rem] lg:rounded-[3.5rem] bg-linear-to-br from-primary-container/20 to-surface border border-primary/20 shadow-2xl shadow-primary/10 space-y-8 lg:space-y-10">
-              <div className="space-y-4">
-                 <p className="text-[10px] text-primary uppercase tracking-[0.3em] font-black">ENTRADAS DESDE</p>
-                 <div className="flex items-baseline gap-2">
-                    <span className="text-4xl lg:text-6xl font-black italic tracking-tighter text-on-surface">{formatPrice(event.price)}</span>
-                    <span className="px-3 py-1 rounded bg-tertiary/10 text-tertiary text-[9px] lg:text-[10px] font-black tracking-widest uppercase whitespace-nowrap">
-                      {Math.round((event.attendeesCount / event.capacity) * 100)}% Vendido
-                    </span>
-                 </div>
-              </div>
-
-              <div className="space-y-4">
-                  <button
-                    onClick={() => { 
-                      if (handleInteraction()) return; 
-                      if (event.ticket_type === 'mercadopago' || event.qr_enabled || event.price === 0) {
-                        handlePurchaseTicket();
-                      } else {
-                        window.open(event.ticket_url || 'https://mercadopago.com.ar', '_blank'); 
-                      }
-                    }}
-                    className="w-full btn-primary h-14 lg:h-16 text-base lg:text-lg flex items-center justify-center gap-3 shadow-xl shadow-primary/20"
-                  >
-                    <TicketIcon size={22} className="lg:size-6" />
-                    {event.qr_enabled ? 'OBTENER ENTRADA QR' : (event.price === 0 ? 'OBTENER ENTRADA GRATIS' : 'ADQUIRIR ACCESO')}
-                  </button>
-                 <p className="text-[9px] lg:text-[10px] text-center text-on-surface-variant font-bold uppercase tracking-widest">
-                   {event.qr_enabled || event.price === 0 ? 'Entrada digital vía QueSale' : 'Pago directo al organizador'}
-                 </p>
-              </div>
-
-              <div className="space-y-4 lg:space-y-6">
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] lg:text-xs font-bold uppercase tracking-widest opacity-60">Asistentes</span>
-                  <span className="text-[10px] lg:text-xs font-bold text-primary">{event.attendeesCount} / {event.capacity}</span>
+              {event.is_external ? (
+                <div className="space-y-6">
+                   <div className="space-y-2">
+                      <p className="text-[10px] text-primary uppercase tracking-[0.3em] font-black">ESTADO DEL EVENTO</p>
+                      <h3 className="text-3xl lg:text-4xl font-black italic tracking-tighter text-on-surface">CONTENIDO EXTERNO</h3>
+                   </div>
+                   <p className="text-xs font-medium text-on-surface-variant leading-relaxed">
+                      Este evento no vende entradas a través de QueSale. Podes consultar más información en el sitio oficial del organizador.
+                   </p>
+                   {event.external_organizer_url && (
+                      <button
+                        onClick={() => window.open(event.external_organizer_url, '_blank')}
+                        className="w-full btn-primary h-14 lg:h-16 text-base lg:text-lg flex items-center justify-center gap-3 shadow-xl shadow-primary/20"
+                      >
+                        <Globe size={22} className="lg:size-6" />
+                        SITIO OFICIAL
+                      </button>
+                   )}
                 </div>
-                <div className="h-1.5 lg:h-2 w-full bg-surface-container-high rounded-full overflow-hidden">
-                  <div 
-                    className="h-full bg-primary transition-all duration-1000" 
-                    style={{ width: `${(event.attendeesCount / event.capacity) * 100}%` }}
-                  />
-                </div>
+              ) : (
+                <>
+                  <div className="space-y-4">
+                    <p className="text-[10px] text-primary uppercase tracking-[0.3em] font-black">ENTRADAS DESDE</p>
+                    <div className="flex items-baseline gap-2">
+                        <span className="text-4xl lg:text-6xl font-black italic tracking-tighter text-on-surface">{formatPrice(event.price)}</span>
+                        <span className="px-3 py-1 rounded bg-tertiary/10 text-tertiary text-[9px] lg:text-[10px] font-black tracking-widest uppercase whitespace-nowrap">
+                          {Math.round((event.attendeesCount / event.capacity) * 100)}% Vendido
+                        </span>
+                    </div>
+                  </div>
 
-              </div>
+                  <div className="space-y-4">
+                      <button
+                        onClick={() => { 
+                          if (handleInteraction()) return; 
+                          if (event.ticket_type === 'mercadopago' || event.qr_enabled || event.price === 0) {
+                            handlePurchaseTicket();
+                          } else {
+                            window.open(event.ticket_url || 'https://mercadopago.com.ar', '_blank'); 
+                          }
+                        }}
+                        className="w-full btn-primary h-14 lg:h-16 text-base lg:text-lg flex items-center justify-center gap-3 shadow-xl shadow-primary/20"
+                      >
+                        <TicketIcon size={22} className="lg:size-6" />
+                        {event.qr_enabled ? 'OBTENER ENTRADA QR' : (event.price === 0 ? 'OBTENER ENTRADA GRATIS' : 'ADQUIRIR ACCESO')}
+                      </button>
+                    <p className="text-[9px] lg:text-[10px] text-center text-on-surface-variant font-bold uppercase tracking-widest">
+                      {event.qr_enabled || event.price === 0 ? 'Entrada digital vía QueSale' : 'Pago directo al organizador'}
+                    </p>
+                  </div>
+
+                  <div className="space-y-4 lg:space-y-6">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] lg:text-xs font-bold uppercase tracking-widest opacity-60">Asistentes</span>
+                      <span className="text-[10px] lg:text-xs font-bold text-primary">{event.attendeesCount} / {event.capacity}</span>
+                    </div>
+                    <div className="h-1.5 lg:h-2 w-full bg-surface-container-high rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-primary transition-all duration-1000" 
+                        style={{ width: `${(event.attendeesCount / event.capacity) * 100}%` }}
+                      />
+                    </div>
+                  </div>
+                </>
+              )}
            </section>
 
-           <section className="p-6 lg:p-8 rounded-[2rem] lg:rounded-[3rem] bg-orange-50 border border-orange-100 text-on-surface space-y-4 lg:space-y-6 relative overflow-hidden group">
-              <div className="relative z-10 space-y-2">
-                 <div className="flex items-center gap-3">
-                    <ShieldCheck size={20} className="text-orange-600" />
-                    <h3 className="text-base lg:text-lg font-black italic text-orange-900">Aviso Importante</h3>
-                 </div>
-                 <p className="text-[9px] lg:text-[11px] text-orange-800/80 leading-relaxed uppercase tracking-wider font-bold">
-                   QueSale no actúa como intermediario en los cobros. Tu pago va directamente al organizador.
-                 </p>
-              </div>
-              <div className="absolute top-0 right-0 w-32 h-32 bg-orange-200/20 blur-3xl rounded-full translate-x-10 -translate-y-10 group-hover:scale-150 transition-transform" />
-           </section>
+           {!event.is_external && (
+             <section className="p-6 lg:p-8 rounded-[2rem] lg:rounded-[3rem] bg-orange-50 border border-orange-100 text-on-surface space-y-4 lg:space-y-6 relative overflow-hidden group">
+                <div className="relative z-10 space-y-2">
+                   <div className="flex items-center gap-3">
+                      <ShieldCheck size={20} className="text-orange-600" />
+                      <h3 className="text-base lg:text-lg font-black italic text-orange-900">Aviso Importante</h3>
+                   </div>
+                   <p className="text-[9px] lg:text-[11px] text-orange-800/80 leading-relaxed uppercase tracking-wider font-bold">
+                     QueSale no actúa como intermediario en los cobros. Tu pago va directamente al organizador.
+                   </p>
+                </div>
+                <div className="absolute top-0 right-0 w-32 h-32 bg-orange-200/20 blur-3xl rounded-full translate-x-10 -translate-y-10 group-hover:scale-150 transition-transform" />
+             </section>
+           )}
         </div>
       </div>
 
