@@ -48,7 +48,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       displayName: username || null,
       photoURL: backendPhoto,
       username,
-      role: username?.toLowerCase() === 'santipingui58' ? 'admin' : 'user',
+      role: backendProfile?.global_role || 'user',
     };
   };
 
@@ -90,7 +90,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             displayName: usernameFromDisplayName || null,
             photoURL: firebaseUser?.photoURL || null,
             username: usernameFromDisplayName,
-            role: usernameFromDisplayName?.toLowerCase() === 'santipingui58' ? 'admin' : 'user',
+            role: 'user', // Default to user if backend fails
           });
         }
       } else {

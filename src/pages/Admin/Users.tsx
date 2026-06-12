@@ -16,14 +16,14 @@ const AdminUsers: React.FC = () => {
       try {
             const data: any = await api.getUsers(1, 50);
             const mapped = (data || []).map((user: any) => ({
-               id: user.id_user,
-               uid: user.id_user,
-               username: user.username,
-               email: user.email,
-               photoURL: user.photo_url,
-               displayName: user.username,
-               createdAt: user.created_at,
-               role: 'user',
+            id: user.id_user,
+            uid: user.id_user,
+            username: user.username,
+            email: user.email,
+            photoURL: user.photo_url,
+            displayName: user.username,
+            createdAt: user.created_at,
+            role: user.global_role || 'user',
             }));
             setUsers(mapped);
       } catch (err) {
@@ -36,7 +36,15 @@ const AdminUsers: React.FC = () => {
   }, []);
 
   const updateRole = async (userId: string, newRole: string) => {
-      return;
+    try {
+      if(confirm(`¿Estás seguro de que quieres cambiar el rango de este usuario a ${newRole.toUpperCase()}?`)) {
+        await api.put(`/users/${userId}/role`, { role: newRole });
+        setUsers(prev => prev.map(u => u.id === userId ? { ...u, role: newRole } : u));
+      }
+    } catch (err) {
+      alert('Error al actualizar el rango');
+      console.error(err);
+    }
   };
 
   const filteredUsers = users.filter(u => 
@@ -109,7 +117,6 @@ const AdminUsers: React.FC = () => {
                           {/* User Button */}
                           <button 
                             onClick={() => updateRole(user.id, 'user')}
-                            disabled
                             className={cn(
                               "w-10 h-10 rounded-xl border flex items-center justify-center transition-all",
                               user.role === 'user' ? "bg-on-surface text-surface border-on-surface" : "bg-white border-outline-variant hover:border-on-surface text-on-surface-variant hover:text-on-surface"
@@ -122,7 +129,6 @@ const AdminUsers: React.FC = () => {
                           {/* Moderator Button */}
                           <button 
                             onClick={() => updateRole(user.id, 'moderator')}
-                            disabled
                             className={cn(
                               "w-10 h-10 rounded-xl border flex items-center justify-center transition-all",
                               user.role === 'moderator' ? "bg-purple-600 text-white border-purple-600 shadow-lg shadow-purple-500/20" : "bg-white border-outline-variant hover:border-purple-500 text-on-surface-variant hover:text-purple-500"
@@ -135,7 +141,6 @@ const AdminUsers: React.FC = () => {
                           {/* Admin Button */}
                           <button 
                             onClick={() => updateRole(user.id, 'admin')}
-                            disabled
                             className={cn(
                               "w-10 h-10 rounded-xl border flex items-center justify-center transition-all",
                               user.role === 'admin' ? "bg-primary text-white border-primary shadow-lg shadow-primary/20" : "bg-white border-outline-variant hover:border-primary text-on-surface-variant hover:text-primary"

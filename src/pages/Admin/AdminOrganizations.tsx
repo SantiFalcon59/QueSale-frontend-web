@@ -36,7 +36,25 @@ const AdminOrganizations: React.FC = () => {
   }, []);
 
   const handleVerify = async (orgId: string, level: number) => {
-      return;
+    try {
+      if(confirm(`¿Estás seguro de que quieres cambiar el estado de verificación de esta organización a Nivel ${level}?`)) {
+        await api.put(`/organizers/${orgId}/verify`, { verified: level === 2 });
+        // Refresh local state to reflect the change
+        setOrgs(prev => prev.map(org => {
+          if(org.id === orgId) {
+            return {
+              ...org,
+              verificationLevel: level,
+              status: level === 2 ? 'verified' : 'pending_verification'
+            };
+          }
+          return org;
+        }));
+      }
+    } catch (err) {
+      alert('Error al actualizar la verificación');
+      console.error(err);
+    }
   };
 
   const filteredOrgs = orgs.filter(o => 
