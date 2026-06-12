@@ -899,8 +899,16 @@ const OrganizerDashboard: React.FC = () => {
                     Ver
                   </button>
                   <button
+                    onClick={() => navigate('/organizer/new', { state: { copyData: event } })}
+                    className="h-10 w-10 rounded-xl bg-surface text-primary border border-outline-variant flex items-center justify-center hover:bg-primary/10 transition-all"
+                    title="Copiar Evento"
+                  >
+                    <Copy size={14} />
+                  </button>
+                  <button
                     onClick={() => navigate(`/organizer/edit/${event.id_event}`)}
                     className="h-10 w-10 rounded-xl bg-surface text-primary text-[9px] font-black uppercase tracking-widest hover:bg-primary hover:text-white transition-all flex items-center justify-center border border-outline-variant"
+                    title="Editar Evento"
                   >
                     <Edit size={14} />
                   </button>
@@ -908,6 +916,7 @@ const OrganizerDashboard: React.FC = () => {
                     <button
                       onClick={() => handleDeleteEvent(event.id_event)}
                       className="h-10 w-10 rounded-xl bg-red-50 text-red-500 text-[9px] font-black uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all flex items-center justify-center"
+                      title="Eliminar Evento"
                     >
                       <Trash size={14} />
                     </button>

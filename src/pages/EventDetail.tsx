@@ -302,9 +302,20 @@ const EventDetail: React.FC = () => {
 
   const rawDate = event.date?.toDate ? event.date.toDate() : new Date(event.date);
   const eventDate = isNaN(rawDate.getTime()) ? new Date() : rawDate;
+  const isPast = eventDate < new Date();
 
   return (
     <div className="relative px-4 lg:px-8 xl:px-12 max-w-[1600px] mx-auto">
+      {isPast && (
+        <motion.div 
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-on-surface text-surface p-4 rounded-2xl flex items-center justify-center gap-3 shadow-xl mb-8"
+        >
+          <CalendarDays size={20} className="text-primary" />
+          <p className="text-xs lg:text-sm font-black uppercase tracking-widest italic text-center">Este evento ya se realizó. Consultá la info y el muro de comunidad.</p>
+        </motion.div>
+      )}
       <LoginPromptModal
         isOpen={showLoginPrompt}
         onClose={() => setShowLoginPrompt(false)}
@@ -712,7 +723,20 @@ const EventDetail: React.FC = () => {
         {/* Right Column: Interaction & Tickets */}
         <div className="col-span-12 lg:col-span-4 space-y-6 lg:space-y-8 relative lg:sticky lg:top-28 self-start lg:pl-8">
            <section className="p-6 lg:p-10 rounded-[2rem] lg:rounded-[3.5rem] bg-linear-to-br from-primary-container/20 to-surface border border-primary/20 shadow-2xl shadow-primary/10 space-y-8 lg:space-y-10">
-              {event.is_external ? (
+              {isPast ? (
+                <div className="space-y-6 text-center">
+                   <div className="w-16 h-16 rounded-full bg-surface-container-high flex items-center justify-center mx-auto">
+                      <CalendarDays size={32} className="text-on-surface-variant opacity-40" />
+                   </div>
+                   <div className="space-y-2">
+                      <p className="text-[10px] text-primary uppercase tracking-[0.3em] font-black">ESTADO DEL EVENTO</p>
+                      <h3 className="text-3xl lg:text-4xl font-black italic tracking-tighter text-on-surface">FINALIZADO</h3>
+                   </div>
+                   <p className="text-xs font-bold text-on-surface-variant uppercase tracking-widest leading-relaxed">
+                      Este evento ya se realizó. <br /> ¡Nos vemos en el próximo!
+                   </p>
+                </div>
+              ) : event.is_external ? (
                 <div className="space-y-6">
                    <div className="space-y-2">
                       <p className="text-[10px] text-primary uppercase tracking-[0.3em] font-black">ESTADO DEL EVENTO</p>

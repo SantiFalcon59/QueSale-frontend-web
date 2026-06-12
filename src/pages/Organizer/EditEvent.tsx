@@ -283,14 +283,8 @@ const EditEvent: React.FC = () => {
   };
 
   const canProceed = () => {
-    switch (currentStep) {
-      case 0: return formData.title.trim() && formData.description.trim() && formData.date && formData.time;
-      case 1: return mediaFiles.length > 0;
-      case 2: return formData.address.trim();
-      case 3: return formData.ticketType !== 'external' || formData.ticketUrl.trim();
-      case 4: return true;
-      default: return false;
-    }
+    // Basic validation only for essential fields
+    return formData.title.trim() && formData.date && formData.time;
   };
 
   if (loading) {
@@ -342,12 +336,11 @@ const EditEvent: React.FC = () => {
         {STEPS.map((step, i) => (
           <React.Fragment key={step.id}>
             <button
-              onClick={() => { if (i < currentStep) setCurrentStep(i); }}
+              onClick={() => { setCurrentStep(i); }}
               className={cn(
                 "flex items-center gap-2 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap",
                 i === currentStep ? "bg-primary text-white" :
-                i < currentStep ? "bg-primary/10 text-primary" :
-                "bg-surface-container-low text-on-surface-variant opacity-50"
+                "bg-surface-container-low text-on-surface-variant hover:bg-primary/5 hover:text-primary"
               )}
             >
               {i < currentStep ? <Check size={12} /> : <span className="w-4 h-4 rounded-full border-2 border-current flex items-center justify-center text-[8px]">{i + 1}</span>}

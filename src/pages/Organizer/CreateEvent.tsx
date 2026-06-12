@@ -2,10 +2,11 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { ArrowLeft, Calendar, MapPin, DollarSign, Users, Tag, Image as ImageIcon, Sparkles, Upload, X, Plus, Check, Loader2, Camera, Link, DoorOpen, Gift } from 'lucide-react';
+import { ArrowLeft, Calendar, MapPin, DollarSign, Users, Tag, Image as ImageIcon, Sparkles, Upload, X, Plus, Check, Loader2, Camera, Link, DoorOpen, Gift, Copy } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { api, resolveAssetUrl } from '../../services/apiClient';
 import { APIProvider, Map, Marker, AdvancedMarker, useMap, useMapsLibrary } from '@vis.gl/react-google-maps';
+import { useLocation } from 'react-router-dom';
 
 const GOOGLE_MAPS_KEY = process.env.GOOGLE_MAPS_PLATFORM_KEY || '';
 
@@ -88,6 +89,8 @@ const MapPicker: React.FC<{ lat: number; lng: number; address: string; onLocatio
 
 const CreateEvent: React.FC = () => {
   const navigate = useNavigate();
+  const locationState = useLocation();
+  const copyData = locationState.state?.copyData;
   const { eventId } = useParams<{ eventId?: string }>();
   const isEditing = !!eventId;
   const { user, profile } = useAuth();
@@ -98,27 +101,27 @@ const CreateEvent: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    category: '',
-    date: '',
-    time: '',
-    address: '',
-    lat: -34.6037,
-    lng: -58.3816,
-    price: 0,
-    capacity: '',
-    ticketType: 'free' as 'free' | 'external' | 'door' | 'mercadopago',
-    ticketUrl: '',
-    qr_enabled: false,
-    tags: [] as string[],
+    title: copyData?.title || '',
+    description: copyData?.description || '',
+    category: copyData?.category || '',
+    date: copyData?.date ? new Date(copyData.date).toISOString().split('T')[0] : '',
+    time: copyData?.date ? new Date(copyData.date).toTimeString().split(':')[0] + ':' + new Date(copyData.date).toTimeString().split(':')[1] : '',
+    address: copyData?.ubication || '',
+    lat: Number(copyData?.latitude) || -34.6037,
+    lng: Number(copyData?.longitude) || -58.3816,
+    price: Number(copyData?.price) || 0,
+    capacity: copyData?.capacity ? String(copyData.capacity) : '',
+    ticketType: (copyData?.ticket_type as any) || 'free',
+    ticketUrl: copyData?.ticket_url || '',
+    qr_enabled: !!copyData?.qr_enabled,
+    tags: copyData?.tags || [] as string[],
     customTag: '',
-    isExternal: false,
-    externalOrganizerName: '',
-    externalOrganizerUrl: '',
-    externalInstagram: '',
-    externalTikTok: '',
-    externalTwitter: '',
+    isExternal: !!copyData?.is_external,
+    externalOrganizerName: copyData?.external_organizer_name || '',
+    externalOrganizerUrl: copyData?.external_organizer_url || '',
+    externalInstagram: copyData?.external_instagram || '',
+    externalTikTok: copyData?.external_tiktok || '',
+    externalTwitter: copyData?.external_twitter || '',
   });
 
   const [categories, setCategories] = useState<{ id: number; name: string }[]>([]);
@@ -235,14 +238,8 @@ const CreateEvent: React.FC = () => {
   };
 
   const canProceed = () => {
-    switch (currentStep) {
-      case 0: return formData.title.trim() && formData.description.trim() && formData.date && formData.time;
-      case 1: return mediaFiles.length > 0;
-      case 2: return formData.address.trim();
-      case 3: return formData.ticketType !== 'external' || formData.ticketUrl.trim();
-      case 4: return true;
-      default: return false;
-    }
+    // Basic validation only for essential fields
+    return formData.title.trim() && formData.date && formData.time;
   };
 
   if (loading) {
@@ -294,12 +291,11 @@ const CreateEvent: React.FC = () => {
         {STEPS.map((step, i) => (
           <React.Fragment key={step.id}>
             <button
-              onClick={() => { if (i < currentStep) setCurrentStep(i); }}
+              onClick={() => { setCurrentStep(i); }}
               className={cn(
                 "flex items-center gap-2 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap",
                 i === currentStep ? "bg-primary text-white" :
-                i < currentStep ? "bg-primary/10 text-primary" :
-                "bg-surface-container-low text-on-surface-variant opacity-50"
+                "bg-surface-container-low text-on-surface-variant hover:bg-primary/5 hover:text-primary"
               )}
             >
               {i < currentStep ? <Check size={12} /> : <span className="w-4 h-4 rounded-full border-2 border-current flex items-center justify-center text-[8px]">{i + 1}</span>}
@@ -751,35 +747,38 @@ const CreateEvent: React.FC = () => {
       </AnimatePresence>
 
       {/* Navigation */}
-      <div className="flex items-center justify-between pt-6 border-t border-outline-variant/30">
-        <button
-          onClick={() => currentStep > 0 && setCurrentStep(currentStep - 1)}
-          className={cn(
-            "h-14 px-8 rounded-2xl font-black uppercase tracking-widest text-sm transition-all",
-            currentStep === 0 ? "opacity-0 pointer-events-none" : "bg-surface-container-low text-on-surface-variant hover:bg-surface-container"
-          )}
-        >
-          Anterior
-        </button>
-
-        {currentStep < STEPS.length - 1 ? (
+      <div className="flex items-center justify-between gap-4 pt-6 border-t border-outline-variant/30">
+        <div className="flex items-center gap-2">
           <button
-            onClick={() => canProceed() && setCurrentStep(currentStep + 1)}
-            disabled={!canProceed()}
-            className="btn-primary h-14 px-10 text-sm font-black uppercase tracking-widest disabled:opacity-30"
+            onClick={() => currentStep > 0 && setCurrentStep(currentStep - 1)}
+            disabled={currentStep === 0}
+            className={cn(
+              "h-14 px-6 rounded-2xl font-black uppercase tracking-widest text-[10px] transition-all border border-outline-variant hover:bg-surface-container-low",
+              currentStep === 0 ? "opacity-30 pointer-events-none" : ""
+            )}
+          >
+            Anterior
+          </button>
+          <button
+            onClick={() => currentStep < STEPS.length - 1 && setCurrentStep(currentStep + 1)}
+            disabled={currentStep === STEPS.length - 1}
+            className={cn(
+              "h-14 px-6 rounded-2xl font-black uppercase tracking-widest text-[10px] transition-all border border-outline-variant hover:bg-surface-container-low",
+              currentStep === STEPS.length - 1 ? "opacity-30 pointer-events-none" : ""
+            )}
           >
             Siguiente
           </button>
-        ) : (
-          <button
-            onClick={handleSubmit}
-            disabled={submitting || !canProceed()}
-            className="btn-primary h-14 px-10 text-sm font-black uppercase tracking-widest disabled:opacity-30 flex items-center gap-2"
-          >
-            {submitting ? <Loader2 size={18} className="animate-spin" /> : <Sparkles size={18} />}
-            {submitting ? 'Publicando...' : 'Publicar Evento'}
-          </button>
-        )}
+        </div>
+
+        <button
+          onClick={handleSubmit}
+          disabled={submitting || !canProceed()}
+          className="flex-1 max-w-xs btn-primary h-14 px-10 text-sm font-black uppercase tracking-widest disabled:opacity-30 flex items-center justify-center gap-2"
+        >
+          {submitting ? <Loader2 size={18} className="animate-spin" /> : <Check size={18} />}
+          {submitting ? 'Guardando...' : (isEditing ? 'Guardar Cambios' : 'Publicar Evento')}
+        </button>
       </div>
     </div>
   );
