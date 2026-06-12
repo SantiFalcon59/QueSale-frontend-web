@@ -49,6 +49,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       photoURL: backendPhoto,
       username,
       role: backendProfile?.global_role || 'user',
+      is_premium: !!backendProfile?.is_premium,
+      premium_until: backendProfile?.premium_until,
     };
   };
 

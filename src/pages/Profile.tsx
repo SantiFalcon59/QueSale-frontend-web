@@ -1,7 +1,7 @@
 import React, { useRef, useCallback } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { Settings, MapPin, Calendar, Grid, Bookmark, Users, Heart, Pencil, X, Check, Instagram, Image, Smile, Loader2, Upload } from 'lucide-react';
+import { Settings, MapPin, Calendar, Grid, Bookmark, Users, Heart, Pencil, X, Check, Instagram, Image, Smile, Loader2, Upload, Crown, Sparkles, Star, ShieldCheck, Zap } from 'lucide-react';
 import { cn, NO_EVENT_IMAGE } from '../lib/utils';
 import { useAuth } from '../context/AuthContext';
 import { format } from 'date-fns';
@@ -12,6 +12,7 @@ import { api, resolveAssetUrl } from '../services/apiClient';
 import EmojiPicker, { EmojiClickData } from 'emoji-picker-react';
 import { GifPicker } from '../components/post/GifPicker';
 import PostFeed from '../components/wall/PostFeed';
+import { PremiumModal } from '../components/ui/PremiumModal';
 
 const safeDate = (val: any) => {
   if (!val) return null;
@@ -23,7 +24,12 @@ const Profile: React.FC<{ usernameFromUrl?: string }> = ({ usernameFromUrl }) =>
   const paramsUsername = useParams<{ username: string }>().username;
   const username = usernameFromUrl || paramsUsername;
   const navigate = useNavigate();
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const premiumSuccess = searchParams.get('premium_success') === 'true';
+  
   const { profile: loggedProfile, user: currentUser, refreshProfile } = useAuth();
+  const [premiumModalOpen, setPremiumModalOpen] = React.useState(false);
   const [profileUser, setProfileUser] = React.useState<any>(null);
   const [loading, setLoading] = React.useState(true);
   const [posts, setPosts] = React.useState<any[]>([]);
@@ -62,6 +68,8 @@ const Profile: React.FC<{ usernameFromUrl?: string }> = ({ usernameFromUrl }) =>
           description: data.description,
           instagram: data.instagram,
           instagramVerified: data.instagramVerified,
+          isPremium: !!data.is_premium,
+          premiumUntil: data.premium_until,
           createdAt: data.createdAt,
           stats: data.stats || { events: 0, followers: 0, following: 0, vibeScore: 0 },
           recentEvents: data.recentEvents || [],
@@ -131,6 +139,13 @@ const Profile: React.FC<{ usernameFromUrl?: string }> = ({ usernameFromUrl }) =>
 
   const handlePhotoSelect = (file: File) => {
     if (!file.type.startsWith('image/')) return;
+    
+    // Premium GIF check
+    if (file.type === 'image/gif' && !loggedProfile?.is_premium && loggedProfile?.role !== 'admin') {
+      alert('Solo los usuarios Premium pueden usar GIFs como foto de perfil.');
+      return;
+    }
+
     setPhotoFile(file);
     const reader = new FileReader();
     reader.onload = (e) => setPhotoPreview(e.target?.result as string);
@@ -345,6 +360,19 @@ const Profile: React.FC<{ usernameFromUrl?: string }> = ({ usernameFromUrl }) =>
 
   return (
     <div className="max-w-5xl mx-auto space-y-8 lg:space-y-12">
+      <PremiumModal isOpen={premiumModalOpen} onClose={() => setPremiumModalOpen(false)} />
+      
+      {premiumSuccess && (
+        <motion.div 
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: 'auto' }}
+          className="bg-amber-100 border border-amber-200 p-4 rounded-2xl flex items-center justify-center gap-3 shadow-sm mx-4 lg:mx-0"
+        >
+          <Crown size={20} className="text-amber-600" />
+          <p className="text-xs font-black text-amber-800 uppercase tracking-widest">¡Felicidades! Ya eres usuario PREMIUM. Disfruta de tus beneficios.</p>
+        </motion.div>
+      )}
+
       {/* Profile Header */}
       <motion.section
         initial={{ opacity: 0, y: -20 }}
@@ -352,7 +380,7 @@ const Profile: React.FC<{ usernameFromUrl?: string }> = ({ usernameFromUrl }) =>
         transition={{ duration: 0.4 }}
         className="relative h-[400px] lg:h-64 rounded-[2rem] lg:rounded-[3rem] overflow-hidden"
       >
-        <div className="absolute inset-0 bg-linear-to-br from-primary/20 to-primary-container/20" />
+        <div className={cn("absolute inset-0 transition-colors duration-1000", profileUser?.isPremium ? "bg-linear-to-br from-amber-400/20 via-amber-200/20 to-amber-400/20" : "bg-linear-to-br from-primary/20 to-primary-container/20")} />
         <div className="absolute inset-0 flex items-center justify-center">
            <div className="w-full max-w-4xl px-6 lg:px-10 flex flex-col lg:flex-row lg:items-end justify-between translate-y-8 lg:translate-y-12 mt-8 lg:mt-0">
               <div className="flex flex-col lg:flex-row items-center lg:items-end gap-6 lg:gap-8">
@@ -360,12 +388,20 @@ const Profile: React.FC<{ usernameFromUrl?: string }> = ({ usernameFromUrl }) =>
                     <img
                       src={profileUser?.photoURL || `https://api.dicebear.com/7.x/avataaars/svg?seed=${profileUser?.username}`}
                       alt="Profile"
-                      className="w-32 h-32 lg:w-40 lg:h-40 shrink-0 rounded-[2rem] lg:rounded-[2.5rem] bg-white p-2 shadow-2xl shadow-black/10 transition-all duration-300 hover:scale-105 hover:shadow-primary/30 object-cover"
+                      className={cn("w-32 h-32 lg:w-40 lg:h-40 shrink-0 rounded-[2rem] lg:rounded-[2.5rem] bg-white p-2 shadow-2xl shadow-black/10 transition-all duration-300 hover:scale-105 hover:shadow-primary/30 object-cover", profileUser?.isPremium && "ring-4 ring-amber-400 ring-offset-4 ring-offset-surface shadow-amber-500/20")}
                     />
+                    {profileUser?.isPremium && (
+                      <div className="absolute -top-3 -right-3 w-10 h-10 rounded-2xl bg-amber-500 text-white flex items-center justify-center shadow-lg border-2 border-white animate-bounce-slow">
+                        <Crown size={20} className="fill-white" />
+                      </div>
+                    )}
                  </div>
                   <div className="pb-0 lg:pb-4 space-y-2 text-center lg:text-left">
                      <div className="flex flex-col lg:flex-row items-center gap-2 lg:gap-3">
-                        <h1 className="text-3xl lg:text-4xl font-black tracking-tight">{profileUser?.displayName || profileUser?.username}</h1>
+                        <h1 className={cn("text-3xl lg:text-4xl font-black tracking-tight flex items-center gap-2", profileUser?.isPremium && "text-amber-600")}>
+                          {profileUser?.displayName || profileUser?.username}
+                          {profileUser?.isPremium && <Sparkles size={24} className="text-amber-400 animate-pulse" />}
+                        </h1>
                      </div>
                     <div className="flex items-center justify-center lg:justify-start gap-4 text-on-surface-variant font-medium text-xs lg:text-sm">
                        <span className="flex items-center gap-1.5"><AtSign size={14} /> {profileUser?.username}</span>
@@ -378,6 +414,14 @@ const Profile: React.FC<{ usernameFromUrl?: string }> = ({ usernameFromUrl }) =>
               </div>
 
               <div className="pb-4 mt-6 lg:mt-0 flex justify-center lg:justify-end gap-3 lg:gap-4">
+                 {isOwnProfile && !profileUser?.isPremium && (
+                   <button
+                     onClick={() => setPremiumModalOpen(true)}
+                     className="bg-linear-to-r from-amber-400 to-amber-600 text-white h-12 lg:h-14 px-6 lg:px-8 rounded-2xl font-black uppercase tracking-widest text-[10px] lg:text-xs shadow-xl shadow-amber-500/30 flex items-center gap-2 hover:scale-105 transition-all"
+                   >
+                     <Zap size={16} className="fill-white" /> UNIRME A PREMIUM
+                   </button>
+                 )}
                  {isOwnProfile ? (
                    <button
                      onClick={openEditModal}

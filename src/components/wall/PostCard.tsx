@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { MessageSquare, Share2, Trash2, Send } from 'lucide-react';
+import { MessageSquare, Share2, Trash2, Send, Crown, Sparkles } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { cn } from '../../lib/utils';
@@ -63,19 +63,35 @@ const PostCard: React.FC<PostCardProps> = ({ post, onReact, onDelete, onComment,
   const totalReactions = Object.values(reactions).reduce((a: any, b: any) => a + b, 0);
   const topReaction = Object.entries(reactions).sort(([, a]: any, [, b]: any) => b - a)[0];
 
+  const isAuthorPremium = post.user?.is_premium;
+
   return (
-    <div className="p-6 lg:p-10 rounded-[2.5rem] lg:rounded-[4rem] bg-white border border-outline-variant hover:border-primary/20 transition-all space-y-6 lg:space-y-8 group">
+    <div className={cn(
+      "p-6 lg:p-10 rounded-[2.5rem] lg:rounded-[4rem] bg-white border transition-all space-y-6 lg:space-y-8 group",
+      isAuthorPremium ? "border-amber-400/50 shadow-xl shadow-amber-500/5" : "border-outline-variant hover:border-primary/20"
+    )}>
       <div className="flex justify-between items-start">
         <div className="flex gap-4 lg:gap-5">
           <div className="relative">
             <img
-              src={resolveAssetUrl(post.author_photo_url) || `https://api.dicebear.com/7.x/avataaars/svg?seed=${post.id_user}`}
-              className="w-12 h-12 lg:w-14 lg:h-14 rounded-xl lg:rounded-2xl bg-surface-container-high object-cover"
+              src={resolveAssetUrl(post.author_photo_url || post.user?.profile?.photo_url) || `https://api.dicebear.com/7.x/avataaars/svg?seed=${post.id_user}`}
+              className={cn(
+                "w-12 h-12 lg:w-14 lg:h-14 rounded-xl lg:rounded-2xl bg-surface-container-high object-cover",
+                isAuthorPremium && "ring-2 ring-amber-400 ring-offset-2 ring-offset-white"
+              )}
               alt="Avatar"
             />
+            {isAuthorPremium && (
+              <div className="absolute -top-2 -right-2 w-6 h-6 rounded-lg bg-amber-500 text-white flex items-center justify-center shadow-md border border-white">
+                <Crown size={12} className="fill-white" />
+              </div>
+            )}
           </div>
           <div>
-            <h4 className="text-base lg:text-lg font-black italic tracking-tight">{post.author}</h4>
+            <h4 className={cn("text-base lg:text-lg font-black italic tracking-tight flex items-center gap-2", isAuthorPremium && "text-amber-600")}>
+              {post.author || post.user?.username}
+              {isAuthorPremium && <Sparkles size={16} className="text-amber-400" />}
+            </h4>
             <p className="text-[9px] lg:text-[10px] text-on-surface-variant font-black uppercase tracking-[0.2em]">
               {post.created_at ? format(new Date(post.created_at), 'HH:mm • d MMM', { locale: es }) : 'Reciente'}
             </p>

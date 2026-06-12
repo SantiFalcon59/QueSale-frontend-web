@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { useAuth } from '../../context/AuthContext';
 
 interface AdBannerProps {
   client: string;
@@ -26,13 +27,19 @@ export const AdBanner: React.FC<AdBannerProps> = ({
   style,
   className
 }) => {
+  const { profile }: any = useAuth();
+  const isPremium = profile?.role === 'admin' || profile?.is_premium;
+
   useEffect(() => {
+    if (isPremium) return;
     try {
       (window.adsbygoogle = window.adsbygoogle || []).push({});
     } catch (e) {
       console.error('AdSense error:', e);
     }
-  }, []);
+  }, [isPremium]);
+
+  if (isPremium) return null;
 
   return (
     <div className={className}>
