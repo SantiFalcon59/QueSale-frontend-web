@@ -5,8 +5,10 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 export const resolveAssetUrl = (url: string | null | undefined): string | null => {
   if (!url) return null;
   if (url.startsWith('http://') || url.startsWith('https://')) return url;
-  if (url.startsWith('/')) return `${API_URL}${url}`;
-  return url;
+  
+  // Ensure local paths start with / if they don't already
+  const path = url.startsWith('/') ? url : `/${url}`;
+  return `${API_URL}${path}`;
 };
 
 const buildHeaders = async (useAuth: boolean) => {

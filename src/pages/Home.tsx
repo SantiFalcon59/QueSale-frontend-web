@@ -9,41 +9,54 @@ import { cn } from '../lib/utils';
 const NO_EVENT_IMAGE = 'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?q=80&w=1000&auto=format&fit=crop';
 
 const EventCard = ({ event }: { event: any }) => (
-  <Link 
-    to={`/events/${event.id_event}`}
-    className="group flex-shrink-0 w-72 bg-white rounded-3xl border border-outline-variant overflow-hidden hover:border-primary/50 transition-all hover:shadow-2xl hover:-translate-y-1"
+  <motion.div
+    whileHover={{ y: -10, scale: 1.02 }}
+    whileTap={{ scale: 0.98 }}
+    className="group flex-shrink-0 w-72 bg-white rounded-3xl border border-outline-variant overflow-hidden hover:border-primary/50 transition-all hover:shadow-2xl"
   >
-    <div className="relative aspect-[16/10] overflow-hidden">
-      <img 
-        src={resolveAssetUrl(event.thumbnail_url) || NO_EVENT_IMAGE} 
-        alt={event.title}
-        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-      />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
-      <div className="absolute top-3 left-3">
-        <span className="px-2.5 py-1 rounded-lg bg-white/20 backdrop-blur-md text-white text-[8px] font-black uppercase tracking-wider border border-white/10">
-          {event.interests?.[0]?.name || event.tags?.[0] || 'Evento'}
-        </span>
-      </div>
-      {event.score && (
-        <div className="absolute top-3 right-3 px-2.5 py-1 rounded-lg bg-primary/90 text-white text-[8px] font-black tracking-widest uppercase shadow-lg flex items-center gap-1">
-          <Sparkles size={10} /> {Math.round(event.score)}% Match
+    <Link to={`/events/${event.id_event}`} className="block">
+      <div className="relative aspect-[16/10] overflow-hidden">
+        <img 
+          src={resolveAssetUrl(event.thumbnail_url) || NO_EVENT_IMAGE} 
+          alt={event.title}
+          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+          onError={(e) => {
+            (e.target as HTMLImageElement).src = NO_EVENT_IMAGE;
+          }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
+        <div className="absolute top-3 left-3 flex gap-2">
+          {event.interests?.slice(0, 2).map((interest: any) => (
+            <span key={interest.id_interest} className="px-2.5 py-1 rounded-lg bg-white/20 backdrop-blur-md text-white text-[8px] font-black uppercase tracking-wider border border-white/10">
+              {interest.name}
+            </span>
+          ))}
+          {!event.interests?.length && event.tags?.[0] && (
+            <span className="px-2.5 py-1 rounded-lg bg-white/20 backdrop-blur-md text-white text-[8px] font-black uppercase tracking-wider border border-white/10">
+              {event.tags[0]}
+            </span>
+          )}
         </div>
-      )}
-    </div>
-    <div className="p-5 space-y-3">
-      <h4 className="text-sm font-black text-on-surface leading-tight truncate uppercase">{event.title}</h4>
-      <div className="flex items-center justify-between text-[10px] text-on-surface-variant font-bold">
-        <span className="flex items-center gap-1">
-          <Calendar size={12} className="text-primary" />
-          {new Date(event.date).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}
-        </span>
-        <span className="text-primary font-black">
-          {event.price && Number(event.price) > 0 ? `$${event.price}` : 'GRATIS'}
-        </span>
+        {event.score && (
+          <div className="absolute top-3 right-3 px-2.5 py-1 rounded-lg bg-primary/90 text-white text-[8px] font-black tracking-widest uppercase shadow-lg flex items-center gap-1">
+            <Sparkles size={10} /> {Math.round(event.score)}% Match
+          </div>
+        )}
       </div>
-    </div>
-  </Link>
+      <div className="p-5 space-y-3">
+        <h4 className="text-sm font-black text-on-surface leading-tight truncate uppercase">{event.title}</h4>
+        <div className="flex items-center justify-between text-[10px] text-on-surface-variant font-bold">
+          <span className="flex items-center gap-1">
+            <Calendar size={12} className="text-primary" />
+            {new Date(event.date).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}
+          </span>
+          <span className="text-primary font-black">
+            {event.price && Number(event.price) > 0 ? `$${event.price}` : 'GRATIS'}
+          </span>
+        </div>
+      </div>
+    </Link>
+  </motion.div>
 );
 
 const Home: React.FC = () => {
@@ -107,7 +120,7 @@ const Home: React.FC = () => {
   }, []);
 
   return (
-    <div className="flex flex-col items-center">
+    <div className="flex flex-col items-center w-full overflow-hidden">
       {/* Hero Section */}
       <section className="w-full max-w-7xl mx-auto px-6 py-16 lg:py-24 flex flex-col items-center text-center relative overflow-hidden">
         {/* Decorative background glow */}
@@ -162,28 +175,44 @@ const Home: React.FC = () => {
       </section>
 
       {/* Recommended for You (AI powered) */}
-      {recommendedEvents.length > 0 && (
-        <section className="w-full max-w-7xl mx-auto px-6 py-12 space-y-8">
-           <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                 <div className="w-10 h-10 rounded-2xl bg-primary/10 text-primary flex items-center justify-center">
-                    <Sparkles size={20} />
-                 </div>
-                 <div>
-                    <h3 className="text-2xl font-black italic uppercase tracking-tighter">Para Ti</h3>
-                    <p className="text-[10px] text-on-surface-variant font-bold uppercase tracking-widest">Basado en tus gustos con IA</p>
-                 </div>
-              </div>
-              <Link to="/feed" className="text-xs font-black text-primary hover:underline uppercase tracking-widest">Ver Feed Completo</Link>
-           </div>
-           <div className="flex gap-6 overflow-x-auto pb-8 no-scrollbar">
-              {recommendedEvents.map(event => <EventCard key={event.id_event} event={event} />)}
-           </div>
-        </section>
-      )}
+      <AnimatePresence>
+        {recommendedEvents.length > 0 && (
+          <motion.section 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="w-full max-w-7xl mx-auto px-6 py-12 space-y-8"
+          >
+             <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                   <div className="w-10 h-10 rounded-2xl bg-primary/10 text-primary flex items-center justify-center">
+                      <Sparkles size={20} />
+                   </div>
+                   <div>
+                      <h3 className="text-2xl font-black italic uppercase tracking-tighter">Para Ti</h3>
+                      <p className="text-[10px] text-on-surface-variant font-bold uppercase tracking-widest">Personalizado con IA</p>
+                   </div>
+                </div>
+                <Link to="/feed" className="text-xs font-black text-primary hover:underline uppercase tracking-widest">Ver Feed Completo</Link>
+             </div>
+             <div className="flex gap-6 overflow-x-auto pb-8 no-scrollbar snap-x snap-mandatory">
+                {recommendedEvents.map(event => (
+                  <div key={event.id_event} className="snap-center">
+                    <EventCard event={event} />
+                  </div>
+                ))}
+             </div>
+          </motion.section>
+        )}
+      </AnimatePresence>
 
       {/* Trending Events */}
-      <section className="w-full max-w-7xl mx-auto px-6 py-12 space-y-8">
+      <motion.section 
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        className="w-full max-w-7xl mx-auto px-6 py-12 space-y-8"
+      >
          <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
                <div className="w-10 h-10 rounded-2xl bg-orange-500/10 text-orange-600 flex items-center justify-center">
@@ -195,10 +224,21 @@ const Home: React.FC = () => {
                </div>
             </div>
          </div>
-         <div className="flex gap-6 overflow-x-auto pb-8 no-scrollbar">
-            {trendingEvents.map(event => <EventCard key={event.id_event} event={event} />)}
+         <div className="flex gap-6 overflow-x-auto pb-8 no-scrollbar snap-x snap-mandatory">
+            {trendingEvents.length > 0 ? (
+              trendingEvents.map(event => (
+                <div key={event.id_event} className="snap-center">
+                  <EventCard event={event} />
+                </div>
+              ))
+            ) : (
+              // Loading placeholders
+              [1, 2, 3, 4].map(i => (
+                <div key={i} className="w-72 h-48 bg-surface-container animate-pulse rounded-3xl" />
+              ))
+            )}
          </div>
-      </section>
+      </motion.section>
 
       {/* Features Bento Grid */}
       <section className="w-full max-w-7xl mx-auto px-6 py-24">

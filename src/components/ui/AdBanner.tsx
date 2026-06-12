@@ -29,11 +29,18 @@ export const AdBanner: React.FC<AdBannerProps> = ({
 }) => {
   const { profile }: any = useAuth();
   const isPremium = profile?.role === 'admin' || profile?.is_premium;
+  const adLoaded = React.useRef(false);
 
   useEffect(() => {
     if (isPremium) return;
+    
+    // Only push if not already loaded in this instance
+    if (adLoaded.current) return;
+
     try {
-      (window.adsbygoogle = window.adsbygoogle || []).push({});
+      const adsbygoogle = (window as any).adsbygoogle || [];
+      adsbygoogle.push({});
+      adLoaded.current = true;
     } catch (e) {
       console.error('AdSense error:', e);
     }
