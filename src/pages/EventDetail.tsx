@@ -17,6 +17,7 @@ import { es } from 'date-fns/locale';
 import { LoginPromptModal } from '../components/ui/LoginPromptModal';
 import { api, resolveAssetUrl } from '../services/apiClient';
 import { UserAvatar } from '../components/ui/UserAvatar';
+import { OrganizerAvatar } from '../components/ui/OrganizerAvatar';
 import { io, Socket } from 'socket.io-client';
 import PostFeed from '../components/wall/PostFeed';
 import PostComposer from '../components/wall/PostComposer';

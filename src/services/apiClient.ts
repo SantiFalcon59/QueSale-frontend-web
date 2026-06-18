@@ -478,8 +478,18 @@ export const api = {
   checkFollowing: (userId: string) =>
     apiRequest(`/api/community/users/${encodeURIComponent(userId)}/is-following`, { auth: true }),
 
-  communitySearch: (q: string) =>
-    apiRequest(`/api/community/search?q=${encodeURIComponent(q)}&type=all`),
+  communitySearch: async (q: string) => {
+    const [users, organizers, events] = await Promise.all([
+      apiRequest(`/api/community/search?q=${encodeURIComponent(q)}&type=users`),
+      apiRequest(`/api/community/search?q=${encodeURIComponent(q)}&type=organizers`),
+      apiRequest(`/api/community/search?q=${encodeURIComponent(q)}&type=events`),
+    ]);
+    return {
+      users: users?.users || [],
+      organizers: organizers?.organizers || [],
+      events: events?.events || [],
+    };
+  },
 
   votePoll: (postId: number, optionId: number, wallId: string) =>
     apiRequest(`/api/wall/post/${postId}/vote`, {

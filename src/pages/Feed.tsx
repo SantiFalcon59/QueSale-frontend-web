@@ -6,9 +6,10 @@ import { useAuth } from '../context/AuthContext';
 import { LoginPromptModal } from '../components/ui/LoginPromptModal';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { api } from '../services/apiClient';
-import { Calendar, MapPin, Share2, Bookmark, Loader2 } from 'lucide-react';
+import { api, resolveAssetUrl } from '../services/apiClient';
+import { Calendar, MapPin, Share2, Bookmark, Loader2, ThumbsUp, MessageSquare } from 'lucide-react';
 import { AdBanner } from '../components/ui/AdBanner';
+import PostCard from '../components/wall/PostCard';
 
 const CYCLE_MS = 4000;
 
@@ -103,6 +104,80 @@ const Feed: React.FC = () => {
     }
   };
 
+  const handleReact = async (postId: number, type: string) => {
+    if (!user) return document.dispatchEvent(new CustomEvent('show-login-prompt'));
+    setEvents(prevEvents => prevEvents.map(ev => ev.id_event === postId ? ({
+      ...ev,
+      // Logic for updating reaction counts locally (optional, for immediate feedback)
+    }) : ev));
+    try {
+      // Assuming event.id_event is the wallId for the post in the feed
+      const result: any = await api.toggleReaction(postId, type);
+      setEvents(prevEvents => prevEvents.map(ev => ev.id_event === postId ? { ...ev, reactions: result.reactions } : ev));
+    } catch (err) {
+      console.error('Error toggling reaction:', err);
+    }
+  };
+
+  const handleDeletePost = async (postId: number) => {
+    if (!window.confirm('¿Eliminar esta publicación?')) return;
+    try {
+      await api.deleteWallPost_new(postId);
+      setEvents(prevEvents => prevEvents.filter(ev => ev.id_event !== postId));
+    } catch (err) {
+      console.error('Error deleting post:', err);
+    }
+  };
+
+  const handleComment = async (postId: number, content: string) => {
+    if (!user) return document.dispatchEvent(new CustomEvent('show-login-prompt'));
+    try {
+      await api.createWallComment_new(postId, content);
+      // Re-fetch posts or update locally
+      const result: any = await api.getEvents(1, 20); // This should ideally be a wall-specific fetch
+      const apiEvents = Array.isArray(result) ? result : (result?.data || []);
+      setEvents(apiEvents);
+    } catch (err) {
+      console.error('Error posting comment:', err);
+    }
+  };
+
+  const handleSharePost = async (content: string) => {
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: 'QueSale', text: content, url: window.location.href });
+      } catch { /* user cancelled */ }
+    } else {
+      await navigator.clipboard.writeText(`${content} — ${window.location.href}`);
+    }
+  };
+
+  const handleDeleteComment = async (commentId: number) => {
+    if (!window.confirm('¿Eliminar este comentario?')) return;
+    try {
+      await api.deleteWallComment_new(commentId);
+      // Re-fetch posts or update locally
+      const result: any = await api.getEvents(1, 20); // This should ideally be a wall-specific fetch
+      const apiEvents = Array.isArray(result) ? result : (result?.data || []);
+      setEvents(apiEvents);
+    } catch (err) {
+      console.error('Error deleting comment:', err);
+    }
+  };
+
+  const handleVotePoll = async (postId: number, optionId: number) => {
+    if (!user) return document.dispatchEvent(new CustomEvent('show-login-prompt'));
+    try {
+      // Assuming event.id_event is the wallId for the post in the feed
+      const result: any = await api.votePoll(postId, optionId, postId.toString()); // Assuming postId is also wallId
+      if (result?.post) {
+        setEvents(prevEvents => prevEvents.map(ev => ev.id_event === postId ? result.post : ev));
+      }
+    } catch (err) {
+      console.error('Error voting on poll:', err);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-[calc(100vh-64px)]">
@@ -128,76 +203,35 @@ const Feed: React.FC = () => {
       <LoginPromptModal isOpen={showLoginPrompt} onClose={() => setShowLoginPrompt(false)} />
 
       {events.map((event, index) => {
-        const images = event.images?.length ? event.images : [];
-        const imgIdx = images.length > 1 ? imageIndex % images.length : 0;
-        const currentSrc = images.length > 0 ? images[imgIdx] : event.thumbnail_url || NO_EVENT_IMAGE;
+        // Assume posts in the feed are actually events for now, or re-evaluate API structure
+        // For now, treating each event as a "post" in the feed to re-use PostCard
         return (
           <React.Fragment key={event.id_event}>
             <div className="w-full h-full snap-start p-4 lg:p-8">
               <div className="relative w-full h-full rounded-[40px] overflow-hidden bg-black shadow-2xl flex flex-col justify-end border border-white/5 group">
-                <div className="absolute inset-0 z-0 overflow-hidden">
-                  <div className="w-full h-full transition-transform duration-1000 group-hover:scale-105">
-                    <img src={currentSrc} className="absolute inset-0 w-full h-full object-cover opacity-70" alt={event.title} />
-                    {fadingMap[event.id_event] && (
-                      <motion.img
-                        initial={{ opacity: 0.7 }}
-                        animate={{ opacity: 0 }}
-                        transition={{ duration: 1.2, ease: "easeInOut" }}
-                        onAnimationComplete={() => setFadingMap(prev => {
-                          const next = { ...prev };
-                          delete next[event.id_event];
-                          return next;
-                        })}
-                        src={fadingMap[event.id_event]}
-                        className="absolute inset-0 w-full h-full object-cover z-10"
-                      />
-                    )}
-                  </div>
-                </div>
-
-                <div className="relative z-20 p-8 lg:p-12 space-y-6 max-w-4xl">
-                  <div className="flex gap-3">
-                     <span className="px-4 py-1.5 rounded-full bg-primary/20 backdrop-blur-md border border-white/10 text-primary text-[10px] font-black uppercase tracking-widest">{event.interests?.[0]?.name || 'Evento'}</span>
-                     <span className="px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/10 text-white text-[10px] font-black uppercase tracking-widest">
-                       {format(new Date(event.date), 'EEEE dd', { locale: es })}
-                     </span>
-                  </div>
-
-                  <div className="space-y-4">
-                    <h2 className="text-4xl lg:text-7xl font-black italic tracking-tighter text-white uppercase leading-[0.9]">{event.title}</h2>
-                    <p className="text-base lg:text-lg text-white/70 font-medium leading-relaxed line-clamp-2 max-w-2xl">{event.description}</p>
-                  </div>
-
-                  <div className="flex flex-wrap items-center gap-6 lg:gap-10 pt-4">
-                    <div className="flex items-center gap-3">
-                       <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center text-white"><MapPin size={24} /></div>
-                       <div>
-                          <p className="text-[10px] text-white/40 font-black uppercase tracking-widest">Ubicación</p>
-                          <p className="text-sm lg:text-base text-white font-bold">{event.ubication}</p>
-                       </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                       <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center text-white"><Calendar size={24} /></div>
-                       <div>
-                          <p className="text-[10px] text-white/40 font-black uppercase tracking-widest">Horario</p>
-                          <p className="text-sm lg:text-base text-white font-bold">{format(new Date(event.date), 'HH:mm')} HS</p>
-                       </div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-4 pt-8">
-                     <Link to={`/events/${event.id_event}`} className="h-16 px-10 rounded-2xl bg-white text-black font-black uppercase tracking-widest text-sm hover:scale-105 transition-all flex items-center justify-center">Ver Detalles</Link>
-                     <button onClick={(e) => toggleSave(e, event.id_event)} className={cn("w-16 h-16 rounded-2xl border flex items-center justify-center transition-all", savedEvents[event.id_event] ? "bg-primary border-primary text-white" : "bg-white/10 border-white/10 text-white hover:bg-white hover:text-black")}>
-                        <Bookmark size={24} fill={savedEvents[event.id_event] ? "currentColor" : "none"} />
-                     </button>
-                     <button onClick={(e) => handleShare(e, event)} className="w-16 h-16 rounded-2xl bg-white/10 border border-white/10 text-white flex items-center justify-center hover:bg-white hover:text-black transition-all">
-                        <Share2 size={24} />
-                     </button>
-                  </div>
-                </div>
-
-                <div className="absolute top-0 right-0 w-1/2 h-full bg-linear-to-l from-black/20 to-transparent pointer-events-none" />
-                <div className="absolute top-0 left-0 w-full h-1/2 bg-linear-to-b from-black/40 to-transparent pointer-events-none" />
+                <PostCard
+                  post={{
+                    id_post: event.id_event, // Assuming event ID can be used as post ID for reactions
+                    content: event.description,
+                    media: event.images?.map(resolveAssetUrl),
+                    author: event.creator?.username || event.organizer?.name,
+                    author_photo_url: event.creator?.profile?.photo_url || event.organizer?.logo_url,
+                    created_at: event.date,
+                    user_reaction: event.user_reaction, // Needs to come from API
+                    reactions: event.reactions, // Needs to come from API
+                    comments: event.comments, // Needs to come from API
+                    user: event.creator, // For premium checks etc.
+                    type: 'event', // Indicate it's an event post
+                  }}
+                  onReact={handleReact}
+                  onDelete={handleDeletePost}
+                  onComment={handleComment}
+                  onShare={handleSharePost}
+                  onDeleteComment={handleDeleteComment}
+                  onVotePoll={handleVotePoll}
+                  showDelete={event.creator?.id_user === user?.uid || user?.global_role === 'admin'}
+                  canDeleteComment={(comment) => comment.id_user === user?.uid || user?.global_role === 'admin'}
+                />
               </div>
             </div>
 

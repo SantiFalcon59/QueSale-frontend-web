@@ -200,7 +200,8 @@ const Home: React.FC = () => {
                   <div key={event.id_event} className="snap-center">
                     <EventCard event={{
                       ...event,
-                      thumbnail_url: resolveAssetUrl(event.thumbnail_url)
+                      thumbnail_url: resolveAssetUrl(event.thumbnail_url),
+                      images: event.images?.map((img: string) => resolveAssetUrl(img))
                     }} />
                   </div>
                 ))}
@@ -228,16 +229,17 @@ const Home: React.FC = () => {
             </div>
          </div>
          <div className="flex gap-6 overflow-x-auto pb-8 no-scrollbar snap-x snap-mandatory">
-            {trendingEvents.length > 0 ? (
-              trendingEvents.map(event => (
-                <div key={event.id_event} className="snap-center">
-                  <EventCard event={{
-                    ...event,
-                    thumbnail_url: resolveAssetUrl(event.thumbnail_url)
-                  }} />
-                </div>
-              ))
-            ) : (
+         {trendingEvents.length > 0 ? (
+          trendingEvents.map(event => (
+            <div key={event.id_event} className="snap-center">
+              <EventCard event={{
+                ...event,
+                thumbnail_url: resolveAssetUrl(event.thumbnail_url),
+                images: event.images?.map((img: string) => resolveAssetUrl(img))
+              }} />
+            </div>
+          ))
+         ) : (
               // Loading placeholders
               [1, 2, 3, 4].map(i => (
                 <div key={i} className="w-72 h-48 bg-surface-container animate-pulse rounded-3xl" />

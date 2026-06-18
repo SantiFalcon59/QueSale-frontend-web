@@ -5,7 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 import { cn } from '../../lib/utils';
 import { NotificationsPopover } from './NotificationsPopover';
 import { motion, AnimatePresence } from 'motion/react';
-import { api } from '../../services/apiClient';
+import { api, resolveAssetUrl } from '../../services/apiClient';
 import { UserAvatar } from '../ui/UserAvatar';
 import { OrganizerAvatar } from '../ui/OrganizerAvatar';
 
@@ -112,7 +112,7 @@ export const Navbar: React.FC<{ onMenuClick: () => void }> = ({ onMenuClick }) =
                         className="w-full flex items-center gap-3 px-2 py-2 rounded-xl hover:bg-white/5 transition-colors text-left cursor-pointer"
                       >
                         {ev.photo_url ? (
-                          <img src={ev.photo_url} alt="" className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
+                          <img src={resolveAssetUrl(ev.photo_url)} alt="" className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
                         ) : (
                           <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center flex-shrink-0">
                             <span className="material-symbols-outlined text-secondary text-lg">event</span>
