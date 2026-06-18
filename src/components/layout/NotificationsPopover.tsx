@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../../lib/utils';
 import { Link } from 'react-router-dom';
 import { apiRequest } from '../../services/apiClient';
+import { UserAvatar } from '../ui/UserAvatar';
 
 export const NotificationsPopover: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -134,10 +135,11 @@ export const NotificationsPopover: React.FC = () => {
                     {!n.is_read && <div className="absolute left-2 top-1/2 -translate-y-1/2 w-1 h-8 bg-primary rounded-full" />}
                     
                     <div className="relative shrink-0">
-                       <img 
-                         src={n.data?.fromPhoto || `https://api.dicebear.com/7.x/avataaars/svg?seed=${n.data?.fromId || n.id_notification}`} 
+                       <UserAvatar 
+                         src={n.data?.fromPhoto} 
                          className="w-12 h-12 rounded-xl object-cover bg-surface-container-high" 
                          alt={n.data?.fromName || 'Sistema'} 
+                         size={24}
                        />
                        <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-lg bg-white shadow-md flex items-center justify-center border border-outline-variant/30">
                           {getIcon(n.type)}

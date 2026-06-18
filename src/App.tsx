@@ -35,6 +35,17 @@ const AdminPanel = React.lazy(() => import('./pages/Admin/AdminPanel'));
 
 import { useAuth } from './context/AuthContext';
 import { Navigate, useLocation, useParams } from 'react-router-dom';
+import { useEffect } from 'react';
+
+const ScrollToTop: React.FC = () => {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+
+  return null;
+};
 
 const ProfileRoute: React.FC = () => {
   const { pathname } = useLocation();
@@ -92,6 +103,7 @@ export default function App() {
   return (
     <AuthProvider>
       <Router>
+        <ScrollToTop />
         <div className="relative flex min-h-screen bg-background overflow-x-hidden font-sans">
           {/* Hyper-Cosmic Ambient Elements */}
           <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">

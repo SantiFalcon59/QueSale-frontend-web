@@ -6,6 +6,7 @@ import { useAuth } from '../../context/AuthContext';
 import EmojiPicker, { EmojiClickData } from 'emoji-picker-react';
 import { GifPicker } from '../post/GifPicker';
 import { motion, AnimatePresence } from 'motion/react';
+import { UserAvatar } from '../ui/UserAvatar';
 
 const GridIcon = (props: any) => (
   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
@@ -120,10 +121,11 @@ const PostComposer: React.FC<PostComposerProps> = ({ placeholder = '¿Qué tiene
       )}
       <div className="flex flex-col sm:flex-row gap-4 lg:gap-6">
         <div className="flex items-center gap-4 sm:block sm:gap-0">
-          <img
-            src={profile?.photoURL || user?.photoURL || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.uid || 'guest'}`}
-            className="w-12 h-12 lg:w-14 lg:h-14 rounded-xl lg:rounded-2xl bg-surface-container-high ring-4 ring-white shadow-lg object-cover"
+          <UserAvatar 
+            src={profile?.photoURL || user?.photoURL} 
+            className="w-12 h-12 lg:w-14 lg:h-14 rounded-xl lg:rounded-2xl bg-surface-container-high ring-4 ring-white shadow-lg object-cover" 
             alt="Me"
+            size={28}
           />
           <h4 className="sm:hidden font-bold">{profile?.displayName || 'Tú'}</h4>
         </div>

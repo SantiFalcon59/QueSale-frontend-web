@@ -232,8 +232,8 @@ export const api = {
   getOrganizers: (page = 1, limit = 50) =>
     apiRequest(`/api/organizers?page=${page}&limit=${limit}`),
 
-  getUsers: (page = 1, limit = 50) =>
-    apiRequest(`/api/users?page=${page}&limit=${limit}`, { auth: true }),
+  getUsers: (page = 1, limit = 50, search = '') => 
+    apiRequest(`/api/users?page=${page}&limit=${limit}${search ? `&search=${encodeURIComponent(search)}` : ''}`, { auth: true }),
 
   getUserWall: (userId: string, page = 1, limit = 20) =>
     apiRequest(`/api/users/${encodeURIComponent(userId)}/wall?page=${page}&limit=${limit}`),

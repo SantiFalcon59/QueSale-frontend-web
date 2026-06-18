@@ -9,6 +9,7 @@ import { es } from 'date-fns/locale';
 import { Send, MessageCircle, ThumbsUp, Share2, MoreHorizontal, Trash2, Gavel } from 'lucide-react';
 import { createNotification } from '../services/notificationService';
 import { api, resolveAssetUrl } from '../services/apiClient';
+import { UserAvatar } from '../components/ui/UserAvatar';
 import EmojiPicker, { EmojiClickData } from 'emoji-picker-react';
 import { GifPicker } from '../components/post/GifPicker';
 import PostFeed from '../components/wall/PostFeed';
@@ -48,6 +49,8 @@ const Profile: React.FC<{ usernameFromUrl?: string }> = ({ usernameFromUrl }) =>
   const [photoPreview, setPhotoPreview] = React.useState<string | null>(null);
   const [uploadingPhoto, setUploadingPhoto] = React.useState(false);
   const [isDragOver, setIsDragOver] = React.useState(false);
+  const [isFollowing, setIsFollowing] = React.useState(false);
+  const [followLoading, setFollowLoading] = React.useState(false);
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const modalRef = React.useRef<HTMLDivElement>(null);
@@ -74,6 +77,15 @@ const Profile: React.FC<{ usernameFromUrl?: string }> = ({ usernameFromUrl }) =>
           stats: data.stats || { events: 0, followers: 0, following: 0, vibeScore: 0 },
           recentEvents: data.recentEvents || [],
         });
+        
+        if (currentUser && data.id !== currentUser.uid) {
+          try {
+            const followStatus: any = await api.checkFollowing(data.id);
+            setIsFollowing(!!followStatus.isFollowing);
+          } catch (e) {
+            console.error('Error checking follow status', e);
+          }
+        }
       } catch (err) {
         setProfileUser(null);
         console.error("Error fetching profile:", err);
@@ -83,7 +95,31 @@ const Profile: React.FC<{ usernameFromUrl?: string }> = ({ usernameFromUrl }) =>
     };
 
     if (username) fetchUser();
-  }, [username]);
+  }, [username, currentUser]);
+
+  const handleFollow = async () => {
+    if (!currentUser || !profileUser) {
+      document.dispatchEvent(new CustomEvent('show-login-prompt'));
+      return;
+    }
+    
+    setFollowLoading(true);
+    try {
+      if (isFollowing) {
+        await api.unfollowUser(profileUser.id);
+        setIsFollowing(false);
+        setProfileUser(prev => ({ ...prev, stats: { ...prev.stats, followers: Math.max(0, prev.stats.followers - 1) } }));
+      } else {
+        await api.followUser(profileUser.id);
+        setIsFollowing(true);
+        setProfileUser(prev => ({ ...prev, stats: { ...prev.stats, followers: prev.stats.followers + 1 } }));
+      }
+    } catch (err) {
+      console.error('Error toggling follow:', err);
+    } finally {
+      setFollowLoading(false);
+    }
+  };
 
   React.useEffect(() => {
     if (!profileUser?.id) return;
@@ -385,10 +421,11 @@ const Profile: React.FC<{ usernameFromUrl?: string }> = ({ usernameFromUrl }) =>
            <div className="w-full max-w-4xl px-6 lg:px-10 flex flex-col lg:flex-row lg:items-end justify-between translate-y-8 lg:translate-y-12 mt-8 lg:mt-0">
               <div className="flex flex-col lg:flex-row items-center lg:items-end gap-6 lg:gap-8">
                  <div className="relative group shrink-0">
-                    <img
-                      src={profileUser?.photoURL || `https://api.dicebear.com/7.x/avataaars/svg?seed=${profileUser?.username}`}
-                      alt="Profile"
+                    <UserAvatar 
+                      src={profileUser?.photoURL} 
+                      alt="Profile" 
                       className={cn("w-32 h-32 lg:w-40 lg:h-40 shrink-0 rounded-[2rem] lg:rounded-[2.5rem] bg-white p-2 shadow-2xl shadow-black/10 transition-all duration-300 hover:scale-105 hover:shadow-primary/30 object-cover", profileUser?.isPremium && "ring-4 ring-amber-400 ring-offset-4 ring-offset-surface shadow-amber-500/20")}
+                      size={60}
                     />
                     {profileUser?.isPremium && (
                       <div className="absolute -top-3 -right-3 w-10 h-10 rounded-2xl bg-amber-500 text-white flex items-center justify-center shadow-lg border-2 border-white animate-bounce-slow">
@@ -430,8 +467,15 @@ const Profile: React.FC<{ usernameFromUrl?: string }> = ({ usernameFromUrl }) =>
                      EDITAR PERFIL
                    </button>
                  ) : (
-                   <button className="btn-primary h-12 lg:h-auto px-6 lg:px-8 text-xs lg:text-sm font-black uppercase tracking-widest">
-                     SEGUIR
+                   <button 
+                     onClick={handleFollow}
+                     disabled={followLoading}
+                     className={cn(
+                       "h-12 lg:h-auto px-6 lg:px-8 text-xs lg:text-sm font-black uppercase tracking-widest transition-all",
+                       isFollowing ? "btn-secondary" : "btn-primary"
+                     )}
+                   >
+                     {followLoading ? <Loader2 size={16} className="animate-spin" /> : (isFollowing ? 'SIGUIENDO' : 'SEGUIR')}
                    </button>
                  )}
                  <button
@@ -536,10 +580,11 @@ const Profile: React.FC<{ usernameFromUrl?: string }> = ({ usernameFromUrl }) =>
                       className="p-6 lg:p-8 rounded-[2.5rem] bg-surface-container-low border border-outline-variant space-y-4 transition-all duration-200 hover:border-primary/20 hover:shadow-md"
                     >
                       <div className="flex gap-4">
-                        <img
-                          src={loggedProfile?.photoURL || currentUser.photoURL || `https://api.dicebear.com/7.x/avataaars/svg?seed=${currentUser.uid}`}
-                          className="w-12 h-12 rounded-xl shrink-0 object-cover bg-primary/10 transition-transform hover:scale-105"
+                        <UserAvatar 
+                          src={loggedProfile?.photoURL || currentUser.photoURL} 
+                          className="w-12 h-12 rounded-xl shrink-0 object-cover bg-primary/10 transition-transform hover:scale-105" 
                           alt="Me"
+                          size={28}
                         />
                         <div className="flex-1">
                           <textarea
@@ -997,13 +1042,12 @@ const ConnectionsSection: React.FC<{ userId: string }> = ({ userId }) => {
         <div className="flex -space-x-4 pl-4 overflow-x-auto no-scrollbar py-2">
           {unique.map((conn: any) => (
             <Link key={conn.id_user} to={`/@${conn.username}`}>
-              <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-full border-4 border-white overflow-hidden bg-surface-container-low shrink-0 shadow-lg transition-all duration-200 hover:opacity-100 hover:scale-125 hover:z-10 hover:shadow-xl">
-                <img
-                  src={conn.photo_url ? resolveAssetUrl(conn.photo_url) : `https://api.dicebear.com/7.x/avataaars/svg?seed=${conn.username}`}
-                  alt={conn.username}
-                  className="w-full h-full object-cover"
-                />
-              </div>
+              <UserAvatar 
+                src={conn.photo_url ? resolveAssetUrl(conn.photo_url) : null} 
+                alt={conn.username} 
+                className="w-10 h-10 lg:w-12 lg:h-12 rounded-full border-4 border-white shrink-0 shadow-lg transition-all duration-200 hover:opacity-100 hover:scale-125 hover:z-10 hover:shadow-xl" 
+                size={24}
+              />
             </Link>
           ))}
           {remaining > 0 && (
@@ -1037,10 +1081,11 @@ const PostComments: React.FC<{ comments: any[]; isModerator: boolean; profileUse
             to={`/@${comment.author_username}`}
             className="shrink-0 cursor-pointer"
           >
-            <img
-              src={comment.author_photo || `https://api.dicebear.com/7.x/avataaars/svg?seed=${comment.author_username || comment.authorId}`}
-              className="w-8 h-8 rounded-lg object-cover bg-primary/10 transition-transform hover:scale-110"
+            <UserAvatar 
+              src={comment.author_photo} 
+              className="w-8 h-8 rounded-lg object-cover bg-primary/10 transition-transform hover:scale-110" 
               alt="Commenter"
+              size={18}
             />
           </Link>
           <div className="bg-white/50 px-4 py-2 rounded-2xl flex-1 border border-outline-variant/10 relative">

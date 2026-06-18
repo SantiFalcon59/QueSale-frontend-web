@@ -7,6 +7,7 @@ import { motion } from 'motion/react';
 import { cn } from '../lib/utils';
 import { Link } from 'react-router-dom';
 import { api, apiRequest } from '../services/apiClient';
+import { UserAvatar } from '../components/ui/UserAvatar';
 
 const Notifications: React.FC = () => {
   const [notifications, setNotifications] = useState<any[]>([]);
@@ -114,10 +115,11 @@ const Notifications: React.FC = () => {
 
                <div className="flex items-center gap-4 shrink-0">
                   <div className="relative">
-                    <img 
-                      src={n.data?.fromPhoto || `https://api.dicebear.com/7.x/avataaars/svg?seed=${n.data?.fromId || n.id_notification}`} 
+                    <UserAvatar 
+                      src={n.data?.fromPhoto} 
                       className="w-16 h-16 rounded-[1.5rem] object-cover bg-surface-container-high border-2 border-white shadow-sm" 
                       alt={n.data?.fromName || 'Sistema'} 
+                      size={28}
                     />
                     <div className="absolute -bottom-2 -right-2 w-8 h-8 rounded-xl bg-white shadow-lg flex items-center justify-center border border-outline-variant/30">
                        {getIcon(n.type)}

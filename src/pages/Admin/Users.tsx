@@ -5,6 +5,7 @@ import { cn } from '../../lib/utils';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { api } from '../../services/apiClient';
+import { UserAvatar } from '../../components/ui/UserAvatar';
 
 const AdminUsers: React.FC = () => {
   const [users, setUsers] = useState<any[]>([]);
@@ -91,7 +92,7 @@ const AdminUsers: React.FC = () => {
                  <tr key={user.id} className="border-b border-outline-variant/10 hover:bg-surface-container transition-colors group">
                     <td className="px-8 py-5">
                        <div className="flex items-center gap-4">
-                          <img src={user.photoURL || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.uid}`} className="w-10 h-10 rounded-full bg-white object-cover shadow-sm" />
+                          <UserAvatar src={user.photoURL} className="w-10 h-10 rounded-full bg-white object-cover shadow-sm" alt={user.displayName || 'Anon'} size={18} />
                           <span className="font-bold">{user.displayName || 'Anon'}</span>
                        </div>
                     </td>

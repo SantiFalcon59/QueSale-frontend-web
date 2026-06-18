@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { SlidersHorizontal, Grid as GridIcon, List, X, Search, MapPin, CalendarDays, Sparkles, RotateCcw, ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn, formatPrice, NO_EVENT_IMAGE } from '../lib/utils';
-import { api } from '../services/apiClient';
+import { api, resolveAssetUrl } from '../services/apiClient';
 import { Link } from 'react-router-dom';
 import { AdBanner } from '../components/ui/AdBanner';
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths } from 'date-fns';

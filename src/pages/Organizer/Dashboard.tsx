@@ -5,6 +5,8 @@ import { cn } from '../../lib/utils';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { api, resolveAssetUrl } from '../../services/apiClient';
+import { UserAvatar } from '../../components/ui/UserAvatar';
+import { OrganizerAvatar } from '../../components/ui/OrganizerAvatar';
 
 const OrganizerDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'insights' | 'events' | 'staff'>('insights');
@@ -30,7 +32,7 @@ const OrganizerDashboard: React.FC = () => {
   const [followers, setFollowers] = useState<any[]>([]);
   const [staffSearch, setStaffSearch] = useState('');
   const [staffSearchResults, setStaffSearchResults] = useState<any[]>([]);
-  const [selectedStaffRole, setSelectedStaffRole] = useState('admin');
+  const [selectedStaffRole, setSelectedStaffRole] = useState('moderator');
   const [searchingUsers, setSearchingUsers] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -209,12 +211,9 @@ const OrganizerDashboard: React.FC = () => {
     if (!staffSearch.trim()) return;
     setSearchingUsers(true);
     try {
-      const data: any = await api.getUsers(1, 50);
-      const users = data?.data || data || [];
-      const filtered = users.filter((u: any) =>
-        u.username?.toLowerCase().includes(staffSearch.toLowerCase())
-      );
-      setStaffSearchResults(filtered);
+      const result: any = await api.getUsers(1, 20, staffSearch.trim());
+      const users = Array.isArray(result) ? result : (result?.data || []);
+      setStaffSearchResults(users);
     } catch {
       setStaffSearchResults([]);
     } finally {
@@ -444,10 +443,11 @@ const OrganizerDashboard: React.FC = () => {
             )}
           </div>
           <div className="flex items-center gap-4">
-            <img
-              src={resolveAssetUrl(organization?.logo_url) || `https://api.dicebear.com/7.x/initials/svg?seed=${organization?.name}`}
-              alt={organization?.name}
-              className="w-16 h-16 rounded-2xl object-cover bg-surface-container-low border border-outline-variant"
+            <OrganizerAvatar 
+              src={resolveAssetUrl(organization?.logo_url)} 
+              alt={organization?.name} 
+              className="w-16 h-16 rounded-2xl object-cover bg-surface-container-low border border-outline-variant" 
+              size={28}
             />
             <div>
               <h1 className="text-4xl lg:text-5xl font-black italic tracking-tighter uppercase leading-none">{organization?.name}</h1>
@@ -456,6 +456,12 @@ const OrganizerDashboard: React.FC = () => {
           </div>
         </div>
         <div className="flex flex-wrap gap-3">
+          <button
+            onClick={() => navigate(`/organizer/${organization.id}`)}
+            className="h-12 px-6 rounded-2xl border border-primary/20 bg-primary/5 hover:bg-primary/10 transition-all text-[10px] font-black uppercase tracking-widest flex items-center gap-2 text-primary"
+          >
+            <ExternalLink size={14} /> Ver Perfil Público
+          </button>
           <button
             onClick={() => setEditingOrg(!editingOrg)}
             className="h-12 px-6 rounded-2xl border border-outline-variant hover:bg-surface-container-low transition-all text-[10px] font-black uppercase tracking-widest flex items-center gap-2"
@@ -498,7 +504,7 @@ const OrganizerDashboard: React.FC = () => {
                 <div className="space-y-1.5">
                   <label className="text-[10px] uppercase font-black tracking-widest text-on-surface-variant ml-4">Logo</label>
                   <div className="flex items-center gap-4">
-                    <img src={logoPreview || resolveAssetUrl(organization?.logo_url) || `https://api.dicebear.com/7.x/initials/svg?seed=${organization?.name}`} alt="Logo" className="w-16 h-16 rounded-2xl object-cover bg-surface-container-low border border-outline-variant" />
+                    <OrganizerAvatar src={logoPreview || resolveAssetUrl(organization?.logo_url)} alt="Logo" className="w-16 h-16 rounded-2xl object-cover bg-surface-container-low border border-outline-variant" size={28} />
                     <button onClick={() => fileInputRef.current?.click()} className="btn-secondary text-xs">Cambiar Logo</button>
                     <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (file) handleLogoSelect(file); }} />
                   </div>
@@ -709,7 +715,7 @@ const OrganizerDashboard: React.FC = () => {
                       const u = follower.user || follower;
                       return (
                         <div key={u?.id_user || i} className="flex items-center gap-3 p-3 rounded-xl hover:bg-surface-container-low transition-colors">
-                          <img src={resolveAssetUrl(u?.profile?.photo_url) || `https://api.dicebear.com/7.x/avataaars/svg?seed=${u?.username || u?.id_user}`} className="w-10 h-10 rounded-xl bg-surface-container-high" alt="" />
+                          <UserAvatar src={resolveAssetUrl(u?.profile?.photo_url)} className="w-10 h-10 rounded-xl bg-surface-container-high" alt="" size={20} />
                           <div>
                             <p className="text-sm font-bold">@{u?.username || 'Usuario'}</p>
                             <p className="text-[10px] text-on-surface-variant">Te sigue desde {follower.created_at ? new Date(follower.created_at).toLocaleDateString('es-ES') : 'reciente'}</p>
@@ -829,17 +835,20 @@ const OrganizerDashboard: React.FC = () => {
                 <div className="space-y-2">
                   <label className="text-[10px] uppercase font-black tracking-widest text-on-surface-variant ml-2">Rol</label>
                   <div className="flex gap-2">
-                    {['admin', 'editor', 'viewer'].map(role => (
+                    {[
+                      { id: 'admin', label: 'Administrador' },
+                      { id: 'moderator', label: 'Moderador' }
+                    ].map(role => (
                       <button
-                        key={role}
+                        key={role.id}
                         type="button"
-                        onClick={() => setSelectedStaffRole(role)}
+                        onClick={() => setSelectedStaffRole(role.id)}
                         className={cn(
                           "flex-1 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all",
-                          selectedStaffRole === role ? "bg-primary text-white border-primary" : "bg-white text-on-surface-variant border-outline-variant hover:border-primary/30"
+                          selectedStaffRole === role.id ? "bg-primary text-white border-primary" : "bg-white text-on-surface-variant border-outline-variant hover:border-primary/30"
                         )}
                       >
-                        {role}
+                        {role.label}
                       </button>
                     ))}
                   </div>
@@ -849,7 +858,7 @@ const OrganizerDashboard: React.FC = () => {
                     {staffSearchResults.filter((u: any) => !staffList.some((s: any) => s.id === u.id_user)).map((u: any) => (
                       <div key={u.id_user} className="flex items-center justify-between p-3 rounded-xl hover:bg-surface-container-low transition-colors">
                         <div className="flex items-center gap-3">
-                          <img src={resolveAssetUrl(u.profile?.photo_url) || `https://api.dicebear.com/7.x/avataaars/svg?seed=${u.username}`} className="w-8 h-8 rounded-lg bg-surface-container-high" alt="" />
+                          <UserAvatar src={resolveAssetUrl(u.profile?.photo_url)} className="w-8 h-8 rounded-lg bg-surface-container-high" alt="" size={18} />
                           <span className="text-sm font-bold">@{u.username}</span>
                         </div>
                         <button onClick={() => handleAddStaff(u.id_user)} className="btn-primary px-3 py-1.5 text-[9px] font-black uppercase tracking-widest">Agregar</button>
@@ -1100,7 +1109,7 @@ const OrganizerDashboard: React.FC = () => {
             {/* Creator row */}
             <div className="py-6 flex items-center justify-between border-b border-outline-variant/30">
               <div className="flex items-center gap-4">
-                <img src={resolveAssetUrl(profile?.photoURL) || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.uid}`} className="w-12 h-12 rounded-xl bg-surface-container-high" alt="" />
+                <UserAvatar src={resolveAssetUrl(profile?.photoURL)} className="w-12 h-12 rounded-xl bg-surface-container-high" alt="" size={24} />
                 <div>
                   <p className="text-sm font-black italic">@{profile?.displayName || profile?.username || 'Creador'}</p>
                   <p className="text-[10px] font-bold text-primary uppercase tracking-widest flex items-center gap-1"><Shield size={10} /> Creador</p>
@@ -1112,7 +1121,7 @@ const OrganizerDashboard: React.FC = () => {
               {staffList.length > 0 ? staffList.map(member => (
                 <div key={member.id} className="py-6 flex items-center justify-between group">
                   <div className="flex items-center gap-4">
-                    <img src={resolveAssetUrl(member.photo_url) || `https://api.dicebear.com/7.x/avataaars/svg?seed=${member.username || member.id}`} className="w-12 h-12 rounded-xl bg-surface-container-high" alt={member.name} />
+                    <UserAvatar src={resolveAssetUrl(member.photo_url)} className="w-12 h-12 rounded-xl bg-surface-container-high" alt={member.name} size={24} />
                     <div>
                       <p className="text-sm font-black italic">@{member.username || member.name}</p>
                       <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">{member.role}</p>
@@ -1142,9 +1151,8 @@ const OrganizerDashboard: React.FC = () => {
               <h4 className="text-sm font-black uppercase tracking-widest italic">Sobre los Roles</h4>
             </div>
             <p className="text-sm text-on-surface-variant font-medium leading-relaxed">
-              Los <span className="font-bold">Admins</span> tienen acceso completo a la organización.
-              Los <span className="font-bold">Editors</span> pueden crear y modificar eventos.
-              Los <span className="font-bold">Viewers</span> solo pueden ver estadísticas.
+              Los <span className="font-bold">Administradores</span> tienen acceso completo a la organización y pueden gestionar el staff.
+              Los <span className="font-bold">Moderadores</span> pueden crear y modificar eventos.
             </p>
           </section>
         </div>

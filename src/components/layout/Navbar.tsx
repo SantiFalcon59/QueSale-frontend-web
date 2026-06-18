@@ -6,6 +6,8 @@ import { cn } from '../../lib/utils';
 import { NotificationsPopover } from './NotificationsPopover';
 import { motion, AnimatePresence } from 'motion/react';
 import { api } from '../../services/apiClient';
+import { UserAvatar } from '../ui/UserAvatar';
+import { OrganizerAvatar } from '../ui/OrganizerAvatar';
 
 export const Navbar: React.FC<{ onMenuClick: () => void }> = ({ onMenuClick }) => {
   const { user, profile, logout } = useAuth();
@@ -133,13 +135,12 @@ export const Navbar: React.FC<{ onMenuClick: () => void }> = ({ onMenuClick }) =
                         onClick={() => { setShowSearchResults(false); setSearchQuery(''); navigate(`/@${u.username}`); }}
                         className="w-full flex items-center gap-3 px-2 py-2 rounded-xl hover:bg-white/5 transition-colors text-left cursor-pointer"
                       >
-                        <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center overflow-hidden flex-shrink-0">
-                          {u.photo_url ? (
-                            <img src={u.photo_url} alt="" className="w-full h-full object-cover" />
-                          ) : (
-                            <span className="material-symbols-outlined text-secondary text-lg">person</span>
-                          )}
-                        </div>
+                        <UserAvatar 
+                          src={u.photo_url} 
+                          alt={u.username} 
+                          className="w-10 h-10 rounded-full flex-shrink-0" 
+                          size={18}
+                        />
                         <div className="min-w-0 flex-1">
                           <p className="text-sm font-semibold text-white truncate">{u.display_name || u.username}</p>
                           <p className="text-xs text-white/50">@{u.username}</p>
@@ -157,13 +158,12 @@ export const Navbar: React.FC<{ onMenuClick: () => void }> = ({ onMenuClick }) =
                         onClick={() => { setShowSearchResults(false); setSearchQuery(''); navigate(`/organizer/${o.id_organizer}`); }}
                         className="w-full flex items-center gap-3 px-2 py-2 rounded-xl hover:bg-white/5 transition-colors text-left cursor-pointer"
                       >
-                        <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center overflow-hidden flex-shrink-0">
-                          {o.logo_url ? (
-                            <img src={o.logo_url} alt="" className="w-full h-full object-cover" />
-                          ) : (
-                            <span className="material-symbols-outlined text-secondary text-lg">groups</span>
-                          )}
-                        </div>
+                        <OrganizerAvatar 
+                          src={o.logo_url} 
+                          alt={o.name} 
+                          className="w-10 h-10 rounded-xl flex-shrink-0" 
+                          size={18}
+                        />
                         <div className="min-w-0 flex-1">
                           <p className="text-sm font-semibold text-white truncate">{o.name}</p>
                           <p className="text-xs text-white/50">{o.category || 'Organización'}</p>
@@ -197,13 +197,12 @@ export const Navbar: React.FC<{ onMenuClick: () => void }> = ({ onMenuClick }) =
               onClick={() => setDropdownOpen(!dropdownOpen)}
               className="flex items-center gap-3 pl-6 border-l border-white/10"
             >
-              <div className="w-9 h-9 rounded-xl bg-primary/20 flex items-center justify-center overflow-hidden border border-primary/40 shadow-[0_0_15px_rgba(115,46,228,0.3)]">
-                {profile?.photoURL ? (
-                  <img src={profile.photoURL} alt={profile.displayName || ''} className="w-full h-full object-cover" />
-                ) : (
-                  <span className="material-symbols-outlined text-secondary text-[22px]">person</span>
-                )}
-              </div>
+              <UserAvatar 
+                src={profile?.photoURL} 
+                alt={profile?.displayName || ''} 
+                className="w-9 h-9 rounded-xl shadow-[0_0_15px_rgba(115,46,228,0.3)]" 
+                size={22}
+              />
               <div className="hidden sm:flex flex-col">
                 <span className="text-xs font-bold text-white leading-none">{profile?.displayName || profile?.username || 'Mi Perfil'}</span>
               </div>
@@ -220,13 +219,12 @@ export const Navbar: React.FC<{ onMenuClick: () => void }> = ({ onMenuClick }) =
                 >
                   <div className="p-4 border-b border-white/10">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center overflow-hidden border border-primary/40">
-                        {profile?.photoURL ? (
-                          <img src={profile.photoURL} alt={profile.displayName || ''} className="w-full h-full object-cover" />
-                        ) : (
-                          <span className="material-symbols-outlined text-secondary text-[20px]">person</span>
-                        )}
-                      </div>
+                      <UserAvatar 
+                        src={profile?.photoURL} 
+                        alt={profile?.displayName || ''} 
+                        className="w-10 h-10 rounded-xl" 
+                        size={20}
+                      />
                       <div className="flex flex-col">
                         <span className="text-sm font-bold text-white">{profile?.displayName || profile?.username}</span>
                         <span className="text-xs text-white/50">@{profile?.username}</span>

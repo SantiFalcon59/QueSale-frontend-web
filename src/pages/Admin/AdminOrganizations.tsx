@@ -3,6 +3,7 @@ import { motion } from 'motion/react';
 import { ShieldCheck, CheckCircle2, AlertCircle, Building, Search, ExternalLink } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { api } from '../../services/apiClient';
+import { OrganizerAvatar } from '../../components/ui/OrganizerAvatar';
 
 const AdminOrganizations: React.FC = () => {
   const [orgs, setOrgs] = useState<any[]>([]);
@@ -17,7 +18,7 @@ const AdminOrganizations: React.FC = () => {
                id: org.id_organizer,
                name: org.name,
                description: org.description,
-               logo: org.logo_url || `https://api.dicebear.com/7.x/initials/svg?seed=${org.name}`,
+               logo: org.logo_url,
                handle: org.name?.toLowerCase().replace(/\s+/g, '_') || 'organizer',
                ownerId: org.id_creator,
                verificationLevel: org.verified ? 2 : 1,
@@ -92,7 +93,7 @@ const AdminOrganizations: React.FC = () => {
             className="p-8 rounded-[2.5rem] bg-surface-container-low border border-outline-variant grid grid-cols-12 gap-8 items-center"
            >
               <div className="col-span-1 border-r border-outline-variant/30 pr-4">
-                 <img src={org.logo} alt={org.name} className="w-16 h-16 rounded-2xl bg-white shadow-sm object-cover" />
+                 <OrganizerAvatar src={org.logo} alt={org.name} className="w-16 h-16 rounded-2xl bg-white shadow-sm object-cover" size={28} />
               </div>
 
               <div className="col-span-4 space-y-1">

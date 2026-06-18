@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { Calendar, MapPin, Users, Heart, Globe, Instagram, Twitter, ShieldCheck, ChevronLeft, ExternalLink } from 'lucide-react';
 import { api, resolveAssetUrl } from '../services/apiClient';
+import { OrganizerAvatar } from '../components/ui/OrganizerAvatar';
 import { useAuth } from '../context/AuthContext';
 import { formatPrice, NO_EVENT_IMAGE } from '../lib/utils';
 import { format } from 'date-fns';
@@ -94,15 +95,12 @@ const OrganizerProfile: React.FC = () => {
       <div className="relative overflow-hidden rounded-[3rem] lg:rounded-[4rem] bg-white border border-outline-variant shadow-sm">
         <div className="absolute top-0 left-0 w-full h-32 lg:h-48 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent" />
         <div className="relative z-10 p-8 lg:p-12 flex flex-col lg:flex-row items-center lg:items-start gap-8">
-          <div className="w-28 h-28 lg:w-36 lg:h-36 rounded-[2rem] lg:rounded-[2.5rem] overflow-hidden bg-surface-container-high ring-4 ring-white shadow-xl shrink-0">
-            {logoUrl ? (
-              <img src={logoUrl} alt={organizer.name} className="w-full h-full object-cover" />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center text-5xl font-black italic text-primary/30">
-                {organizer.name?.charAt(0)?.toUpperCase() || 'O'}
-              </div>
-            )}
-          </div>
+          <OrganizerAvatar 
+            src={logoUrl} 
+            alt={organizer.name} 
+            className="w-28 h-28 lg:w-36 lg:h-36 rounded-[2rem] lg:rounded-[2.5rem] overflow-hidden bg-surface-container-high ring-4 ring-white shadow-xl shrink-0" 
+            size={48}
+          />
           <div className="flex-1 text-center lg:text-left space-y-4">
             <div className="space-y-1">
               <div className="flex items-center gap-3 justify-center lg:justify-start">

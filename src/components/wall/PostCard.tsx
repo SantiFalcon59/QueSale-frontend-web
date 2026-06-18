@@ -6,6 +6,7 @@ import { es } from 'date-fns/locale';
 import { cn } from '../../lib/utils';
 import { resolveAssetUrl } from '../../services/apiClient';
 import { useAuth } from '../../context/AuthContext';
+import { UserAvatar } from '../ui/UserAvatar';
 
 const REACTIONS = [
   { type: 'like', emoji: '👍', label: 'Me gusta' },
@@ -73,13 +74,14 @@ const PostCard: React.FC<PostCardProps> = ({ post, onReact, onDelete, onComment,
       <div className="flex justify-between items-start">
         <div className="flex gap-4 lg:gap-5">
           <div className="relative">
-            <img
-              src={resolveAssetUrl(post.author_photo_url || post.user?.profile?.photo_url) || `https://api.dicebear.com/7.x/avataaars/svg?seed=${post.id_user}`}
+            <UserAvatar 
+              src={resolveAssetUrl(post.author_photo_url || post.user?.profile?.photo_url)} 
+              alt="Avatar" 
               className={cn(
                 "w-12 h-12 lg:w-14 lg:h-14 rounded-xl lg:rounded-2xl bg-surface-container-high object-cover",
                 isAuthorPremium && "ring-2 ring-amber-400 ring-offset-2 ring-offset-white"
               )}
-              alt="Avatar"
+              size={24}
             />
             {isAuthorPremium && (
               <div className="absolute -top-2 -right-2 w-6 h-6 rounded-lg bg-amber-500 text-white flex items-center justify-center shadow-md border border-white">

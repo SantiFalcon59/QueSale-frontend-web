@@ -16,6 +16,7 @@ import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInte
 import { es } from 'date-fns/locale';
 import { LoginPromptModal } from '../components/ui/LoginPromptModal';
 import { api, resolveAssetUrl } from '../services/apiClient';
+import { UserAvatar } from '../components/ui/UserAvatar';
 import { io, Socket } from 'socket.io-client';
 import PostFeed from '../components/wall/PostFeed';
 import PostComposer from '../components/wall/PostComposer';
@@ -186,7 +187,7 @@ const EventDetail: React.FC = () => {
             id: organizerData.id_organizer,
             name: organizerData.name,
             description: organizerData.description || '',
-            logo: resolveAssetUrl(organizerData.logo_url) || `https://api.dicebear.com/7.x/initials/svg?seed=${organizerData.name}`,
+            logo: resolveAssetUrl(organizerData.logo_url),
             ownerId: organizerData.id_creator,
             socials: {
               instagram: organizerData.instagram,
@@ -577,7 +578,7 @@ const EventDetail: React.FC = () => {
                           <h3 className="text-xs font-black uppercase tracking-[0.3em] opacity-40">Organizador</h3>
                           <div className="p-8 rounded-[2.5rem] bg-indigo-50/30 border border-indigo-100 flex flex-col gap-6 shadow-sm">
                             <Link to={`/organizer/${organizer.id}`} className="flex items-center gap-5 group/link">
-                              <img src={organizer.logo} alt={organizer.name} className="w-16 h-16 rounded-2xl object-cover shadow-sm" />
+                              <OrganizerAvatar src={organizer.logo} alt={organizer.name} className="w-16 h-16 rounded-2xl object-cover shadow-sm" size={24} />
                               <div className="min-w-0">
                                  <h4 className="text-xl font-black italic group-hover/link:text-primary transition-colors truncate uppercase tracking-tighter">{organizer.name}</h4>
                                  <div className="flex gap-2 mt-2">
@@ -1307,9 +1308,11 @@ const LiveChat: React.FC<{ eventId: string; isModerator: boolean; organizerId: s
       )}
       {messages.map(msg => (
         <div key={msg.id} className="flex gap-4 group">
-          <img
-            src={resolveAssetUrl(msg.photoURL) || `https://api.dicebear.com/7.x/avataaars/svg?seed=${msg.userId}`}
-            className="w-10 h-10 rounded-xl bg-surface-container-high object-cover" alt="chat-user"
+          <UserAvatar 
+            src={resolveAssetUrl(msg.photoURL)} 
+            className="w-10 h-10 rounded-xl bg-surface-container-high object-cover" 
+            alt="chat-user"
+            size={18}
           />
           <div className="flex-1 space-y-1">
              <div className="flex items-center justify-between">
