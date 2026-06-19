@@ -7,6 +7,7 @@ import { useAuth } from '../../context/AuthContext';
 import { api, resolveAssetUrl } from '../../services/apiClient';
 import { UserAvatar } from '../../components/ui/UserAvatar';
 import { OrganizerAvatar } from '../../components/ui/OrganizerAvatar';
+import { toastSuccess, toastError, confirmAction } from '../../lib/swal';
 
 const OrganizerDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'insights' | 'events' | 'staff'>('insights');
@@ -192,12 +193,14 @@ const OrganizerDashboard: React.FC = () => {
   };
 
   const handleDeleteEvent = async (eventId: string) => {
-    if (!window.confirm('¿Eliminar este evento?')) return;
+    const confirmed = await confirmAction('¿Eliminar este evento?', 'Esta acción no se puede deshacer.');
+    if (!confirmed) return;
     try {
       await api.deleteEvent(eventId);
       setEvents(prev => prev.filter(e => e.id_event !== eventId));
+      toastSuccess('Evento eliminado');
     } catch (err: any) {
-      setError(err.message || 'Error al eliminar');
+      toastError(err.message || 'Error al eliminar');
     }
   };
 
@@ -234,21 +237,24 @@ const OrganizerDashboard: React.FC = () => {
     try {
       await api.addOrganizerAdmin(organization.id, userId, selectedStaffRole);
       await fetchAll();
+      toastSuccess('Staff agregado correctamente');
       setShowAddStaffModal(false);
       setStaffSearch('');
       setStaffSearchResults([]);
     } catch (err: any) {
-      setError(err.message || 'Error al agregar staff');
+      toastError(err.message || 'Error al agregar staff');
     }
   };
 
   const handleRemoveStaff = async (memberId: string) => {
-    if (!window.confirm('¿Eliminar a este miembro del staff?')) return;
+    const confirmed = await confirmAction('¿Eliminar staff?', 'Este miembro perderá acceso al panel de administración.');
+    if (!confirmed) return;
     try {
       await api.removeOrganizerAdmin(organization.id, memberId);
       setStaffList(prev => prev.filter(s => s.id !== memberId));
+      toastSuccess('Staff eliminado correctamente');
     } catch (err: any) {
-      setError(err.message || 'Error al eliminar staff');
+      toastError(err.message || 'Error al eliminar staff');
     }
   };
 
@@ -272,7 +278,7 @@ const OrganizerDashboard: React.FC = () => {
         window.location.href = paymentLink.payment_url;
       }
     } catch (err: any) {
-      alert(err.message || 'Error al procesar el destacado');
+      toastError(err.message || 'Error al procesar el destacado');
     } finally {
       setIsProcessingFeatured(false);
     }
@@ -563,15 +569,16 @@ const OrganizerDashboard: React.FC = () => {
                         <button 
                           type="button"
                           onClick={async () => {
-                             if(confirm('¿Seguro que quieres desconectar tu cuenta de Mercado Pago?')) {
-                                try {
-                                   await api.delete(`/organizers/${organization.id}/oauth/mercadopago`);
-                                   await fetchAll();
-                                } catch (e) {
-                                   alert('Error al desconectar');
-                                }
-                             }
-                          }}
+                              const confirmed = await confirmAction('¿Desconectar Mercado Pago?', 'Dejarás de recibir pagos de entradas a través de Mercado Pago.');
+                              if (!confirmed) return;
+                              try {
+                                 await api.delete(`/api/organizers/${organization.id}/oauth/mercadopago`);
+                                 await fetchAll();
+                                 toastSuccess('Cuenta de Mercado Pago desconectada');
+                              } catch (e) {
+                                 toastError('Error al desconectar');
+                              }
+                           }}
                           className="mt-3 text-[10px] font-bold text-red-600 hover:underline"
                         >
                           Desconectar cuenta
@@ -591,7 +598,7 @@ const OrganizerDashboard: React.FC = () => {
                                  window.location.href = res.url;
                                }
                              } catch (e) {
-                               alert('Error al iniciar la conexión con Mercado Pago');
+                                toastError('Error al iniciar la conexión con Mercado Pago');
                              }
                           }}
                           className="w-full bg-[#009EE3] hover:bg-[#0089C5] text-white rounded-xl px-4 py-3 text-sm font-bold transition-colors flex items-center justify-center gap-2"

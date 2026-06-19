@@ -14,6 +14,7 @@ import EmojiPicker, { EmojiClickData } from 'emoji-picker-react';
 import { GifPicker } from '../components/post/GifPicker';
 import PostFeed from '../components/wall/PostFeed';
 import { PremiumModal } from '../components/ui/PremiumModal';
+import { toastSuccess, toastError, confirmAction } from '../lib/swal';
 
 const safeDate = (val: any) => {
   if (!val) return null;
@@ -289,12 +290,14 @@ const Profile: React.FC<{ usernameFromUrl?: string }> = ({ usernameFromUrl }) =>
   };
 
   const handleDeletePost = async (postId: number) => {
-    if (!window.confirm('¿Eliminar esta publicación?')) return;
+    const confirmed = await confirmAction('¿Eliminar esta publicación?');
+    if (!confirmed) return;
     try {
       await api.deleteWallPost_new(postId);
       setPosts(prev => prev.filter(p => p.id_post !== postId));
+      toastSuccess('Publicación eliminada');
     } catch (err) {
-      console.error("Error deleting post:", err);
+      toastError('Error al eliminar la publicación');
     }
   };
 
@@ -309,6 +312,7 @@ const Profile: React.FC<{ usernameFromUrl?: string }> = ({ usernameFromUrl }) =>
       } else {
         await navigator.clipboard.writeText(url);
         setCopied(true);
+        toastSuccess('Link copiado al portapapeles');
         setTimeout(() => setCopied(false), 2500);
       }
     } catch {
@@ -697,13 +701,15 @@ const Profile: React.FC<{ usernameFromUrl?: string }> = ({ usernameFromUrl }) =>
                       }
                     }}
                     onDeleteComment={async (commentId: number) => {
-                      if (!window.confirm('¿Eliminar este comentario?')) return;
+                      const confirmed = await confirmAction('¿Eliminar este comentario?');
+                      if (!confirmed) return;
                       try {
                         await api.deleteWallComment_new(commentId);
                         const data: any = await api.getWallPosts('user_profile', profileUser.id, 1, 50);
                         setPosts(data || []);
+                        toastSuccess('Comentario eliminado');
                       } catch (err) {
-                        console.error('Error deleting comment:', err);
+                        toastError('Error al eliminar el comentario');
                       }
                     }}
                     showDelete={(post) => isOwnProfile || isModerator || post.id_user === currentUser?.uid}
@@ -990,20 +996,6 @@ const Profile: React.FC<{ usernameFromUrl?: string }> = ({ usernameFromUrl }) =>
         )}
       </AnimatePresence>
 
-      {/* Share Toast */}
-      <AnimatePresence>
-        {copied && (
-          <motion.div
-            initial={{ opacity: 0, y: 20, scale: 0.9 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 10, scale: 0.95 }}
-            className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[100] bg-surface-dark text-white px-6 py-3 rounded-full shadow-xl flex items-center gap-2 text-sm font-medium"
-          >
-            <Check size={16} className="text-green-400" />
-            ¡Link copiado al portapapeles!
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 };

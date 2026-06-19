@@ -6,6 +6,7 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { api } from '../../services/apiClient';
 import { UserAvatar } from '../../components/ui/UserAvatar';
+import { toastSuccess, toastError, confirmAction } from '../../lib/swal';
 
 const AdminUsers: React.FC = () => {
   const [users, setUsers] = useState<any[]>([]);
@@ -37,14 +38,14 @@ const AdminUsers: React.FC = () => {
   }, []);
 
   const updateRole = async (userId: string, newRole: string) => {
+    const confirmed = await confirmAction(`¿Cambiar rango?`, `¿Estás seguro de que quieres cambiar el rango de este usuario a ${newRole.toUpperCase()}?`);
+    if (!confirmed) return;
     try {
-      if(confirm(`¿Estás seguro de que quieres cambiar el rango de este usuario a ${newRole.toUpperCase()}?`)) {
-        await api.put(`/users/${userId}/role`, { role: newRole });
-        setUsers(prev => prev.map(u => u.id === userId ? { ...u, role: newRole } : u));
-      }
+      await api.put(`/api/users/${userId}/role`, { role: newRole });
+      setUsers(prev => prev.map(u => u.id === userId ? { ...u, role: newRole } : u));
+      toastSuccess(`Rango cambiado a ${newRole.toUpperCase()}`);
     } catch (err) {
-      alert('Error al actualizar el rango');
-      console.error(err);
+      toastError('Error al actualizar el rango');
     }
   };
 

@@ -4,6 +4,7 @@ import { ShieldCheck, CheckCircle2, AlertCircle, Building, Search, ExternalLink 
 import { cn } from '../../lib/utils';
 import { api } from '../../services/apiClient';
 import { OrganizerAvatar } from '../../components/ui/OrganizerAvatar';
+import { toastSuccess, toastError, confirmAction } from '../../lib/swal';
 
 const AdminOrganizations: React.FC = () => {
   const [orgs, setOrgs] = useState<any[]>([]);
@@ -37,24 +38,23 @@ const AdminOrganizations: React.FC = () => {
   }, []);
 
   const handleVerify = async (orgId: string, level: number) => {
+    const confirmed = await confirmAction(`¿Cambiar verificación?`, `¿Estás seguro de que quieres cambiar el estado de verificación de esta organización a Nivel ${level}?`);
+    if (!confirmed) return;
     try {
-      if(confirm(`¿Estás seguro de que quieres cambiar el estado de verificación de esta organización a Nivel ${level}?`)) {
-        await api.put(`/organizers/${orgId}/verify`, { verified: level === 2 });
-        // Refresh local state to reflect the change
-        setOrgs(prev => prev.map(org => {
-          if(org.id === orgId) {
-            return {
-              ...org,
-              verificationLevel: level,
-              status: level === 2 ? 'verified' : 'pending_verification'
-            };
-          }
-          return org;
-        }));
-      }
+      await api.put(`/api/organizers/${orgId}/verify`, { verified: level === 2 });
+      setOrgs(prev => prev.map(org => {
+        if(org.id === orgId) {
+          return {
+            ...org,
+            verificationLevel: level,
+            status: level === 2 ? 'verified' : 'pending_verification'
+          };
+        }
+        return org;
+      }));
+      toastSuccess(`Verificación cambiada a Nivel ${level}`);
     } catch (err) {
-      alert('Error al actualizar la verificación');
-      console.error(err);
+      toastError('Error al actualizar la verificación');
     }
   };
 

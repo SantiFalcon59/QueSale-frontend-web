@@ -6,6 +6,7 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Link } from 'react-router-dom';
 import { api, resolveAssetUrl } from '../../services/apiClient';
+import { toastSuccess, toastError, confirmAction } from '../../lib/swal';
 
 const NO_EVENT_IMAGE = 'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?q=80&w=1000&auto=format&fit=crop';
 
@@ -38,13 +39,15 @@ const AdminEvents: React.FC = () => {
   }, []);
 
   const handleDelete = async (eventId: string) => {
-    if (!window.confirm("¿Estás seguro de eliminar este evento? Esta acción es irreversible.")) return;
+    const confirmed = await confirmAction('¿Eliminar evento?', 'Esta acción es irreversible.');
+    if (!confirmed) return;
     
     try {
-         await api.deleteEvent(eventId);
+      await api.deleteEvent(eventId);
       setEvents(prev => prev.filter(e => e.id !== eventId));
+      toastSuccess('Evento eliminado');
     } catch (err) {
-      console.error("Error deleting event:", err);
+      toastError('Error al eliminar el evento');
     }
   };
 

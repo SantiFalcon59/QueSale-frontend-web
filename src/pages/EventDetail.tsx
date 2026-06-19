@@ -22,6 +22,7 @@ import { io, Socket } from 'socket.io-client';
 import PostFeed from '../components/wall/PostFeed';
 import PostComposer from '../components/wall/PostComposer';
 import { TicketFeedbackModal, TicketModalMode } from '../components/ui/TicketFeedbackModal';
+import { toastSuccess, toastError, confirmAction } from '../lib/swal';
 
 const GOOGLE_MAPS_KEY = process.env.GOOGLE_MAPS_PLATFORM_KEY || '';
 
@@ -1008,12 +1009,14 @@ const EventAnnouncements: React.FC<{ eventId: string; organizerId: string; isOrg
   };
 
   const handleDelete = async (postId: string) => {
-    if (!window.confirm('¿Eliminar este anuncio?')) return;
+    const confirmed = await confirmAction('¿Eliminar este anuncio?');
+    if (!confirmed) return;
     try {
       await api.deleteWallPost_new(parseInt(postId));
       setAnnouncements(prev => prev.filter(a => a.id !== postId));
+      toastSuccess('Anuncio eliminado');
     } catch (err) {
-      console.error('Error deleting announcement:', err);
+      toastError('Error al eliminar el anuncio');
     }
   };
 
@@ -1157,12 +1160,14 @@ const EventWall: React.FC<{ eventId: string; organizerOwnerId?: string; eventTit
   };
 
   const handleDeletePost = async (postId: number) => {
-    if (!window.confirm('¿Eliminar esta publicación?')) return;
+    const confirmed = await confirmAction('¿Eliminar esta publicación?');
+    if (!confirmed) return;
     try {
       await api.deleteWallPost_new(postId);
       setPosts(prev => prev.filter(p => p.id_post !== postId));
+      toastSuccess('Publicación eliminada');
     } catch (err) {
-      console.error('Error deleting post:', err);
+      toastError('Error al eliminar la publicación');
     }
   };
 
@@ -1178,13 +1183,15 @@ const EventWall: React.FC<{ eventId: string; organizerOwnerId?: string; eventTit
   };
 
   const handleDeleteComment = async (commentId: number) => {
-    if (!window.confirm('¿Eliminar este comentario?')) return;
+    const confirmed = await confirmAction('¿Eliminar este comentario?');
+    if (!confirmed) return;
     try {
       await api.deleteWallComment_new(commentId);
       const data: any = await api.getWallPosts('event', eventId, 1, 50, WALL_TYPE_FILTER);
       setPosts(data || []);
+      toastSuccess('Comentario eliminado');
     } catch (err) {
-      console.error('Error deleting comment:', err);
+      toastError('Error al eliminar el comentario');
     }
   };
 
