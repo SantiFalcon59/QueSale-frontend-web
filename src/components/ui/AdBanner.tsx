@@ -31,10 +31,11 @@ export const AdBanner: React.FC<AdBannerProps> = ({
   const isPremium = profile?.role === 'admin' || profile?.is_premium;
   const adLoaded = React.useRef(false);
 
+  const isPlaceholder = client.includes('YOUR_') || client.includes('ca-pub-0000000000000000');
+
   useEffect(() => {
-    if (isPremium) return;
+    if (isPremium || isPlaceholder) return;
     
-    // Only push if not already loaded in this instance
     if (adLoaded.current) return;
 
     try {
@@ -44,9 +45,17 @@ export const AdBanner: React.FC<AdBannerProps> = ({
     } catch (e) {
       console.error('AdSense error:', e);
     }
-  }, [isPremium]);
+  }, [isPremium, isPlaceholder]);
 
   if (isPremium) return null;
+
+  if (isPlaceholder) {
+    return (
+      <div className={className}>
+        <img src="/publicidad.jpg" alt="Publicidad" className="w-full h-full object-cover rounded-xl" />
+      </div>
+    );
+  }
 
   return (
     <div className={className}>

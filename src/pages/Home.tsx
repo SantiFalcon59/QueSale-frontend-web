@@ -37,11 +37,6 @@ const EventCard = ({ event }: { event: any }) => (
             </span>
           )}
         </div>
-        {event.score && (
-          <div className="absolute top-3 right-3 px-2.5 py-1 rounded-lg bg-primary/90 text-white text-[8px] font-black tracking-widest uppercase shadow-lg flex items-center gap-1">
-            <Sparkles size={10} /> {Math.round(event.score)}% Match
-          </div>
-        )}
       </div>
       <div className="p-5 space-y-3">
         <h4 className="text-sm font-black text-on-surface leading-tight truncate uppercase">{event.title}</h4>

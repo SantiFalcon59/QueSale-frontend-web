@@ -120,25 +120,29 @@ const OrganizerProfile: React.FC = () => {
             {organizer.description && (
               <p className="text-sm lg:text-base text-on-surface-variant leading-relaxed max-w-2xl">{organizer.description}</p>
             )}
-            <div className="flex items-center gap-3 justify-center lg:justify-start pt-2">
+            <div className="flex items-center gap-2 justify-center lg:justify-start pt-2 flex-wrap">
               {organizer.instagram && (
-                <a href={`https://instagram.com/${organizer.instagram.replace('@', '')}`} target="_blank" className="w-10 h-10 rounded-xl bg-surface-container-low flex items-center justify-center text-on-surface-variant hover:text-primary hover:bg-primary/10 transition-all">
-                  <Instagram size={16} />
+                <a href={`https://instagram.com/${organizer.instagram.replace('@', '')}`} target="_blank" className="h-9 px-3 rounded-xl bg-surface-container-low flex items-center gap-1.5 text-on-surface-variant hover:text-primary hover:bg-primary/10 transition-all text-xs font-medium">
+                  <Instagram size={14} />
+                  <span>@{organizer.instagram.replace('@', '')}</span>
                 </a>
               )}
               {organizer.tiktok && (
-                <a href={`https://tiktok.com/@${organizer.tiktok.replace('@', '')}`} target="_blank" className="w-10 h-10 rounded-xl bg-surface-container-low flex items-center justify-center text-on-surface-variant hover:text-primary hover:bg-primary/10 transition-all">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5" /></svg>
+                <a href={`https://tiktok.com/@${organizer.tiktok.replace('@', '')}`} target="_blank" className="h-9 px-3 rounded-xl bg-surface-container-low flex items-center gap-1.5 text-on-surface-variant hover:text-primary hover:bg-primary/10 transition-all text-xs font-medium">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5" /></svg>
+                  <span>@{organizer.tiktok.replace('@', '')}</span>
                 </a>
               )}
               {organizer.twitter && (
-                <a href={`https://twitter.com/${organizer.twitter.replace('@', '')}`} target="_blank" className="w-10 h-10 rounded-xl bg-surface-container-low flex items-center justify-center text-on-surface-variant hover:text-primary hover:bg-primary/10 transition-all">
-                  <Twitter size={16} />
+                <a href={`https://twitter.com/${organizer.twitter.replace('@', '')}`} target="_blank" className="h-9 px-3 rounded-xl bg-surface-container-low flex items-center gap-1.5 text-on-surface-variant hover:text-primary hover:bg-primary/10 transition-all text-xs font-medium">
+                  <Twitter size={14} />
+                  <span>@{organizer.twitter.replace('@', '')}</span>
                 </a>
               )}
               {organizer.website && (
-                <a href={organizer.website} target="_blank" className="w-10 h-10 rounded-xl bg-surface-container-low flex items-center justify-center text-on-surface-variant hover:text-primary hover:bg-primary/10 transition-all">
-                  <Globe size={16} />
+                <a href={organizer.website} target="_blank" className="h-9 px-3 rounded-xl bg-surface-container-low flex items-center gap-1.5 text-on-surface-variant hover:text-primary hover:bg-primary/10 transition-all text-xs font-medium">
+                  <Globe size={14} />
+                  <span>{organizer.website.replace(/^https?:\/\//, '').replace(/\/$/, '')}</span>
                 </a>
               )}
               <div className="flex-1" />

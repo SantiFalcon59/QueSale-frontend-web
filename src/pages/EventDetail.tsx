@@ -582,28 +582,32 @@ const EventDetail: React.FC = () => {
                               <OrganizerAvatar src={organizer.logo} alt={organizer.name} className="w-16 h-16 rounded-2xl object-cover shadow-sm" size={24} />
                               <div className="min-w-0">
                                  <h4 className="text-xl font-black italic group-hover/link:text-primary transition-colors truncate uppercase tracking-tighter">{organizer.name}</h4>
-                                  <div className="flex gap-2 mt-2">
-                                     {organizer.socials?.instagram && (
-                                       <a href={`https://instagram.com/${organizer.socials.instagram.replace('@', '')}`} target="_blank" className="p-1.5 rounded-lg bg-white hover:text-primary transition-all shadow-sm text-on-surface-variant">
-                                         <Instagram size={12} />
-                                       </a>
-                                     )}
-                                     {organizer.socials?.tiktok && (
-                                       <a href={`https://tiktok.com/@${organizer.socials.tiktok.replace('@', '')}`} target="_blank" className="p-1.5 rounded-lg bg-white hover:text-primary transition-all shadow-sm text-on-surface-variant">
-                                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5" /></svg>
-                                       </a>
-                                     )}
-                                     {organizer.socials?.twitter && (
-                                       <a href={`https://twitter.com/${organizer.socials.twitter.replace('@', '')}`} target="_blank" className="p-1.5 rounded-lg bg-white hover:text-primary transition-all shadow-sm text-on-surface-variant">
-                                         <Twitter size={12} />
-                                       </a>
-                                     )}
-                                     {organizer.socials?.website && (
-                                       <a href={organizer.socials.website} target="_blank" className="p-1.5 rounded-lg bg-white hover:text-primary transition-all shadow-sm text-on-surface-variant">
-                                         <Globe size={12} />
-                                       </a>
-                                     )}
-                                  </div>
+                                   <div className="flex gap-1.5 mt-2 flex-wrap">
+                                      {organizer.socials?.instagram && (
+                                        <a href={`https://instagram.com/${organizer.socials.instagram.replace('@', '')}`} target="_blank" className="px-2 py-1 rounded-lg bg-white hover:text-primary transition-all shadow-sm text-on-surface-variant flex items-center gap-1 text-[10px] font-medium">
+                                          <Instagram size={10} />
+                                          <span>@{organizer.socials.instagram.replace('@', '')}</span>
+                                        </a>
+                                      )}
+                                      {organizer.socials?.tiktok && (
+                                        <a href={`https://tiktok.com/@${organizer.socials.tiktok.replace('@', '')}`} target="_blank" className="px-2 py-1 rounded-lg bg-white hover:text-primary transition-all shadow-sm text-on-surface-variant flex items-center gap-1 text-[10px] font-medium">
+                                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5" /></svg>
+                                          <span>@{organizer.socials.tiktok.replace('@', '')}</span>
+                                        </a>
+                                      )}
+                                      {organizer.socials?.twitter && (
+                                        <a href={`https://twitter.com/${organizer.socials.twitter.replace('@', '')}`} target="_blank" className="px-2 py-1 rounded-lg bg-white hover:text-primary transition-all shadow-sm text-on-surface-variant flex items-center gap-1 text-[10px] font-medium">
+                                          <Twitter size={10} />
+                                          <span>@{organizer.socials.twitter.replace('@', '')}</span>
+                                        </a>
+                                      )}
+                                      {organizer.socials?.website && (
+                                        <a href={organizer.socials.website} target="_blank" className="px-2 py-1 rounded-lg bg-white hover:text-primary transition-all shadow-sm text-on-surface-variant flex items-center gap-1 text-[10px] font-medium">
+                                          <Globe size={10} />
+                                          <span>{organizer.socials.website.replace(/^https?:\/\//, '').replace(/\/$/, '')}</span>
+                                        </a>
+                                      )}
+                                   </div>
                                </div>
                              </Link>
                              <p className="text-xs lg:text-sm text-on-surface-variant leading-relaxed font-medium">{organizer.description}</p>
