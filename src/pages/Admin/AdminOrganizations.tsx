@@ -46,7 +46,7 @@ const AdminOrganizations: React.FC = () => {
     const confirmed = await confirmAction(`¿Cambiar verificación?`, `¿Estás seguro de que quieres cambiar el estado de verificación de esta organización a Nivel ${level}?`);
     if (!confirmed) return;
     try {
-      await api.put(`/api/organizers/${orgId}/verify`, { verified: level === 2 });
+      await api.put(`/api/organizers/${orgId}/verify`, { verified: level === 2 }, { auth: true });
       setOrgs(prev => prev.map(org => {
         if(org.id === orgId) {
           return {
@@ -140,22 +140,22 @@ const AdminOrganizations: React.FC = () => {
                     </p>
                  </div>
 
-                         {org.verificationLevel < 2 && (
-                   <button 
-                              disabled
-                    className="btn-primary h-12 px-6 text-[10px] font-black tracking-widest uppercase"
-                   >
-                     Verificar Nivel 2
-                   </button>
-                 )}
-                 {org.verificationLevel >= 2 && (
+                 {org.verificationLevel < 2 && (
                     <button 
-                                 disabled
-                      className="btn-secondary h-12 px-6 text-[10px] font-black tracking-widest uppercase"
+                      onClick={() => handleVerify(org.id, 2)}
+                      className="btn-primary h-12 px-6 text-[10px] font-black tracking-widest uppercase"
                     >
-                      Degradar a L1
+                      Verificar Nivel 2
                     </button>
-                 )}
+                  )}
+                  {org.verificationLevel >= 2 && (
+                     <button 
+                       onClick={() => handleVerify(org.id, 1)}
+                       className="btn-secondary h-12 px-6 text-[10px] font-black tracking-widest uppercase"
+                     >
+                       Degradar a L1
+                     </button>
+                  )}
               </div>
            </motion.div>
          ))}

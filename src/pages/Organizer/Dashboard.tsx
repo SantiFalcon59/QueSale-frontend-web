@@ -603,30 +603,7 @@ const OrganizerDashboard: React.FC = () => {
                    </div>
                 </div>
 
-                <div className="pt-4 border-t border-outline-variant space-y-4">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Shield className="text-secondary" size={16} />
-                    <h4 className="text-[9px] font-black uppercase tracking-[0.2em] text-on-surface-variant">Datos para Verificación (Opcional)</h4>
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                     <div className="space-y-1">
-                        <label className="text-[10px] uppercase font-black tracking-widest text-on-surface-variant ml-4">Nombre Real</label>
-                        <input value={editOrgData.real_name} onChange={e => setEditOrgData(prev => ({ ...prev, real_name: e.target.value }))} className="w-full bg-surface-container-low border border-outline-variant rounded-xl px-4 py-3 text-sm outline-none focus:border-primary/50 transition-all font-medium" />
-                     </div>
-                     <div className="space-y-1">
-                        <label className="text-[10px] uppercase font-black tracking-widest text-on-surface-variant ml-4">DNI / CUIT</label>
-                        <input value={editOrgData.dni} onChange={e => setEditOrgData(prev => ({ ...prev, dni: e.target.value }))} className="w-full bg-surface-container-low border border-outline-variant rounded-xl px-4 py-3 text-sm outline-none focus:border-primary/50 transition-all font-medium" />
-                     </div>
-                     <div className="space-y-1">
-                        <label className="text-[10px] uppercase font-black tracking-widest text-on-surface-variant ml-4">Teléfono</label>
-                        <input value={editOrgData.phone_number} onChange={e => setEditOrgData(prev => ({ ...prev, phone_number: e.target.value }))} className="w-full bg-surface-container-low border border-outline-variant rounded-xl px-4 py-3 text-sm outline-none focus:border-primary/50 transition-all font-medium" />
-                     </div>
-                     <div className="space-y-1">
-                        <label className="text-[10px] uppercase font-black tracking-widest text-on-surface-variant ml-4">Dirección Comercial</label>
-                        <input value={editOrgData.address} onChange={e => setEditOrgData(prev => ({ ...prev, address: e.target.value }))} className="w-full bg-surface-container-low border border-outline-variant rounded-xl px-4 py-3 text-sm outline-none focus:border-primary/50 transition-all font-medium" />
-                     </div>
-                  </div>
-                </div>
+
 
                 {organization?.verified ? (
                   <div className="pt-4 border-t border-outline-variant space-y-4">
@@ -1107,6 +1084,94 @@ const OrganizerDashboard: React.FC = () => {
               </motion.div>
             ))}
           </div>
+
+          {/* Nivel 2 Verification Panel */}
+          <section className="p-8 rounded-[2.5rem] bg-surface-container-low border border-outline-variant grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+            <div className="lg:col-span-8 space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="p-3 rounded-2xl bg-primary/10 text-primary">
+                  <ShieldCheck size={28} />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold flex items-center gap-2">
+                    Verificación de Nivel 2
+                    {organization?.verified && (
+                      <span className="text-[10px] bg-green-50 text-green-600 border border-green-200 px-2.5 py-0.5 rounded-full font-black uppercase tracking-widest">
+                        Verificado
+                      </span>
+                    )}
+                  </h3>
+                  <p className="text-xs text-on-surface-variant font-medium mt-0.5">
+                    Habilita funciones profesionales y cobros automatizados
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+                <div className="space-y-2">
+                  <h4 className="text-[10px] font-black uppercase tracking-widest text-primary">Beneficios</h4>
+                  <ul className="text-xs space-y-2 font-medium text-on-surface-variant">
+                    <li className="flex items-start gap-2">
+                      <Check size={14} className="text-green-500 shrink-0 mt-0.5" />
+                      <span><strong>Cobros Directos:</strong> Integra tu cuenta de Mercado Pago para cobrar entradas automáticamente.</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Check size={14} className="text-green-500 shrink-0 mt-0.5" />
+                      <span><strong>Insignia Oficial:</strong> Tilde verificado en tu perfil para mayor seriedad.</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Check size={14} className="text-green-500 shrink-0 mt-0.5" />
+                      <span><strong>Recomendación Prioritaria:</strong> Mayor visibilidad en búsquedas y mapas.</span>
+                    </li>
+                  </ul>
+                </div>
+
+                <div className="space-y-2">
+                  <h4 className="text-[10px] font-black uppercase tracking-widest text-secondary">Requisitos</h4>
+                  <ul className="text-xs space-y-2 font-medium text-on-surface-variant">
+                    <li className="flex items-start gap-2">
+                      <div className="w-1.5 h-1.5 rounded-full bg-secondary shrink-0 mt-2" />
+                      <span>Completar datos legales (Nombre legal, CUIT/DNI, dirección fiscal, teléfono).</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <div className="w-1.5 h-1.5 rounded-full bg-secondary shrink-0 mt-2" />
+                      <span>Soporte verificará la información provista en un plazo de 24-48 hs hábiles.</span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <div className="lg:col-span-4 flex flex-col items-center lg:items-end justify-center h-full border-t lg:border-t-0 lg:border-l border-outline-variant/30 pt-6 lg:pt-0 lg:pl-8">
+              <div className="text-center lg:text-right space-y-3 w-full">
+                <div>
+                  <p className="text-[9px] uppercase font-black tracking-widest text-on-surface-variant">Estado de Solicitud</p>
+                  {organization?.verified ? (
+                    <p className="text-lg font-black text-green-600 mt-1 flex items-center justify-center lg:justify-end gap-1.5">
+                      <ShieldCheck size={20} /> VERIFICADO PRO
+                    </p>
+                  ) : (organization?.real_name && organization?.dni && organization?.phone_number && organization?.address) ? (
+                    <p className="text-lg font-black text-amber-600 mt-1 flex items-center justify-center lg:justify-end gap-1.5">
+                      <Sparkles size={20} className="animate-pulse" /> EN REVISIÓN
+                    </p>
+                  ) : (
+                    <p className="text-lg font-black text-primary mt-1">
+                      SIN SOLICITAR
+                    </p>
+                  )}
+                </div>
+
+                {!organization?.verified && (
+                  <button
+                    onClick={() => setEditingOrg(true)}
+                    className="btn-primary w-full py-3 text-[10px] font-black tracking-widest uppercase mt-2"
+                  >
+                    {(organization?.real_name && organization?.dni && organization?.phone_number && organization?.address) ? 'Actualizar Datos' : 'Solicitar Verificación'}
+                  </button>
+                )}
+              </div>
+            </div>
+          </section>
 
           {/* Descubrimiento Section */}
           <section className="p-8 rounded-[2.5rem] bg-surface-container-low border border-outline-variant space-y-6">
