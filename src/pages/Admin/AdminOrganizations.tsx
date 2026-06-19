@@ -25,7 +25,12 @@ const AdminOrganizations: React.FC = () => {
                verificationLevel: org.verified ? 2 : 1,
                status: org.verified ? 'verified' : 'pending_verification',
                instagram: '',
-               verificationInfo: null,
+               verificationInfo: {
+                 realName: org.real_name,
+                 dni: org.dni,
+                 address: org.address,
+                 phone: org.phone_number
+               },
             }));
             setOrgs(mapped);
       } catch (err) {
@@ -112,7 +117,9 @@ const AdminOrganizations: React.FC = () => {
                  <div className="space-y-1">
                     <p className="text-[9px] uppercase font-black tracking-widest text-on-surface-variant">Info Real</p>
                     <p className="text-xs font-bold">{org.verificationInfo?.realName || 'N/A'}</p>
-                    <p className="text-[10px] text-on-surface-variant">DNI: {org.verificationInfo?.dni || 'N/A'}</p>
+                    <p className="text-[10px] text-on-surface-variant">DNI/CUIT: {org.verificationInfo?.dni || 'N/A'}</p>
+                    <p className="text-[10px] text-on-surface-variant">Tel: {org.verificationInfo?.phone || 'N/A'}</p>
+                    <p className="text-[10px] text-on-surface-variant truncate" title={org.verificationInfo?.address || ''}>Dir: {org.verificationInfo?.address || 'N/A'}</p>
                  </div>
                  <div className="space-y-1">
                     <p className="text-[9px] uppercase font-black tracking-widest text-on-surface-variant">Social</p>

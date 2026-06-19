@@ -29,8 +29,23 @@ const Profile: React.FC<{ usernameFromUrl?: string }> = ({ usernameFromUrl }) =>
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
   const premiumSuccess = searchParams.get('premium_success') === 'true';
+  const paymentId = searchParams.get('payment_id');
   
   const { profile: loggedProfile, user: currentUser, refreshProfile } = useAuth();
+
+  React.useEffect(() => {
+    if (premiumSuccess && paymentId && currentUser && loggedProfile && !loggedProfile.is_premium) {
+      const verifyPayment = async () => {
+        try {
+          await api.verifyPremiumSubscription(paymentId);
+          await refreshProfile();
+        } catch (err) {
+          console.error('Error verificando pago premium:', err);
+        }
+      };
+      verifyPayment();
+    }
+  }, [premiumSuccess, paymentId, currentUser, loggedProfile, refreshProfile]);
   const [premiumModalOpen, setPremiumModalOpen] = React.useState(false);
   const [profileUser, setProfileUser] = React.useState<any>(null);
   const [loading, setLoading] = React.useState(true);

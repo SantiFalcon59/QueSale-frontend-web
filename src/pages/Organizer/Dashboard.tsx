@@ -26,7 +26,7 @@ const OrganizerDashboard: React.FC = () => {
   const [isDragOver, setIsDragOver] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [editingOrg, setEditingOrg] = useState(false);
-  const [editOrgData, setEditOrgData] = useState({ name: '', description: '', instagram: '', tiktok: '', twitter: '', website: '' });
+  const [editOrgData, setEditOrgData] = useState({ name: '', description: '', instagram: '', tiktok: '', twitter: '', website: '', real_name: '', dni: '', address: '', phone_number: '' });
   const [showFollowersModal, setShowFollowersModal] = useState(false);
   const [showReportsModal, setShowReportsModal] = useState(false);
   const [showAddStaffModal, setShowAddStaffModal] = useState(false);
@@ -85,6 +85,10 @@ const OrganizerDashboard: React.FC = () => {
           tiktok: org.tiktok || '',
           twitter: org.twitter || '',
           website: org.website || '',
+          real_name: org.real_name || '',
+          dni: org.dni || '',
+          address: org.address || '',
+          phone_number: org.phone_number || ''
         });
 
         const eventsData: any = await api.getOrganizerEvents(org.id_organizer, 1, 50);
@@ -176,6 +180,10 @@ const OrganizerDashboard: React.FC = () => {
         tiktok: editOrgData.tiktok,
         twitter: editOrgData.twitter,
         website: editOrgData.website,
+        real_name: editOrgData.real_name,
+        dni: editOrgData.dni,
+        address: editOrgData.address,
+        phone_number: editOrgData.phone_number
       });
       if (logoFile) {
         await api.uploadOrganizerLogo(logoFile, organization.id);
@@ -506,15 +514,15 @@ const OrganizerDashboard: React.FC = () => {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
               onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-lg bg-white rounded-[2rem] shadow-2xl overflow-hidden"
+              className="w-full max-w-lg bg-white rounded-[2rem] shadow-2xl overflow-hidden max-h-[90vh] flex flex-col"
             >
-              <div className="flex items-center justify-between p-6 border-b border-outline-variant">
+              <div className="flex items-center justify-between p-6 border-b border-outline-variant shrink-0">
                 <h2 className="text-xl font-black">Editar Organización</h2>
                 <button onClick={() => setEditingOrg(false)} className="p-2 rounded-xl hover:bg-surface-container-low transition-colors">
                   <X size={20} />
                 </button>
               </div>
-              <div className="p-6 space-y-5">
+              <div className="p-6 space-y-5 overflow-y-auto flex-1 no-scrollbar">
                 <div className="space-y-1.5">
                   <label className="text-[10px] uppercase font-black tracking-widest text-on-surface-variant ml-4">Logo</label>
                   <div className="flex items-center gap-4">
@@ -621,8 +629,37 @@ const OrganizerDashboard: React.FC = () => {
                     </div>
                   </div>
                 )}
+
+                <div className="pt-4 border-t border-outline-variant space-y-4">
+                  <h4 className="text-[10px] uppercase font-black tracking-widest text-on-surface-variant flex items-center gap-2">
+                     <Shield size={14} className="text-primary" /> Datos de Verificación (Nivel 2)
+                  </h4>
+                  <p className="text-[11px] text-on-surface-variant font-medium">
+                     Completa estos datos legales para solicitar la verificación y habilitar el cobro de entradas.
+                  </p>
+                  <div className="space-y-3">
+                     <div className="space-y-1">
+                        <label className="text-[10px] uppercase font-black tracking-widest text-on-surface-variant ml-4">Nombre Legal o Razón Social</label>
+                        <input value={editOrgData.real_name} onChange={e => setEditOrgData(prev => ({ ...prev, real_name: e.target.value }))} placeholder="Ej: Productora S.A." className="w-full bg-surface-container-low border border-outline-variant rounded-xl px-4 py-3 text-sm outline-none focus:border-primary/50 transition-all font-medium" />
+                     </div>
+                     <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-1">
+                           <label className="text-[10px] uppercase font-black tracking-widest text-on-surface-variant ml-4">DNI / CUIT</label>
+                           <input value={editOrgData.dni} onChange={e => setEditOrgData(prev => ({ ...prev, dni: e.target.value }))} placeholder="Sin guiones" className="w-full bg-surface-container-low border border-outline-variant rounded-xl px-4 py-3 text-sm outline-none focus:border-primary/50 transition-all font-medium" />
+                        </div>
+                        <div className="space-y-1">
+                           <label className="text-[10px] uppercase font-black tracking-widest text-on-surface-variant ml-4">Teléfono</label>
+                           <input value={editOrgData.phone_number} onChange={e => setEditOrgData(prev => ({ ...prev, phone_number: e.target.value }))} placeholder="+54 9..." className="w-full bg-surface-container-low border border-outline-variant rounded-xl px-4 py-3 text-sm outline-none focus:border-primary/50 transition-all font-medium" />
+                        </div>
+                     </div>
+                     <div className="space-y-1">
+                        <label className="text-[10px] uppercase font-black tracking-widest text-on-surface-variant ml-4">Dirección Fiscal</label>
+                        <input value={editOrgData.address} onChange={e => setEditOrgData(prev => ({ ...prev, address: e.target.value }))} placeholder="Calle 123, Ciudad, Provincia" className="w-full bg-surface-container-low border border-outline-variant rounded-xl px-4 py-3 text-sm outline-none focus:border-primary/50 transition-all font-medium" />
+                     </div>
+                  </div>
+                </div>
               </div>
-              <div className="flex gap-3 p-6 border-t border-outline-variant">
+              <div className="flex gap-3 p-6 border-t border-outline-variant shrink-0">
                 <button onClick={() => setEditingOrg(false)} className="btn-secondary flex-1">CANCELAR</button>
                 <button onClick={handleUpdateOrg} className="btn-primary flex-1">GUARDAR</button>
               </div>

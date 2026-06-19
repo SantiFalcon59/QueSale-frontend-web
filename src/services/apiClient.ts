@@ -524,4 +524,12 @@ export const api = {
 
   getOrganizerFeaturedEvents: (organizerId: string, page = 1, limit = 20) =>
     apiRequest(`/api/featured/organizer/${encodeURIComponent(organizerId)}?page=${page}&limit=${limit}`, { auth: true }),
+
+  // --- Subscriptions ---
+  verifyPremiumSubscription: (paymentId: string) =>
+    apiRequest('/api/subscriptions/verify', {
+      method: 'POST',
+      body: { paymentId },
+      auth: true,
+    }),
 };
