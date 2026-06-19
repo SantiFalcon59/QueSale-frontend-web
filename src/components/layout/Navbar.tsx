@@ -311,6 +311,7 @@ export const Navbar: React.FC<{ onMenuClick: () => void }> = ({ onMenuClick }) =
             INGRESAR
           </Link>
         )}
+      </div>
       </header>
       
       <PremiumModal 
