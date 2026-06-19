@@ -211,8 +211,8 @@ const OrganizerDashboard: React.FC = () => {
     if (!staffSearch.trim()) return;
     setSearchingUsers(true);
     try {
-      const result: any = await api.getUsers(1, 20, staffSearch.trim());
-      const users = Array.isArray(result) ? result : (result?.data || []);
+      const result: any = await api.searchUsers(staffSearch.trim());
+      const users = result?.users || [];
       setStaffSearchResults(users);
     } catch {
       setStaffSearchResults([]);

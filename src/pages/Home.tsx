@@ -17,7 +17,7 @@ const EventCard = ({ event }: { event: any }) => (
     <Link to={`/events/${event.id_event}`} className="block">
       <div className="relative aspect-[16/10] overflow-hidden">
         <img 
-          src={resolveAssetUrl(event.thumbnail_url) || NO_EVENT_IMAGE} 
+          src={resolveAssetUrl(event.thumbnail_url) || (event.images?.[0] ? resolveAssetUrl(event.images[0]) : null) || NO_EVENT_IMAGE} 
           alt={event.title}
           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
           onError={(e) => {

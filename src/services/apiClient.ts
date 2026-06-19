@@ -491,6 +491,9 @@ export const api = {
     };
   },
 
+  searchUsers: (q: string) =>
+    apiRequest(`/api/community/search?q=${encodeURIComponent(q)}&type=users`),
+
   votePoll: (postId: number, optionId: number, wallId: string) =>
     apiRequest(`/api/wall/post/${postId}/vote`, {
       method: 'POST',

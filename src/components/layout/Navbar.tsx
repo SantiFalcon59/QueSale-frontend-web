@@ -38,7 +38,7 @@ export const Navbar: React.FC<{ onMenuClick: () => void }> = ({ onMenuClick }) =
           api.communitySearch(trimmed),
         ]);
         setSearchResults({
-          events: eventsRes.events || [],
+          events: Array.isArray(eventsRes) ? eventsRes : (eventsRes?.events || []),
           users: communityRes.users || [],
           organizers: communityRes.organizers || [],
         });
