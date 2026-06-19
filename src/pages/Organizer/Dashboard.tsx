@@ -34,6 +34,7 @@ const OrganizerDashboard: React.FC = () => {
   const [staffSearchResults, setStaffSearchResults] = useState<any[]>([]);
   const [selectedStaffRole, setSelectedStaffRole] = useState('moderator');
   const [searchingUsers, setSearchingUsers] = useState(false);
+  const [hasSearched, setHasSearched] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Featured Events State
@@ -210,6 +211,7 @@ const OrganizerDashboard: React.FC = () => {
   const handleSearchUsers = async () => {
     if (!staffSearch.trim()) return;
     setSearchingUsers(true);
+    setHasSearched(true);
     try {
       const result: any = await api.searchUsers(staffSearch.trim());
       const users = result?.users || [];
@@ -815,7 +817,7 @@ const OrganizerDashboard: React.FC = () => {
             >
               <div className="flex items-center justify-between p-6 border-b border-outline-variant">
                 <h2 className="text-xl font-black flex items-center gap-2"><UserPlus size={20} className="text-primary" /> Agregar Staff</h2>
-                <button onClick={() => { setShowAddStaffModal(false); setStaffSearchResults([]); setStaffSearch(''); }} className="p-2 rounded-xl hover:bg-surface-container-low transition-colors"><X size={20} /></button>
+                <button onClick={() => { setShowAddStaffModal(false); setStaffSearchResults([]); setStaffSearch(''); setHasSearched(false); }} className="p-2 rounded-xl hover:bg-surface-container-low transition-colors"><X size={20} /></button>
               </div>
               <div className="p-6 space-y-4">
                 <div className="flex gap-2">
@@ -867,7 +869,7 @@ const OrganizerDashboard: React.FC = () => {
                     ))}
                   </div>
                 )}
-                {staffSearchResults.length === 0 && staffSearch.trim() && !searchingUsers && (
+                {staffSearchResults.length === 0 && hasSearched && !searchingUsers && (
                   <p className="text-center text-sm text-on-surface-variant py-4">No se encontraron usuarios o ya son staff</p>
                 )}
               </div>
