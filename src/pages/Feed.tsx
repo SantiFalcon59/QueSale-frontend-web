@@ -203,35 +203,79 @@ const Feed: React.FC = () => {
       <LoginPromptModal isOpen={showLoginPrompt} onClose={() => setShowLoginPrompt(false)} />
 
       {events.map((event, index) => {
-        // Assume posts in the feed are actually events for now, or re-evaluate API structure
-        // For now, treating each event as a "post" in the feed to re-use PostCard
+        const images = event.images?.length ? event.images : [];
+        const imgIdx = images.length > 1 ? imageIndex % images.length : 0;
+        const currentSrc = images.length > 0 ? resolveAssetUrl(images[imgIdx]) : resolveAssetUrl(event.thumbnail_url || NO_EVENT_IMAGE);
+        
         return (
           <React.Fragment key={event.id_event}>
             <div className="w-full h-full snap-start p-4 lg:p-8">
               <div className="relative w-full h-full rounded-[40px] overflow-hidden bg-black shadow-2xl flex flex-col justify-end border border-white/5 group">
-                <PostCard
-                  post={{
-                    id_post: event.id_event, // Assuming event ID can be used as post ID for reactions
-                    content: event.description,
-                    media: event.images?.map(resolveAssetUrl),
-                    author: event.creator?.username || event.organizer?.name,
-                    author_photo_url: event.creator?.profile?.photo_url || event.organizer?.logo_url,
-                    created_at: event.date,
-                    user_reaction: event.user_reaction, // Needs to come from API
-                    reactions: event.reactions, // Needs to come from API
-                    comments: event.comments, // Needs to come from API
-                    user: event.creator, // For premium checks etc.
-                    type: 'event', // Indicate it's an event post
-                  }}
-                  onReact={handleReact}
-                  onDelete={handleDeletePost}
-                  onComment={handleComment}
-                  onShare={handleSharePost}
-                  onDeleteComment={handleDeleteComment}
-                  onVotePoll={handleVotePoll}
-                  showDelete={event.creator?.id_user === user?.uid || user?.global_role === 'admin'}
-                  canDeleteComment={(comment) => comment.id_user === user?.uid || user?.global_role === 'admin'}
-                />
+                <div className="absolute inset-0 z-0 overflow-hidden">
+                  <div className="w-full h-full transition-transform duration-1000 group-hover:scale-105">
+                    <img src={currentSrc} className="absolute inset-0 w-full h-full object-cover opacity-70" alt={event.title} />
+                    {fadingMap[event.id_event] && (
+                      <motion.img
+                        initial={{ opacity: 0.7 }}
+                        animate={{ opacity: 0 }}
+                        transition={{ duration: 1.2, ease: "easeInOut" }}
+                        onAnimationComplete={() => setFadingMap(prev => {
+                          const next = { ...prev };
+                          delete next[event.id_event];
+                          return next;
+                        })}
+                        src={resolveAssetUrl(fadingMap[event.id_event])}
+                        className="absolute inset-0 w-full h-full object-cover z-10"
+                      />
+                    )}
+                  </div>
+                </div>
+
+                <div className="relative z-20 p-8 lg:p-12 space-y-6 max-w-4xl">
+                  <div className="flex gap-3">
+                     <span className="px-4 py-1.5 rounded-full bg-primary/20 backdrop-blur-md border-2 border-primary/30 shadow-sm shadow-primary/20 text-primary text-[10px] font-black uppercase tracking-widest">
+                       {event.organizer?.name || event.interests?.[0]?.name || event.tags?.[0] || 'Evento'}
+                     </span>
+                     <span className="px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/10 text-white text-[10px] font-black uppercase tracking-widest">
+                       {format(new Date(event.date), 'EEEE dd', { locale: es })}
+                     </span>
+                  </div>
+
+                  <div className="space-y-4">
+                    <h2 className="text-4xl lg:text-7xl font-black italic tracking-tighter text-white uppercase leading-[0.9]">{event.title}</h2>
+                    <p className="text-base lg:text-lg text-white/70 font-medium leading-relaxed line-clamp-2 max-w-2xl">{event.description}</p>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-6 lg:gap-10 pt-4">
+                    <div className="flex items-center gap-3">
+                       <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center text-white"><MapPin size={24} /></div>
+                       <div>
+                          <p className="text-[10px] text-white/40 font-black uppercase tracking-widest">Ubicación</p>
+                          <p className="text-sm lg:text-base text-white font-bold">{event.ubication}</p>
+                       </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                       <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center text-white"><Calendar size={24} /></div>
+                       <div>
+                          <p className="text-[10px] text-white/40 font-black uppercase tracking-widest">Horario</p>
+                          <p className="text-sm lg:text-base text-white font-bold">{format(new Date(event.date), 'HH:mm')} HS</p>
+                       </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-4 pt-8">
+                     <Link to={`/events/${event.id_event}`} className="h-16 px-10 rounded-2xl bg-white text-black font-black uppercase tracking-widest text-sm hover:scale-105 transition-all flex items-center justify-center">Ver Detalles</Link>
+                     <button onClick={(e) => toggleSave(e, event.id_event)} className={cn("w-16 h-16 rounded-2xl border flex items-center justify-center transition-all", savedEvents[event.id_event] ? "bg-primary border-primary text-white" : "bg-white/10 border-white/10 text-white hover:bg-white hover:text-black")}>
+                        <Bookmark size={24} fill={savedEvents[event.id_event] ? "currentColor" : "none"} />
+                     </button>
+                     <button onClick={(e) => handleShare(e, event)} className="w-16 h-16 rounded-2xl bg-white/10 border border-white/10 text-white flex items-center justify-center hover:bg-white hover:text-black transition-all">
+                        <Share2 size={24} />
+                     </button>
+                  </div>
+                </div>
+
+                <div className="absolute top-0 right-0 w-1/2 h-full bg-linear-to-l from-black/20 to-transparent pointer-events-none" />
+                <div className="absolute top-0 left-0 w-full h-1/2 bg-linear-to-b from-black/40 to-transparent pointer-events-none" />
               </div>
             </div>
 

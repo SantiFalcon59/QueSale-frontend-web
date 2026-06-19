@@ -255,7 +255,7 @@ export const Navbar: React.FC<{ onMenuClick: () => void }> = ({ onMenuClick }) =
                       className="w-full px-4 py-2.5 text-left text-sm text-white flex items-center gap-3 transition-colors cursor-pointer"
                     >
                       <span className="material-symbols-outlined text-[20px] text-white/60">groups</span>
-                      Mis Organizaciones
+                      Mi Organización
                     </motion.button>
                     <motion.button
                       whileHover={{ x: 4, backgroundColor: 'rgba(255,255,255,0.05)' }}

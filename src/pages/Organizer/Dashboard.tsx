@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Users, Ticket, DollarSign, Calendar, Plus, Edit, Trash, BarChart3, TrendingUp, Users as UsersIcon, Sparkles, Building, ArrowRight, Upload, X, Camera, Loader2, Search, Shield, UserPlus, Check, Link, Copy, Star } from 'lucide-react';
+import { Users, Ticket, DollarSign, Calendar, Plus, Edit, Trash, BarChart3, TrendingUp, Users as UsersIcon, Sparkles, Building, ArrowRight, Upload, X, Camera, Loader2, Search, Shield, UserPlus, Check, Link, Copy, Star, ExternalLink } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
@@ -25,7 +25,7 @@ const OrganizerDashboard: React.FC = () => {
   const [isDragOver, setIsDragOver] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [editingOrg, setEditingOrg] = useState(false);
-  const [editOrgData, setEditOrgData] = useState({ name: '', description: '' });
+  const [editOrgData, setEditOrgData] = useState({ name: '', description: '', instagram: '', tiktok: '', twitter: '', website: '' });
   const [showFollowersModal, setShowFollowersModal] = useState(false);
   const [showReportsModal, setShowReportsModal] = useState(false);
   const [showAddStaffModal, setShowAddStaffModal] = useState(false);
