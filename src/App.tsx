@@ -137,7 +137,7 @@ export default function App() {
                     <Route path="/feed" element={<PageWrapper><Feed /></PageWrapper>} />
                     <Route path="/events" element={<PageWrapper><Discovery /></PageWrapper>} />
                     <Route path="/map" element={<PageWrapper><MapPage /></PageWrapper>} />
-                    <Route path="/communities" element={<PageWrapper><Communities /></PageWrapper>} />
+                    <Route path="/community" element={<PageWrapper><Communities /></PageWrapper>} />
                     <Route path="/tos" element={<PageWrapper><TermsOfService /></PageWrapper>} />
                     <Route path="/notifications" element={<AuthGuard><PageWrapper><Notifications /></PageWrapper></AuthGuard>} />
                     <Route path="/favorites" element={<AuthGuard><PageWrapper><Favorites /></PageWrapper></AuthGuard>} />

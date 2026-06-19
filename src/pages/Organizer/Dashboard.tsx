@@ -858,7 +858,7 @@ const OrganizerDashboard: React.FC = () => {
                     {staffSearchResults.filter((u: any) => !staffList.some((s: any) => s.id === u.id_user)).map((u: any) => (
                       <div key={u.id_user} className="flex items-center justify-between p-3 rounded-xl hover:bg-surface-container-low transition-colors">
                         <div className="flex items-center gap-3">
-                          <UserAvatar src={resolveAssetUrl(u.profile?.photo_url)} className="w-8 h-8 rounded-lg bg-surface-container-high" alt="" size={18} />
+                          <UserAvatar src={resolveAssetUrl(u.photo_url)} className="w-8 h-8 rounded-lg bg-surface-container-high" alt="" size={18} />
                           <span className="text-sm font-bold">@{u.username}</span>
                         </div>
                         <button onClick={() => handleAddStaff(u.id_user)} className="btn-primary px-3 py-1.5 text-[9px] font-black uppercase tracking-widest">Agregar</button>

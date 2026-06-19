@@ -3,6 +3,9 @@ import { motion } from 'motion/react';
 import { useNavigate } from 'react-router-dom';
 import { Users, Search, Bell, UserPlus, X } from 'lucide-react';
 import { cn } from '../lib/utils';
+import { api } from '../services/apiClient';
+import { useAuth } from '../context/AuthContext';
+import { UserAvatar } from '../components/ui/UserAvatar';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
@@ -212,13 +215,18 @@ function ExploreContent({ searchQuery, onSearchChange, results, loading }: {
 }
 
 function FollowingContent() {
+  const { profile } = useAuth();
   const [following, setFollowing] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // This would need auth - for now show empty state
-    setLoading(false);
-  }, []);
+    setLoading(true);
+    if (!profile?.id_user) { setLoading(false); return; }
+    api.get(`/api/community/users/${encodeURIComponent(profile.id_user)}/following`)
+      .then((data: any) => setFollowing(Array.isArray(data) ? data : []))
+      .catch(() => setFollowing([]))
+      .finally(() => setLoading(false));
+  }, [profile?.id_user]);
 
   if (loading) {
     return (
@@ -257,10 +265,11 @@ function UserCard({ user }: { user: any }) {
     <div className="flex items-center gap-4 bg-surface-container-low rounded-2xl p-4 border border-outline-variant/50 hover:border-primary/30 transition-all cursor-pointer"
       onClick={() => navigate(`/@${user.username}`)}
     >
-      <img
-        src={resolveImgUrl(user.photo_url) || 'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=96'}
+      <UserAvatar
+        src={resolveImgUrl(user.photo_url)}
         alt={user.username}
-        className="w-12 h-12 rounded-full object-cover bg-surface-container-high"
+        className="w-12 h-12 rounded-full"
+        size={22}
       />
       <div className="flex-1 min-w-0">
         <p className="font-bold text-sm text-on-surface truncate">{user.username}</p>

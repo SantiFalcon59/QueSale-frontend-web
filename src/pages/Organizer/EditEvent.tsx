@@ -28,7 +28,7 @@ const MapPicker: React.FC<{ lat: number; lng: number; address: string; onLocatio
 
   useEffect(() => {
     if (!places || !inputRef.current) return;
-    const autocomplete = new places.Autocomplete(inputRef.current, { types: ['geocode'] });
+    const autocomplete = new places.Autocomplete(inputRef.current, { types: ['geocode'], componentRestrictions: { country: 'AR' } });
     autocompleteRef.current = autocomplete;
     autocomplete.addListener('place_changed', () => {
       const place = autocomplete.getPlace();

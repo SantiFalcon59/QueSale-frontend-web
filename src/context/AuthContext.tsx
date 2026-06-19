@@ -10,6 +10,7 @@ interface UserProfile {
   photoURL: string | null;
   username?: string;
   role?: 'admin' | 'user' | 'moderator';
+  id_user?: string;
 }
 
 interface AuthContextType {
@@ -44,6 +45,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     return {
       uid,
+      id_user: backendProfile?.id_user || backendProfile?.id || uid,
       email: backendProfile?.email || auth.currentUser?.email || null,
       displayName: username || null,
       photoURL: backendPhoto,
