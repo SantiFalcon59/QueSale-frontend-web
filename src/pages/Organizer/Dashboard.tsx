@@ -214,7 +214,8 @@ const OrganizerDashboard: React.FC = () => {
       const result: any = await api.searchUsers(staffSearch.trim());
       const users = result?.users || [];
       setStaffSearchResults(users);
-    } catch {
+    } catch (err) {
+      console.error("Error searching users:", err);
       setStaffSearchResults([]);
     } finally {
       setSearchingUsers(false);

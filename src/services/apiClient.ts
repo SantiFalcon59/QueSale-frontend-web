@@ -492,7 +492,7 @@ export const api = {
   },
 
   searchUsers: (q: string) =>
-    apiRequest(`/api/community/search?q=${encodeURIComponent(q)}&type=users`),
+    apiRequest(`/api/community/search?q=${encodeURIComponent(q)}&type=users`, { auth: true }),
 
   votePoll: (postId: number, optionId: number, wallId: string) =>
     apiRequest(`/api/wall/post/${postId}/vote`, {

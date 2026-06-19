@@ -51,8 +51,8 @@ export const AdBanner: React.FC<AdBannerProps> = ({
 
   if (isPlaceholder) {
     return (
-      <div className={`w-full ${className || ''}`}>
-        <img src="/publicidad.jpg" alt="Publicidad" className="w-full rounded-xl" />
+      <div className={`w-full self-stretch ${className || ''}`}>
+        <img src="/publicidad.jpg" alt="Publicidad" className="w-full h-full object-cover rounded-xl" />
       </div>
     );
   }
