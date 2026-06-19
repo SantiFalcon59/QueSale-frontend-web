@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion } from 'motion/react';
 import { cn, NO_EVENT_IMAGE } from '../lib/utils';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -7,9 +7,8 @@ import { LoginPromptModal } from '../components/ui/LoginPromptModal';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { api, resolveAssetUrl } from '../services/apiClient';
-import { Calendar, MapPin, Share2, Bookmark, Loader2, ThumbsUp, MessageSquare } from 'lucide-react';
+import { Calendar, MapPin, Share2, Bookmark } from 'lucide-react';
 import { AdBanner } from '../components/ui/AdBanner';
-import PostCard from '../components/wall/PostCard';
 
 const CYCLE_MS = 4000;
 
@@ -101,80 +100,6 @@ const Feed: React.FC = () => {
       }
     } catch (err) {
       console.error('Error sharing:', err);
-    }
-  };
-
-  const handleReact = async (postId: number, type: string) => {
-    if (!user) return document.dispatchEvent(new CustomEvent('show-login-prompt'));
-    setEvents(prevEvents => prevEvents.map(ev => ev.id_event === postId ? ({
-      ...ev,
-      // Logic for updating reaction counts locally (optional, for immediate feedback)
-    }) : ev));
-    try {
-      // Assuming event.id_event is the wallId for the post in the feed
-      const result: any = await api.toggleReaction(postId, type);
-      setEvents(prevEvents => prevEvents.map(ev => ev.id_event === postId ? { ...ev, reactions: result.reactions } : ev));
-    } catch (err) {
-      console.error('Error toggling reaction:', err);
-    }
-  };
-
-  const handleDeletePost = async (postId: number) => {
-    if (!window.confirm('¿Eliminar esta publicación?')) return;
-    try {
-      await api.deleteWallPost_new(postId);
-      setEvents(prevEvents => prevEvents.filter(ev => ev.id_event !== postId));
-    } catch (err) {
-      console.error('Error deleting post:', err);
-    }
-  };
-
-  const handleComment = async (postId: number, content: string) => {
-    if (!user) return document.dispatchEvent(new CustomEvent('show-login-prompt'));
-    try {
-      await api.createWallComment_new(postId, content);
-      // Re-fetch posts or update locally
-      const result: any = await api.getEvents(1, 20); // This should ideally be a wall-specific fetch
-      const apiEvents = Array.isArray(result) ? result : (result?.data || []);
-      setEvents(apiEvents);
-    } catch (err) {
-      console.error('Error posting comment:', err);
-    }
-  };
-
-  const handleSharePost = async (content: string) => {
-    if (navigator.share) {
-      try {
-        await navigator.share({ title: 'QueSale', text: content, url: window.location.href });
-      } catch { /* user cancelled */ }
-    } else {
-      await navigator.clipboard.writeText(`${content} — ${window.location.href}`);
-    }
-  };
-
-  const handleDeleteComment = async (commentId: number) => {
-    if (!window.confirm('¿Eliminar este comentario?')) return;
-    try {
-      await api.deleteWallComment_new(commentId);
-      // Re-fetch posts or update locally
-      const result: any = await api.getEvents(1, 20); // This should ideally be a wall-specific fetch
-      const apiEvents = Array.isArray(result) ? result : (result?.data || []);
-      setEvents(apiEvents);
-    } catch (err) {
-      console.error('Error deleting comment:', err);
-    }
-  };
-
-  const handleVotePoll = async (postId: number, optionId: number) => {
-    if (!user) return document.dispatchEvent(new CustomEvent('show-login-prompt'));
-    try {
-      // Assuming event.id_event is the wallId for the post in the feed
-      const result: any = await api.votePoll(postId, optionId, postId.toString()); // Assuming postId is also wallId
-      if (result?.post) {
-        setEvents(prevEvents => prevEvents.map(ev => ev.id_event === postId ? result.post : ev));
-      }
-    } catch (err) {
-      console.error('Error voting on poll:', err);
     }
   };
 
