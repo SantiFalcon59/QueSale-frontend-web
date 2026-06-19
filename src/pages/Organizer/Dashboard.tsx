@@ -485,7 +485,23 @@ const OrganizerDashboard: React.FC = () => {
             <ExternalLink size={14} /> Ver Perfil Público
           </button>
           <button
-            onClick={() => setEditingOrg(!editingOrg)}
+            onClick={() => {
+              setEditingOrg(true);
+              if (organization) {
+                setEditOrgData({
+                  name: organization.name || '',
+                  description: organization.description || '',
+                  instagram: organization.instagram || '',
+                  tiktok: organization.tiktok || '',
+                  twitter: organization.twitter || '',
+                  website: organization.website || '',
+                  real_name: organization.real_name || '',
+                  dni: organization.dni || '',
+                  address: organization.address || '',
+                  phone_number: organization.phone_number || ''
+                });
+              }
+            }}
             className="h-12 px-6 rounded-2xl border border-outline-variant hover:bg-surface-container-low transition-all text-[10px] font-black uppercase tracking-widest flex items-center gap-2"
           >
             <Edit size={14} /> Editar Org
@@ -514,7 +530,7 @@ const OrganizerDashboard: React.FC = () => {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
               onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-lg bg-white rounded-[2rem] shadow-2xl overflow-hidden max-h-[90vh] flex flex-col"
+              className="w-full max-w-lg bg-white rounded-[2rem] shadow-2xl overflow-hidden max-h-[85vh] flex flex-col"
             >
               <div className="flex items-center justify-between p-6 border-b border-outline-variant shrink-0">
                 <h2 className="text-xl font-black">Editar Organización</h2>
@@ -557,6 +573,31 @@ const OrganizerDashboard: React.FC = () => {
                       <label className="text-[10px] uppercase font-black tracking-widest text-on-surface-variant ml-4">Sitio Web</label>
                       <input value={editOrgData.website} onChange={e => setEditOrgData(prev => ({ ...prev, website: e.target.value }))} placeholder="https://..." className="w-full bg-surface-container-low border border-outline-variant rounded-xl px-4 py-3 text-sm outline-none focus:border-primary/50 transition-all font-medium" />
                    </div>
+                </div>
+
+                <div className="pt-4 border-t border-outline-variant space-y-4">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Shield className="text-secondary" size={16} />
+                    <h4 className="text-[9px] font-black uppercase tracking-[0.2em] text-on-surface-variant">Datos para Verificación (Opcional)</h4>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                     <div className="space-y-1">
+                        <label className="text-[10px] uppercase font-black tracking-widest text-on-surface-variant ml-4">Nombre Real</label>
+                        <input value={editOrgData.real_name} onChange={e => setEditOrgData(prev => ({ ...prev, real_name: e.target.value }))} className="w-full bg-surface-container-low border border-outline-variant rounded-xl px-4 py-3 text-sm outline-none focus:border-primary/50 transition-all font-medium" />
+                     </div>
+                     <div className="space-y-1">
+                        <label className="text-[10px] uppercase font-black tracking-widest text-on-surface-variant ml-4">DNI / CUIT</label>
+                        <input value={editOrgData.dni} onChange={e => setEditOrgData(prev => ({ ...prev, dni: e.target.value }))} className="w-full bg-surface-container-low border border-outline-variant rounded-xl px-4 py-3 text-sm outline-none focus:border-primary/50 transition-all font-medium" />
+                     </div>
+                     <div className="space-y-1">
+                        <label className="text-[10px] uppercase font-black tracking-widest text-on-surface-variant ml-4">Teléfono</label>
+                        <input value={editOrgData.phone_number} onChange={e => setEditOrgData(prev => ({ ...prev, phone_number: e.target.value }))} className="w-full bg-surface-container-low border border-outline-variant rounded-xl px-4 py-3 text-sm outline-none focus:border-primary/50 transition-all font-medium" />
+                     </div>
+                     <div className="space-y-1">
+                        <label className="text-[10px] uppercase font-black tracking-widest text-on-surface-variant ml-4">Dirección Comercial</label>
+                        <input value={editOrgData.address} onChange={e => setEditOrgData(prev => ({ ...prev, address: e.target.value }))} className="w-full bg-surface-container-low border border-outline-variant rounded-xl px-4 py-3 text-sm outline-none focus:border-primary/50 transition-all font-medium" />
+                     </div>
+                  </div>
                 </div>
 
                 {organization?.verified ? (

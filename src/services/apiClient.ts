@@ -527,9 +527,7 @@ export const api = {
 
   // --- Subscriptions ---
   verifyPremiumSubscription: (paymentId: string) =>
-    apiRequest('/api/subscriptions/verify', {
-      method: 'POST',
-      body: { paymentId },
+    apiRequest(`/api/subscriptions/verify-payment?payment_id=${encodeURIComponent(paymentId)}`, {
       auth: true,
     }),
 };

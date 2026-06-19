@@ -29,7 +29,7 @@ const Profile: React.FC<{ usernameFromUrl?: string }> = ({ usernameFromUrl }) =>
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
   const premiumSuccess = searchParams.get('premium_success') === 'true';
-  const paymentId = searchParams.get('payment_id');
+  const paymentId = searchParams.get('payment_id') || searchParams.get('collection_id');
   
   const { profile: loggedProfile, user: currentUser, refreshProfile } = useAuth();
 
@@ -219,10 +219,8 @@ const Profile: React.FC<{ usernameFromUrl?: string }> = ({ usernameFromUrl }) =>
       const content = selectedGif
         ? `${newPost.trim()}\n[GIF:${selectedGif}]`
         : newPost.trim();
-      const created: any = await api.createWallPost_new('user_profile', profileUser.id, content);
-      if (created) {
-        setPosts(prev => [created, ...prev]);
-      }
+      await api.createWallPost_new('user_profile', profileUser.id, content);
+      await fetchPosts();
       setNewPost('');
       setSelectedGif(null);
       setShowEmojiPicker(false);

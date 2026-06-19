@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, Check, Star, Zap, Image as ImageIcon, MessageSquare, ShieldCheck, Crown, Loader2 } from 'lucide-react';
 import { api } from '../../services/apiClient';
@@ -36,7 +37,7 @@ export const PremiumModal: React.FC<PremiumModalProps> = ({ isOpen, onClose }) =
     { name: 'Soporte prioritario', free: false, premium: true },
   ];
 
-  return (
+  const modalContent = (
     <AnimatePresence>
       {isOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 lg:p-8">
@@ -133,4 +134,7 @@ export const PremiumModal: React.FC<PremiumModalProps> = ({ isOpen, onClose }) =
       )}
     </AnimatePresence>
   );
+
+  if (typeof document === 'undefined') return null;
+  return createPortal(modalContent, document.body);
 };

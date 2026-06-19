@@ -1138,8 +1138,8 @@ const EventWall: React.FC<{ eventId: string; organizerOwnerId?: string; eventTit
   const handlePost = async (content: string, type?: string, media?: string[], pollOptions?: string[]) => {
     if (!user) return;
     try {
-      const created: any = await api.createWallPost_new('event', eventId, content, type, media, pollOptions);
-      if (created) setPosts(prev => [created, ...prev]);
+      await api.createWallPost_new('event', eventId, content, type, media, pollOptions);
+      await fetchPosts();
     } catch (e) {
       console.error(e);
     }
