@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Menu } from 'lucide-react';
+import { Menu, Crown } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { cn } from '../../lib/utils';
@@ -8,12 +8,14 @@ import { motion, AnimatePresence } from 'motion/react';
 import { api, resolveAssetUrl } from '../../services/apiClient';
 import { UserAvatar } from '../ui/UserAvatar';
 import { OrganizerAvatar } from '../ui/OrganizerAvatar';
+import { PremiumModal } from '../ui/PremiumModal';
 
 export const Navbar: React.FC<{ onMenuClick: () => void }> = ({ onMenuClick }) => {
   const { user, profile, logout } = useAuth();
   const navigate = useNavigate();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const [premiumModalOpen, setPremiumModalOpen] = useState(false);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<{ events: any[]; users: any[]; organizers: any[] }>({ events: [], users: [], organizers: [] });
@@ -188,6 +190,15 @@ export const Navbar: React.FC<{ onMenuClick: () => void }> = ({ onMenuClick }) =
 
       <div className="flex items-center gap-6">
         <div className="flex items-center gap-3">
+          {user && !profile?.is_premium && (
+            <button
+              onClick={() => setPremiumModalOpen(true)}
+              className="hidden sm:flex items-center gap-2 bg-linear-to-r from-amber-400 to-amber-600 text-white px-4 py-2 rounded-xl font-bold text-xs shadow-lg shadow-amber-500/20 hover:scale-105 transition-transform border border-amber-300/30 uppercase tracking-widest cursor-pointer"
+            >
+              <Crown size={16} className="fill-white" />
+              PREMIUM
+            </button>
+          )}
           {user && <NotificationsPopover />}
         </div>
 
@@ -300,6 +311,11 @@ export const Navbar: React.FC<{ onMenuClick: () => void }> = ({ onMenuClick }) =
           </Link>
         )}
       </div>
+      
+      <PremiumModal 
+        isOpen={premiumModalOpen} 
+        onClose={() => setPremiumModalOpen(false)} 
+      />
     </header>
   );
 };

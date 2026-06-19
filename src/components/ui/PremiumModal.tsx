@@ -52,10 +52,10 @@ export const PremiumModal: React.FC<PremiumModalProps> = ({ isOpen, onClose }) =
             initial={{ scale: 0.9, opacity: 0, y: 20 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.9, opacity: 0, y: 20 }}
-            className="relative w-full max-w-2xl bg-surface rounded-[2.5rem] shadow-2xl overflow-hidden border border-white/20"
+            className="relative w-full max-w-2xl max-h-[90vh] flex flex-col bg-surface rounded-[2.5rem] shadow-2xl overflow-hidden border border-white/20"
           >
             {/* Header / Banner */}
-            <div className="relative h-48 bg-linear-to-br from-amber-400 via-amber-500 to-amber-600 flex flex-col items-center justify-center text-center p-6">
+            <div className="relative shrink-0 h-40 lg:h-48 bg-linear-to-br from-amber-400 via-amber-500 to-amber-600 flex flex-col items-center justify-center text-center p-6">
                <div className="absolute inset-0 overflow-hidden opacity-20">
                   <div className="absolute -top-10 -left-10 w-40 h-40 bg-white rounded-full blur-3xl animate-pulse" />
                   <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-white rounded-full blur-3xl animate-pulse delay-1000" />
@@ -73,8 +73,8 @@ export const PremiumModal: React.FC<PremiumModalProps> = ({ isOpen, onClose }) =
                </button>
             </div>
 
-            <div className="p-8 lg:p-12 space-y-8">
-               <div className="grid grid-cols-12 gap-4">
+            <div className="p-6 lg:p-8 space-y-6 overflow-y-auto">
+               <div className="grid grid-cols-12 gap-2 lg:gap-4">
                   <div className="col-span-6" />
                   <div className="col-span-3 text-center">
                      <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Gratis</p>
