@@ -15,7 +15,7 @@ export const PremiumModal: React.FC<PremiumModalProps> = ({ isOpen, onClose }) =
   const handleSubscribe = async () => {
     setLoading(true);
     try {
-      const res: any = await api.post('/api/subscriptions/premium', {});
+      const res: any = await api.post('/api/subscriptions/premium', {}, { auth: true });
       if (res.init_point) {
         window.location.href = res.init_point;
       }

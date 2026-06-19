@@ -73,7 +73,8 @@ export const Navbar: React.FC<{ onMenuClick: () => void }> = ({ onMenuClick }) =
   };
 
   return (
-    <header className="fixed top-0 right-0 w-full lg:w-[calc(100%-16rem)] h-16 z-50 navbar-glass flex justify-between items-center px-8 transition-all duration-300">
+    <>
+      <header className="fixed top-0 right-0 w-full lg:w-[calc(100%-16rem)] h-16 z-50 navbar-glass flex justify-between items-center px-8 transition-all duration-300">
       <div className="flex items-center gap-4 flex-1">
         <button 
           onClick={onMenuClick}
@@ -310,12 +311,12 @@ export const Navbar: React.FC<{ onMenuClick: () => void }> = ({ onMenuClick }) =
             INGRESAR
           </Link>
         )}
-      </div>
+      </header>
       
       <PremiumModal 
         isOpen={premiumModalOpen} 
         onClose={() => setPremiumModalOpen(false)} 
       />
-    </header>
+    </>
   );
 };
