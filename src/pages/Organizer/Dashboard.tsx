@@ -35,6 +35,7 @@ const OrganizerDashboard: React.FC = () => {
   const [selectedStaffRole, setSelectedStaffRole] = useState('moderator');
   const [searchingUsers, setSearchingUsers] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
+  const [availableRoles, setAvailableRoles] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Featured Events State
@@ -128,6 +129,10 @@ const OrganizerDashboard: React.FC = () => {
   useEffect(() => {
     fetchAll();
   }, [user]);
+
+  useEffect(() => {
+    api.getOrganizerRoles().then(setAvailableRoles).catch(() => setAvailableRoles(['admin', 'moderator']));
+  }, []);
 
   const handleCreateOrg = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -838,20 +843,17 @@ const OrganizerDashboard: React.FC = () => {
                 <div className="space-y-2">
                   <label className="text-[10px] uppercase font-black tracking-widest text-on-surface-variant ml-2">Rol</label>
                   <div className="flex gap-2">
-                    {[
-                      { id: 'admin', label: 'Administrador' },
-                      { id: 'moderator', label: 'Moderador' }
-                    ].map(role => (
+                    {availableRoles.map(role => (
                       <button
-                        key={role.id}
+                        key={role}
                         type="button"
-                        onClick={() => setSelectedStaffRole(role.id)}
+                        onClick={() => setSelectedStaffRole(role)}
                         className={cn(
                           "flex-1 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all",
-                          selectedStaffRole === role.id ? "bg-primary text-white border-primary" : "bg-white text-on-surface-variant border-outline-variant hover:border-primary/30"
+                          selectedStaffRole === role ? "bg-primary text-white border-primary" : "bg-white text-on-surface-variant border-outline-variant hover:border-primary/30"
                         )}
                       >
-                        {role.label}
+                        {role === 'admin' ? 'Administrador' : role.charAt(0).toUpperCase() + role.slice(1)}
                       </button>
                     ))}
                   </div>

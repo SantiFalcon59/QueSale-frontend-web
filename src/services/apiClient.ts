@@ -191,6 +191,9 @@ export const api = {
   getOrganizerAdmins: (organizerId: string) =>
     apiRequest(`/api/organizers/${encodeURIComponent(organizerId)}/admins`, { auth: true }),
 
+  getOrganizerRoles: () =>
+    apiRequest('/api/organizers/roles'),
+
   removeOrganizerAdmin: (organizerId: string, adminId: string) =>
     apiRequest(`/api/organizers/${encodeURIComponent(organizerId)}/admins/${encodeURIComponent(adminId)}`, {
       method: 'DELETE',
