@@ -77,6 +77,14 @@ const OrganizerDashboard: React.FC = () => {
           id_creator: org.id_creator,
           mp_public_key: org.mp_public_key,
           mp_access_token: org.mp_access_token,
+          instagram: org.instagram,
+          tiktok: org.tiktok,
+          twitter: org.twitter,
+          website: org.website,
+          real_name: org.real_name,
+          dni: org.dni,
+          address: org.address,
+          phone_number: org.phone_number,
         });
         setEditOrgData({ 
           name: org.name, 
@@ -192,6 +200,14 @@ const OrganizerDashboard: React.FC = () => {
         ...prev, 
         name: editOrgData.name, 
         description: editOrgData.description,
+        instagram: editOrgData.instagram,
+        tiktok: editOrgData.tiktok,
+        twitter: editOrgData.twitter,
+        website: editOrgData.website,
+        real_name: editOrgData.real_name,
+        dni: editOrgData.dni,
+        address: editOrgData.address,
+        phone_number: editOrgData.phone_number,
       }));
       setEditingOrg(false);
       await fetchAll();
