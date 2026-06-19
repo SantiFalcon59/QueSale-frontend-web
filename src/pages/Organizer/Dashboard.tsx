@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Users, Ticket, DollarSign, Calendar, Plus, Edit, Trash, BarChart3, TrendingUp, Users as UsersIcon, Sparkles, Building, ArrowRight, Upload, X, Camera, Loader2, Search, Shield, UserPlus, Check, Link, Copy, Star, ExternalLink } from 'lucide-react';
+import { Users, Ticket, DollarSign, Calendar, Plus, Edit, Trash, BarChart3, TrendingUp, Users as UsersIcon, Sparkles, Building, ArrowRight, Upload, X, Camera, Loader2, Search, Shield, UserPlus, Check, Link, Copy, Star, ExternalLink, Eye, Heart, MessageCircle, Percent, ShieldCheck, MessageSquare } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
@@ -311,11 +311,23 @@ const OrganizerDashboard: React.FC = () => {
   const isCreator = organization?.id_creator === user?.uid;
   const isStaff = staffList.some((s: any) => s.id === user?.uid) || isCreator;
 
+  const d = dashboardData || {};
   const stats = [
-    { label: 'Eventos', value: dashboardData?.total_events || events.length || 0, icon: Calendar, color: 'text-primary' },
-    { label: 'Tickets Vendidos', value: dashboardData?.total_tickets || 0, icon: Ticket, color: 'text-secondary' },
-    { label: 'Seguidores', value: dashboardData?.followers || 0, icon: UsersIcon, color: 'text-tertiary' },
-    { label: 'Rating Promedio', value: dashboardData?.avg_rating ? `${dashboardData.avg_rating}/5` : 'Sin reviews', icon: Sparkles, color: 'text-on-surface' },
+    { label: 'Eventos', value: d.total_events || events.length || 0, icon: Calendar, color: 'text-primary' },
+    { label: 'Tickets Vendidos', value: d.total_tickets || 0, icon: Ticket, color: 'text-secondary' },
+    { label: 'Seguidores', value: d.followers || 0, icon: UsersIcon, color: 'text-tertiary' },
+    { label: 'Rating Promedio', value: d.avg_rating ? `${d.avg_rating}/5` : 'Sin reviews', icon: Sparkles, color: 'text-on-surface' },
+  ];
+
+  const extraStats = [
+    { label: 'Vistas Eventos', value: d.total_event_views || 0, icon: Eye, color: 'text-blue-600' },
+    { label: 'Vistas Perfil', value: d.total_profile_views || 0, icon: Eye, color: 'text-purple-600' },
+    { label: 'Ingresos', value: d.revenue ? `$${Number(d.revenue).toLocaleString('es-AR')}` : '$0', icon: DollarSign, color: 'text-green-600' },
+    { label: 'Guardados', value: d.total_saves || 0, icon: Heart, color: 'text-red-500' },
+    { label: 'Engagement', value: (d.total_posts || 0) + (d.total_comments || 0) + (d.total_reactions || 0), icon: MessageCircle, color: 'text-amber-500' },
+    { label: 'Mensajes Chat', value: d.total_chat_messages || 0, icon: MessageSquare, color: 'text-cyan-600' },
+    { label: 'Ocupación', value: d.capacity_utilization ? `${Math.round(d.capacity_utilization * 100)}%` : '0%', icon: Percent, color: 'text-indigo-500' },
+    { label: 'Validación', value: d.validation_rate ? `${Math.round(d.validation_rate * 100)}%` : '0%', icon: ShieldCheck, color: 'text-teal-600' },
   ];
 
   if (loading) {
@@ -870,13 +882,25 @@ const OrganizerDashboard: React.FC = () => {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="p-4 rounded-2xl bg-primary/5 border border-primary/10">
                     <p className="text-[10px] font-black uppercase tracking-widest text-primary">Total Tickets</p>
-                    <p className="text-3xl font-black mt-1">{dashboardData?.total_tickets || 0}</p>
+                    <p className="text-3xl font-black mt-1">{d.total_tickets || 0}</p>
                   </div>
                   <div className="p-4 rounded-2xl bg-secondary/5 border border-secondary/10">
                     <p className="text-[10px] font-black uppercase tracking-widest text-secondary">Eventos</p>
-                    <p className="text-3xl font-black mt-1">{dashboardData?.total_events || events.length || 0}</p>
+                    <p className="text-3xl font-black mt-1">{d.total_events || events.length || 0}</p>
                   </div>
                 </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="p-4 rounded-2xl bg-green-50 border border-green-100">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-green-700">Ingresos</p>
+                    <p className="text-3xl font-black mt-1 text-green-800">${Number(d.revenue || 0).toLocaleString('es-AR')}</p>
+                  </div>
+                  <div className="p-4 rounded-2xl bg-blue-50 border border-blue-100">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-blue-700">Vistas</p>
+                    <p className="text-2xl font-black mt-1 text-blue-800">{d.total_event_views || 0} eventos · {d.total_profile_views || 0} perfil</p>
+                  </div>
+                </div>
+
                 <div className="p-4 rounded-2xl bg-surface-container-low border border-outline-variant">
                   <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant mb-3">Eventos por Estado</p>
                   <div className="space-y-3">
@@ -890,13 +914,49 @@ const OrganizerDashboard: React.FC = () => {
                     </div>
                   </div>
                 </div>
+
                 <div className="p-4 rounded-2xl bg-surface-container-low border border-outline-variant">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant mb-3">Seguidores</p>
-                  <p className="text-2xl font-black">{dashboardData?.followers || 0}</p>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant mb-3">Distribución de Ratings</p>
+                  {d.avg_rating_count > 0 ? (
+                    <div className="space-y-2">
+                      {[5, 4, 3, 2, 1].map((star) => {
+                        const count = d.rating_distribution?.[String(star)] || 0;
+                        const pct = d.avg_rating_count > 0 ? (count / d.avg_rating_count) * 100 : 0;
+                        return (
+                          <div key={star} className="flex items-center gap-3">
+                            <span className="text-xs font-black w-4">{star}</span>
+                            <div className="flex-1 h-3 rounded-full bg-outline-variant/30 overflow-hidden">
+                              <div
+                                className="h-full rounded-full bg-amber-400 transition-all"
+                                style={{ width: `${pct}%` }}
+                              />
+                            </div>
+                            <span className="text-[10px] font-bold text-on-surface-variant w-8 text-right">{count}</span>
+                          </div>
+                        );
+                      })}
+                      <p className="text-[10px] text-on-surface-variant font-medium mt-2 text-center">
+                        {d.avg_rating}/5 promedio · {d.avg_rating_count} reviews
+                      </p>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-on-surface-variant font-medium text-center py-4">Sin reviews aún</p>
+                  )}
                 </div>
-                <div className="p-4 rounded-2xl bg-surface-container-low border border-outline-variant">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant mb-3">Rating</p>
-                  <p className="text-2xl font-black">{dashboardData?.avg_rating ? `${dashboardData.avg_rating}/5` : 'Sin reviews'}</p>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="p-4 rounded-2xl bg-surface-container-low border border-outline-variant">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant mb-1">Seguidores</p>
+                    <p className="text-2xl font-black">{d.followers || 0}</p>
+                    <p className="text-[10px] text-on-surface-variant mt-1 font-medium">
+                      +{d.follower_growth_30d || 0} en 30 días
+                    </p>
+                  </div>
+                  <div className="p-4 rounded-2xl bg-surface-container-low border border-outline-variant">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant mb-1">Rendimiento</p>
+                    <p className="text-sm font-black">Ocupación: {d.capacity_utilization ? `${Math.round(d.capacity_utilization * 100)}%` : '0%'}</p>
+                    <p className="text-sm font-black">Validación: {d.validation_rate ? `${Math.round(d.validation_rate * 100)}%` : '0%'}</p>
+                  </div>
                 </div>
               </div>
             </motion.div>
@@ -1027,6 +1087,60 @@ const OrganizerDashboard: React.FC = () => {
             ))}
           </div>
 
+          {/* Extra Metrics */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {extraStats.map((stat, i) => (
+              <motion.div
+                key={stat.label}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.05 }}
+                className="p-4 rounded-2xl bg-surface-container-low border border-outline-variant hover:border-primary/20 hover:shadow-sm transition-all group"
+              >
+                <div className="flex items-center gap-3 mb-2">
+                  <div className={cn("p-2 rounded-xl bg-surface-container-high", stat.color)}>
+                    <stat.icon size={16} />
+                  </div>
+                  <p className="text-[9px] font-bold uppercase tracking-widest text-on-surface-variant">{stat.label}</p>
+                </div>
+                <h3 className="text-xl font-black ml-1">{stat.value}</h3>
+              </motion.div>
+            ))}
+          </div>
+
+          {/* Descubrimiento Section */}
+          <section className="p-8 rounded-[2.5rem] bg-surface-container-low border border-outline-variant space-y-6">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xl font-bold flex items-center gap-2"><BarChart3 size={20} className="text-secondary" /> Descubrimiento</h3>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+              <div className="p-5 rounded-2xl bg-white/50 border border-outline-variant/50">
+                <p className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant mb-1">Vistas Totales</p>
+                <p className="text-2xl font-black">{d.total_event_views || 0}</p>
+                <p className="text-[10px] text-on-surface-variant mt-1 font-medium">en todos los eventos</p>
+              </div>
+              <div className="p-5 rounded-2xl bg-white/50 border border-outline-variant/50">
+                <p className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant mb-1">Guardados</p>
+                <p className="text-2xl font-black">{d.total_saves || 0}</p>
+                <p className="text-[10px] text-on-surface-variant mt-1 font-medium">eventos favoritos</p>
+              </div>
+              <div className="p-5 rounded-2xl bg-white/50 border border-outline-variant/50">
+                <p className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant mb-1">Tasa de Conversión</p>
+                <p className="text-2xl font-black">
+                  {d.total_event_views > 0
+                    ? `${Math.round(((d.total_saves || 0) / d.total_event_views) * 1000) / 10}%`
+                    : '0%'}
+                </p>
+                <p className="text-[10px] text-on-surface-variant mt-1 font-medium">guardados / vistas</p>
+              </div>
+              <div className="p-5 rounded-2xl bg-white/50 border border-outline-variant/50">
+                <p className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant mb-1">Top por Vistas</p>
+                <p className="text-sm font-black truncate">{d.trending?.top_by_views || '—'}</p>
+                <p className="text-[10px] text-on-surface-variant mt-1 font-medium">evento más visto</p>
+              </div>
+            </div>
+          </section>
+
           {/* Recent Events */}
           <section className="p-8 rounded-[2.5rem] bg-surface-container-low border border-outline-variant space-y-6">
             <div className="flex items-center justify-between">
@@ -1037,26 +1151,35 @@ const OrganizerDashboard: React.FC = () => {
             </div>
             {events.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {events.slice(0, 6).map(event => (
-                  <div key={event.id_event} className="p-4 rounded-2xl bg-white/50 border border-transparent hover:border-primary/20 transition-all flex items-center gap-4 group">
-                    <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
-                      <Calendar size={18} />
+                {events.slice(0, 6).map(event => {
+                  const evMetrics = (d.per_event || []).find((p: any) => p.id_event === event.id_event);
+                  return (
+                    <div key={event.id_event} className="p-4 rounded-2xl bg-white/50 border border-transparent hover:border-primary/20 transition-all flex items-center gap-4 group">
+                      <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
+                        <Calendar size={18} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h4 className="text-sm font-bold truncate">{event.title}</h4>
+                        <p className="text-[10px] text-on-surface-variant font-medium">
+                          {event.date ? new Date(event.date).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' }) : 'Sin fecha'}
+                        </p>
+                        {evMetrics && (
+                          <div className="flex gap-2 mt-1">
+                            <span className="text-[8px] font-bold text-blue-600"><Eye size={8} className="inline mr-0.5" />{evMetrics.views}</span>
+                            <span className="text-[8px] font-bold text-green-600"><Ticket size={8} className="inline mr-0.5" />{evMetrics.tickets_sold}</span>
+                            <span className="text-[8px] font-bold text-amber-600"><Star size={8} className="inline mr-0.5" />{evMetrics.avg_rating > 0 ? evMetrics.avg_rating : '—'}</span>
+                          </div>
+                        )}
+                      </div>
+                      <span className={cn(
+                        "px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest",
+                        event.status === 'active' ? "bg-green-50 text-green-600" : "bg-gray-100 text-gray-500"
+                      )}>
+                        {event.status === 'active' ? 'Activo' : 'Finalizado'}
+                      </span>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <h4 className="text-sm font-bold truncate">{event.title}</h4>
-                      <p className="text-[10px] text-on-surface-variant font-medium">
-                        {event.date ? new Date(event.date).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' }) : 'Sin fecha'}
-                        {event.capacity ? ` · ${event.capacity} lugares` : ''}
-                      </p>
-                    </div>
-                    <span className={cn(
-                      "px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest",
-                      event.status === 'active' ? "bg-green-50 text-green-600" : "bg-gray-100 text-gray-500"
-                    )}>
-                      {event.status === 'active' ? 'Activo' : 'Finalizado'}
-                    </span>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             ) : (
               <p className="text-sm text-on-surface-variant text-center py-8">No hay eventos aún. ¡Crea tu primer evento!</p>
@@ -1069,7 +1192,7 @@ const OrganizerDashboard: React.FC = () => {
               <UsersIcon size={32} />
               <div>
                 <h4 className="text-sm font-black uppercase tracking-widest italic">Seguidores</h4>
-                <p className="text-xs font-medium opacity-80 mt-1">{dashboardData?.followers || 0} personas siguen tu organización</p>
+                <p className="text-xs font-medium opacity-80 mt-1">{d.followers || 0} personas siguen tu organización</p>
               </div>
               <button onClick={handleOpenFollowers} className="w-full py-3 bg-white/10 hover:bg-white/20 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all">Ver seguidores</button>
             </div>
@@ -1077,7 +1200,7 @@ const OrganizerDashboard: React.FC = () => {
               <TrendingUp size={32} className="text-secondary" />
               <div>
                 <h4 className="text-sm font-black uppercase tracking-widest">Tickets</h4>
-                <p className="text-xs text-on-surface-variant mt-1">{dashboardData?.total_tickets || 0} tickets emitidos en total</p>
+                <p className="text-xs text-on-surface-variant mt-1">{d.total_tickets || 0} tickets emitidos en total</p>
               </div>
               <button onClick={() => setShowReportsModal(true)} className="w-full py-3 bg-secondary/10 hover:bg-secondary/20 rounded-xl text-[9px] font-black uppercase tracking-widest text-secondary transition-all">Ver reportes</button>
             </div>
@@ -1109,21 +1232,50 @@ const OrganizerDashboard: React.FC = () => {
                     )}
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <h3 className="text-xl font-black italic tracking-tight truncate">{event.title}</h3>
-                  <div className="flex items-center gap-2 opacity-60">
-                    <Calendar size={12} />
-                    <p className="text-[9px] text-on-surface-variant font-bold uppercase tracking-widest">
-                      {event.date ? new Date(event.date).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Sin fecha'}
-                    </p>
-                  </div>
-                  {event.ubication && <p className="text-[9px] text-on-surface-variant font-medium truncate">{event.ubication}</p>}
-                  {event.capacity && (
-                    <p className="text-[10px] font-black uppercase tracking-widest text-primary pt-2">
-                      {event.capacity} lugares
-                    </p>
-                  )}
-                </div>
+                {(() => {
+                  const evMetrics = (d.per_event || []).find((p: any) => p.id_event === event.id_event);
+                  return (
+                    <div className="space-y-2">
+                      <h3 className="text-xl font-black italic tracking-tight truncate">{event.title}</h3>
+                      <div className="flex items-center gap-2 opacity-60">
+                        <Calendar size={12} />
+                        <p className="text-[9px] text-on-surface-variant font-bold uppercase tracking-widest">
+                          {event.date ? new Date(event.date).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Sin fecha'}
+                        </p>
+                      </div>
+                      {event.ubication && <p className="text-[9px] text-on-surface-variant font-medium truncate">{event.ubication}</p>}
+                      <div className="flex flex-wrap gap-2 pt-1">
+                        {evMetrics ? (
+                          <>
+                            <span className="px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 text-[8px] font-black uppercase tracking-widest">
+                              <Eye size={10} className="inline mr-0.5" />{evMetrics.views}
+                            </span>
+                            <span className="px-2 py-0.5 rounded-md bg-green-50 text-green-700 text-[8px] font-black uppercase tracking-widest">
+                              <Ticket size={10} className="inline mr-0.5" />{evMetrics.tickets_sold}
+                            </span>
+                            <span className="px-2 py-0.5 rounded-md bg-red-50 text-red-500 text-[8px] font-black uppercase tracking-widest">
+                              <Heart size={10} className="inline mr-0.5" />{evMetrics.saves}
+                            </span>
+                            <span className="px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 text-[8px] font-black uppercase tracking-widest">
+                              <Star size={10} className="inline mr-0.5" />{evMetrics.avg_rating > 0 ? `${evMetrics.avg_rating}` : '—'}
+                            </span>
+                            {evMetrics.fill_rate > 0 && (
+                              <span className="px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-600 text-[8px] font-black uppercase tracking-widest">
+                                {Math.round(evMetrics.fill_rate * 100)}% ocupado
+                              </span>
+                            )}
+                          </>
+                        ) : (
+                          event.capacity && (
+                            <span className="text-[10px] font-black uppercase tracking-widest text-primary">
+                              {event.capacity} lugares
+                            </span>
+                          )
+                        )}
+                      </div>
+                    </div>
+                  );
+                })()}
                 <div className="pt-4 flex flex-wrap gap-2 border-t border-outline-variant/30">
                   <button
                     onClick={() => navigate(`/events/${event.id_event}`)}
