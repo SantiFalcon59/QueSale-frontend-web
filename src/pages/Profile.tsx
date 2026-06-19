@@ -34,18 +34,22 @@ const Profile: React.FC<{ usernameFromUrl?: string }> = ({ usernameFromUrl }) =>
   const { profile: loggedProfile, user: currentUser, refreshProfile } = useAuth();
 
   React.useEffect(() => {
-    if (premiumSuccess && paymentId && currentUser && loggedProfile && !loggedProfile.is_premium) {
-      const verifyPayment = async () => {
-        try {
-          await api.verifyPremiumSubscription(paymentId);
-          await refreshProfile();
-        } catch (err) {
-          console.error('Error verificando pago premium:', err);
-        }
-      };
-      verifyPayment();
-    }
-  }, [premiumSuccess, paymentId, currentUser, loggedProfile, refreshProfile]);
+    if (!premiumSuccess || !paymentId) return;
+    if (!currentUser) return; // wait for auth to load
+
+    const verifyPayment = async () => {
+      try {
+        await api.verifyPremiumSubscription(paymentId);
+        await refreshProfile();
+        // Clean up URL params after successful verification
+        navigate(location.pathname, { replace: true });
+      } catch (err) {
+        console.error('Error verificando pago premium:', err);
+      }
+    };
+    verifyPayment();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [premiumSuccess, paymentId, currentUser]);
   const [premiumModalOpen, setPremiumModalOpen] = React.useState(false);
   const [profileUser, setProfileUser] = React.useState<any>(null);
   const [loading, setLoading] = React.useState(true);
