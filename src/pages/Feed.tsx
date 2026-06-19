@@ -13,7 +13,8 @@ import { AdBanner } from '../components/ui/AdBanner';
 const CYCLE_MS = 4000;
 
 const Feed: React.FC = () => {
-  const { user } = useAuth();
+  const { user, profile } = useAuth() as any;
+  const isPremium = profile?.is_premium || profile?.role === 'admin';
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
   const [events, setEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -204,8 +205,8 @@ const Feed: React.FC = () => {
               </div>
             </div>
 
-            {/* Show an Ad after every 4 events */}
-            {(index + 1) % 4 === 0 && (
+            {/* Show an Ad after every 4 events — hidden for premium users */}
+            {(index + 1) % 4 === 0 && !isPremium && (
               <div className="w-full h-full snap-start p-4 lg:p-8 flex items-center justify-center">
                 <div className="max-w-4xl w-full h-full glass-card rounded-[40px] p-12 border border-white/10 flex flex-col items-center justify-center gap-6">
                   <div className="text-center space-y-2">

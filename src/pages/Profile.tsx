@@ -14,6 +14,7 @@ import EmojiPicker, { EmojiClickData } from 'emoji-picker-react';
 import { GifPicker } from '../components/post/GifPicker';
 import PostFeed from '../components/wall/PostFeed';
 import { PremiumModal } from '../components/ui/PremiumModal';
+import { SubscriptionManagerModal } from '../components/ui/SubscriptionManagerModal';
 import { toastSuccess, toastError, confirmAction } from '../lib/swal';
 
 const safeDate = (val: any) => {
@@ -51,6 +52,7 @@ const Profile: React.FC<{ usernameFromUrl?: string }> = ({ usernameFromUrl }) =>
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [premiumSuccess, paymentId, currentUser]);
   const [premiumModalOpen, setPremiumModalOpen] = React.useState(false);
+  const [subscriptionModalOpen, setSubscriptionModalOpen] = React.useState(false);
   const [profileUser, setProfileUser] = React.useState<any>(null);
   const [loading, setLoading] = React.useState(true);
   const [posts, setPosts] = React.useState<any[]>([]);
@@ -418,6 +420,7 @@ const Profile: React.FC<{ usernameFromUrl?: string }> = ({ usernameFromUrl }) =>
   return (
     <div className="max-w-5xl mx-auto space-y-8 lg:space-y-12">
       <PremiumModal isOpen={premiumModalOpen} onClose={() => setPremiumModalOpen(false)} />
+      <SubscriptionManagerModal isOpen={subscriptionModalOpen} onClose={() => setSubscriptionModalOpen(false)} />
       
       {premiumSuccess && (
         <motion.div 
@@ -478,6 +481,14 @@ const Profile: React.FC<{ usernameFromUrl?: string }> = ({ usernameFromUrl }) =>
                      className="bg-linear-to-r from-amber-400 to-amber-600 text-white h-12 lg:h-14 px-6 lg:px-8 rounded-2xl font-black uppercase tracking-widest text-[10px] lg:text-xs shadow-xl shadow-amber-500/30 flex items-center gap-2 hover:scale-105 transition-all"
                    >
                      <Zap size={16} className="fill-white" /> UNIRME A PREMIUM
+                   </button>
+                 )}
+                 {isOwnProfile && profileUser?.isPremium && (
+                   <button
+                     onClick={() => setSubscriptionModalOpen(true)}
+                     className="bg-gradient-to-r from-emerald-500 to-emerald-600 text-white h-12 lg:h-14 px-6 lg:px-8 rounded-2xl font-black uppercase tracking-widest text-[10px] lg:text-xs shadow-xl shadow-emerald-500/30 flex items-center gap-2 hover:scale-105 transition-all"
+                   >
+                     <Crown size={16} className="fill-white" /> GESTIONAR PREMIUM
                    </button>
                  )}
                  {isOwnProfile ? (

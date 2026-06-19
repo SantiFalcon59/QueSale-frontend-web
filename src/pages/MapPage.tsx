@@ -6,6 +6,7 @@ import { cn, formatPrice, NO_EVENT_IMAGE } from '../lib/utils';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../services/apiClient';
 import { AdBanner } from '../components/ui/AdBanner';
+import { useAuth } from '../context/AuthContext';
 
 const API_KEY =
   process.env.GOOGLE_MAPS_PLATFORM_KEY ||
@@ -69,6 +70,8 @@ const getQuickDateRange = (id: string): { from: Date; to: Date } | null => {
 };
 
 const MapPage: React.FC = () => {
+  const { profile } = useAuth() as any;
+  const isPremium = profile?.is_premium || profile?.role === 'admin';
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [activeCategory, setActiveCategory] = useState('Todos');
   const [proximity, setProximity] = useState(25);
@@ -276,18 +279,20 @@ const MapPage: React.FC = () => {
             </div>
           )}
 
-          {/* Ad Slot in Map Filters */}
-          <div className="pt-4 mt-4 border-t border-outline-variant/20">
-            <p className="text-[8px] font-black uppercase tracking-widest text-on-surface-variant/40 text-center mb-2">Publicidad</p>
-            <div className="rounded-xl overflow-hidden bg-surface-container-low border border-outline-variant/10 min-h-[100px] flex items-center justify-center">
-              <AdBanner 
-                client="ca-pub-YOUR_ADSENSE_CLIENT_ID" 
-                slot="YOUR_MAP_AD_SLOT" 
-                format="fluid" 
-                className="w-full"
-              />
+          {/* Ad Slot in Map Filters — hidden for premium users */}
+          {!isPremium && (
+            <div className="pt-4 mt-4 border-t border-outline-variant/20">
+              <p className="text-[8px] font-black uppercase tracking-widest text-on-surface-variant/40 text-center mb-2">Publicidad</p>
+              <div className="rounded-xl overflow-hidden bg-surface-container-low border border-outline-variant/10 min-h-[100px] flex items-center justify-center">
+                <AdBanner 
+                  client="ca-pub-YOUR_ADSENSE_CLIENT_ID" 
+                  slot="YOUR_MAP_AD_SLOT" 
+                  format="fluid" 
+                  className="w-full"
+                />
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Advanced Filters Toggle */}
           <button onClick={() => setShowAdvanced(!showAdvanced)}

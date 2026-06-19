@@ -5,6 +5,7 @@ import { cn, formatPrice, NO_EVENT_IMAGE } from '../lib/utils';
 import { api, resolveAssetUrl } from '../services/apiClient';
 import { Link } from 'react-router-dom';
 import { AdBanner } from '../components/ui/AdBanner';
+import { useAuth } from '../context/AuthContext';
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -92,6 +93,8 @@ const CalendarPicker: React.FC<{ selectedDate: Date | null; onSelect: (date: Dat
 };
 
 const Discovery: React.FC = () => {
+  const { profile } = useAuth() as any;
+  const isPremium = profile?.is_premium || profile?.role === 'admin';
   const [view, setView] = useState<'grid' | 'list'>('grid');
   const [showFilters, setShowFilters] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -458,18 +461,20 @@ const Discovery: React.FC = () => {
               </div>
             )}
 
-            {/* Ad Slot in Discovery Sidebar */}
-            <div className="pt-6 mt-6 border-t border-outline-variant/30">
-              <p className="text-[8px] font-black uppercase tracking-widest text-on-surface-variant/40 text-center mb-2">Publicidad</p>
-              <div className="rounded-2xl overflow-hidden bg-surface-container-low border border-outline-variant/10 min-h-[250px] flex items-center justify-center">
-                <AdBanner 
-                  client="ca-pub-YOUR_ADSENSE_CLIENT_ID" 
-                  slot="YOUR_DISCOVERY_SIDEBAR_AD_SLOT" 
-                  format="rectangle" 
-                  className="w-full"
-                />
+            {/* Ad Slot in Discovery Sidebar — hidden for premium users */}
+            {!isPremium && (
+              <div className="pt-6 mt-6 border-t border-outline-variant/30">
+                <p className="text-[8px] font-black uppercase tracking-widest text-on-surface-variant/40 text-center mb-2">Publicidad</p>
+                <div className="rounded-2xl overflow-hidden bg-surface-container-low border border-outline-variant/10 min-h-[250px] flex items-center justify-center">
+                  <AdBanner 
+                    client="ca-pub-YOUR_ADSENSE_CLIENT_ID" 
+                    slot="YOUR_DISCOVERY_SIDEBAR_AD_SLOT" 
+                    format="rectangle" 
+                    className="w-full"
+                  />
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </aside>
 

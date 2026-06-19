@@ -9,6 +9,7 @@ import { api, resolveAssetUrl } from '../../services/apiClient';
 import { UserAvatar } from '../ui/UserAvatar';
 import { OrganizerAvatar } from '../ui/OrganizerAvatar';
 import { PremiumModal } from '../ui/PremiumModal';
+import { SubscriptionManagerModal } from '../ui/SubscriptionManagerModal';
 
 export const Navbar: React.FC<{ onMenuClick: () => void }> = ({ onMenuClick }) => {
   const { user, profile, logout } = useAuth();
@@ -16,6 +17,7 @@ export const Navbar: React.FC<{ onMenuClick: () => void }> = ({ onMenuClick }) =
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [premiumModalOpen, setPremiumModalOpen] = useState(false);
+  const [subscriptionModalOpen, setSubscriptionModalOpen] = useState(false);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<{ events: any[]; users: any[]; organizers: any[] }>({ events: [], users: [], organizers: [] });
@@ -191,6 +193,7 @@ export const Navbar: React.FC<{ onMenuClick: () => void }> = ({ onMenuClick }) =
 
       <div className="flex items-center gap-6">
         <div className="flex items-center gap-3">
+          {/* Premium button — if premium show green 'Gestionar suscripción' */}
           {user && !profile?.is_premium && (
             <button
               onClick={() => setPremiumModalOpen(true)}
@@ -198,6 +201,15 @@ export const Navbar: React.FC<{ onMenuClick: () => void }> = ({ onMenuClick }) =
             >
               <Crown size={16} className="fill-white" />
               PREMIUM
+            </button>
+          )}
+          {user && profile?.is_premium && (
+            <button
+              onClick={() => setSubscriptionModalOpen(true)}
+              className="hidden sm:flex items-center gap-2 bg-linear-to-r from-emerald-500 to-emerald-600 text-white px-4 py-2 rounded-xl font-bold text-xs shadow-lg shadow-emerald-500/20 hover:scale-105 transition-transform border border-emerald-400/30 uppercase tracking-widest cursor-pointer"
+            >
+              <Crown size={16} className="fill-white" />
+              Premium Activo
             </button>
           )}
           {user && <NotificationsPopover />}
@@ -317,6 +329,10 @@ export const Navbar: React.FC<{ onMenuClick: () => void }> = ({ onMenuClick }) =
       <PremiumModal 
         isOpen={premiumModalOpen} 
         onClose={() => setPremiumModalOpen(false)} 
+      />
+      <SubscriptionManagerModal
+        isOpen={subscriptionModalOpen}
+        onClose={() => setSubscriptionModalOpen(false)}
       />
     </>
   );

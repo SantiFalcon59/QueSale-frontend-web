@@ -7,7 +7,8 @@ import { X } from 'lucide-react';
 import { AdBanner } from '../ui/AdBanner';
 
 export const Sidebar: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen, onClose }) => {
-  const { user } = useAuth();
+  const { user, profile } = useAuth() as any;
+  const isPremium = profile?.is_premium || profile?.role === 'admin';
 
   const navItems = [
     { name: 'Inicio', icon: 'home', path: '/' },
@@ -69,18 +70,20 @@ export const Sidebar: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ is
           ))}
         </nav>
 
-        {/* Sidebar Ad Slot */}
-        <div className="mt-auto pt-6 border-t border-white/10">
-          <p className="text-[8px] font-black uppercase tracking-[0.3em] text-white/30 text-center mb-2">Publicidad</p>
-          <div className="rounded-xl overflow-hidden bg-black/20 border border-white/5 min-h-[150px] flex items-center justify-center">
-            <AdBanner 
-              client="ca-pub-YOUR_ADSENSE_CLIENT_ID" 
-              slot="YOUR_SIDEBAR_AD_SLOT" 
-              format="rectangle"
-              style={{ display: 'block' }}
-            />
+        {/* Sidebar Ad Slot — hidden for premium users */}
+        {!isPremium && (
+          <div className="mt-auto pt-6 border-t border-white/10">
+            <p className="text-[8px] font-black uppercase tracking-[0.3em] text-white/30 text-center mb-2">Publicidad</p>
+            <div className="rounded-xl overflow-hidden bg-black/20 border border-white/5 min-h-[150px] flex items-center justify-center">
+              <AdBanner 
+                client="ca-pub-YOUR_ADSENSE_CLIENT_ID" 
+                slot="YOUR_SIDEBAR_AD_SLOT" 
+                format="rectangle"
+                style={{ display: 'block' }}
+              />
+            </div>
           </div>
-        </div>
+        )}
 
       </aside>
     </>
