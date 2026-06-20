@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Users, Ticket, DollarSign, Calendar, Plus, Edit, Trash, BarChart3, TrendingUp, Users as UsersIcon, Sparkles, Building, ArrowRight, Upload, X, Camera, Loader2, Search, Shield, UserPlus, Check, Link, Copy, Star, ExternalLink, Eye, Heart, MessageCircle, Percent, ShieldCheck, MessageSquare } from 'lucide-react';
+import { Users, Ticket, DollarSign, Calendar, Plus, Edit, Trash, BarChart3, TrendingUp, Users as UsersIcon, Sparkles, Building, ArrowRight, Upload, X, Camera, Loader2, Search, Shield, UserPlus, Check, Link, Copy, Star, ExternalLink, Eye, Heart, MessageCircle, Percent, ShieldCheck, MessageSquare, CheckCircle } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
@@ -486,8 +486,8 @@ const OrganizerDashboard: React.FC = () => {
           <div className="flex flex-wrap items-center gap-3">
             <p className="text-[10px] text-primary uppercase tracking-[0.4em] font-black italic">Panel de Organización</p>
             {organization?.verified && (
-              <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-700 shadow-sm">
-                <Sparkles size={12} className="fill-amber-500" />
+              <div className="flex items-center gap-1 px-3 py-1 rounded-full bg-blue-50 border border-blue-200 text-blue-600 shadow-sm">
+                <CheckCircle size={12} className="fill-blue-500 text-white" />
                 <span className="text-[10px] font-black uppercase tracking-[0.1em]">Verificada</span>
               </div>
             )}
@@ -626,12 +626,12 @@ const OrganizerDashboard: React.FC = () => {
                               const confirmed = await confirmAction('¿Desconectar Mercado Pago?', 'Dejarás de recibir pagos de entradas a través de Mercado Pago.');
                               if (!confirmed) return;
                               try {
-                                 await api.delete(`/api/organizers/${organization.id}/oauth/mercadopago`);
-                                 await fetchAll();
-                                 toastSuccess('Cuenta de Mercado Pago desconectada');
-                              } catch (e) {
-                                 toastError('Error al desconectar');
-                              }
+                                  await api.delete(`/api/organizers/${organization.id}/oauth/mercadopago`, { auth: true });
+                                  await fetchAll();
+                                  toastSuccess('Cuenta de Mercado Pago desconectada');
+                               } catch (e) {
+                                  toastError('Error al desconectar');
+                               }
                            }}
                           className="mt-3 text-[10px] font-bold text-red-600 hover:underline"
                         >
@@ -646,19 +646,19 @@ const OrganizerDashboard: React.FC = () => {
                         <button
                           type="button"
                           onClick={async () => {
-                             try {
-                               const res: any = await api.get(`/api/organizers/${organization.id}/oauth/mercadopago`);
-                               if (res && res.url) {
-                                 window.location.href = res.url;
-                               }
-                             } catch (e) {
-                                toastError('Error al iniciar la conexión con Mercado Pago');
-                             }
-                          }}
-                          className="w-full bg-[#009EE3] hover:bg-[#0089C5] text-white rounded-xl px-4 py-3 text-sm font-bold transition-colors flex items-center justify-center gap-2"
-                        >
-                          <Link size={18} />
-                          Conectar con Mercado Pago
+                              try {
+                                const res: any = await api.get(`/api/organizers/${organization.id}/oauth/mercadopago`, { auth: true });
+                                if (res && res.url) {
+                                  window.location.href = res.url;
+                                }
+                              } catch (e) {
+                                 toastError('Error al iniciar la conexión con Mercado Pago');
+                              }
+                           }}
+                           className="w-full bg-[#009EE3] hover:bg-[#0089C5] text-white rounded-xl px-4 py-3 text-sm font-bold transition-colors flex items-center justify-center gap-2"
+                         >
+                           <img src="https://www.mercadopago.com/instore/merchant/bundles/mptheme/images/logo-mercadopago.png" className="h-5" alt="MP" />
+                           Conectar con Mercado Pago
                         </button>
                       </div>
                     )}
@@ -1147,8 +1147,8 @@ const OrganizerDashboard: React.FC = () => {
                 <div>
                   <p className="text-[9px] uppercase font-black tracking-widest text-on-surface-variant">Estado de Solicitud</p>
                   {organization?.verified ? (
-                    <p className="text-lg font-black text-green-600 mt-1 flex items-center justify-center lg:justify-end gap-1.5">
-                      <ShieldCheck size={20} /> VERIFICADO PRO
+                    <p className="text-lg font-black text-blue-600 mt-1 flex items-center justify-center lg:justify-end gap-1.5">
+                      <CheckCircle size={20} className="fill-blue-500 text-white" /> VERIFICADO PRO
                     </p>
                   ) : (organization?.real_name && organization?.dni && organization?.phone_number && organization?.address) ? (
                     <p className="text-lg font-black text-amber-600 mt-1 flex items-center justify-center lg:justify-end gap-1.5">

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'motion/react';
-import { Calendar, MapPin, Users, Heart, Globe, Instagram, Twitter, ShieldCheck, ChevronLeft, ExternalLink } from 'lucide-react';
+import { Calendar, MapPin, Users, Heart, Globe, Instagram, Twitter, CheckCircle, ChevronLeft, ExternalLink } from 'lucide-react';
 import { api, resolveAssetUrl } from '../services/apiClient';
 import { OrganizerAvatar } from '../components/ui/OrganizerAvatar';
 import { useAuth } from '../context/AuthContext';
@@ -106,7 +106,7 @@ const OrganizerProfile: React.FC = () => {
               <div className="flex items-center gap-3 justify-center lg:justify-start">
                 <h1 className="text-3xl lg:text-5xl font-black italic tracking-tight uppercase leading-none">{organizer.name}</h1>
                 {organizer.verified && (
-                  <ShieldCheck size={24} className="text-primary shrink-0" fill="currentColor" />
+                  <CheckCircle size={24} className="text-blue-500 shrink-0" fill="currentColor" />
                 )}
               </div>
               <div className="flex items-center gap-4 justify-center lg:justify-start text-on-surface-variant font-bold text-xs uppercase tracking-widest">
