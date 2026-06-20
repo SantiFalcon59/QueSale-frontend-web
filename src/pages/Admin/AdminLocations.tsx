@@ -115,7 +115,7 @@ const AdminLocations: React.FC = () => {
               <MapPin className="text-primary" size={32} />
               <h1 className="text-2xl sm:text-4xl lg:text-5xl font-black italic tracking-tighter uppercase">CONTROL DE <span className="text-primary">LOCALIZACIONES</span></h1>
            </div>
-           <p className="text-on-surface-variant font-medium ml-1">Configuración de Ciudades, Provincias y Regiones Habilitadas (Rappi/Uber style)</p>
+           <p className="text-on-surface-variant font-medium ml-1">Configuración de Ciudades, Provincias y Regiones Habilitadas</p>
         </div>
         <button 
           onClick={() => setShowAddForm(!showAddForm)}

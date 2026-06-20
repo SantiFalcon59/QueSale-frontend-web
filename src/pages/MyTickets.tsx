@@ -67,7 +67,18 @@ const MyTickets: React.FC = () => {
   const fetchTickets = async () => {
     try {
       const response = await api.getUserTickets();
-      setTickets(Array.isArray(response) ? response : (response as any).tickets || []);
+      const rawTickets = Array.isArray(response) ? response : (response as any).tickets || [];
+      
+      const sorted = [...rawTickets].sort((a, b) => {
+        const aActive = a.state === 1;
+        const bActive = b.state === 1;
+        if (aActive && !bActive) return -1;
+        if (!aActive && bActive) return 1;
+        
+        return new Date(a.date).getTime() - new Date(b.date).getTime();
+      });
+      
+      setTickets(sorted);
     } catch (error) {
       console.error('Error fetching tickets:', error);
     } finally {
