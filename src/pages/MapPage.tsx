@@ -79,6 +79,7 @@ const MapPage: React.FC = () => {
   const [activeQuickFilter, setActiveQuickFilter] = useState<string | null>(null);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [showFilters, setShowFilters] = useState(true);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [events, setEvents] = useState<any[]>([]);
   const [totalActive, setTotalActive] = useState(0);
@@ -138,7 +139,7 @@ const MapPage: React.FC = () => {
   const selectedEvent = events.find(e => e.id_event === selectedEventId);
 
   return (
-    <div className="h-[calc(100vh-64px)] -mt-16 relative overflow-hidden bg-[#0b0e14]">
+    <div className="h-screen lg:h-[calc(100vh-64px)] lg:-mt-16 relative overflow-hidden bg-[#0b0e14]">
       {/* Search Input Injected into Header (Visual Only) */}
       <style>{`
         .navbar-glass input {
@@ -187,12 +188,25 @@ const MapPage: React.FC = () => {
       )}
 
       {/* Floating Filter Panel */}
-      <div className="absolute top-24 left-4 lg:left-8 w-72 flex flex-col gap-3 z-30 pointer-events-none">
+      <AnimatePresence>
+        {showFilters && (
+          <motion.div 
+            initial={{ opacity: 0, x: -320 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -320 }}
+            transition={{ type: 'spring', damping: 25, stiffness: 250 }}
+            className="absolute top-24 left-4 lg:left-8 w-72 flex flex-col gap-3 z-30 pointer-events-none"
+          >
         {/* Stats Notice */}
         <div className="bg-black/80 backdrop-blur-2xl px-5 py-3 rounded-2xl border border-white/10 shadow-2xl flex flex-col gap-1 pointer-events-auto">
-           <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-              <span className="text-[10px] text-white font-black uppercase tracking-widest">{events.length} Eventos mostrados</span>
+           <div className="flex items-center justify-between gap-2">
+             <div className="flex items-center gap-2">
+               <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+               <span className="text-[10px] text-white font-black uppercase tracking-widest">{events.length} Eventos mostrados</span>
+             </div>
+             <button onClick={() => setShowFilters(false)} className="lg:hidden p-1 text-white/50 hover:text-white transition-colors">
+               <X size={14} />
+             </button>
            </div>
            <p className="text-[9px] text-white/40 font-bold uppercase tracking-[0.1em]">De un total de {totalActive} activos</p>
         </div>
@@ -326,8 +340,10 @@ const MapPage: React.FC = () => {
               </div>
             </motion.div>
           )}
-        </div>
-      </div>
+          </div>
+        </motion.div>
+      )}
+      </AnimatePresence>
 
       {/* Selected Event Bottom Card */}
       <AnimatePresence>
@@ -511,6 +527,16 @@ const MapWrapper = ({ userLocation, selectedEventId, onSelectEvent, activeCatego
         onZoomOut={handleZoomOut} 
         onRecenter={handleRecenter} 
       />
+
+      {/* FAB to show filters when hidden */}
+      {!showFilters && (
+        <button
+          onClick={() => setShowFilters(true)}
+          className="fixed bottom-24 left-4 z-50 w-12 h-12 rounded-2xl bg-primary text-white shadow-xl hover:shadow-primary/40 transition-all active:scale-95 flex items-center justify-center border border-white/20 lg:hidden"
+        >
+          <span className="material-symbols-outlined text-[22px]">tune</span>
+        </button>
+      )}
     </>
   );
 };

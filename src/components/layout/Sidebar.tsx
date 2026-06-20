@@ -32,10 +32,22 @@ export const Sidebar: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ is
         )}
       </AnimatePresence>
 
-      <aside className={cn(
-        "fixed left-0 top-0 h-full w-64 sidebar-gradient border-r border-primary/20 shadow-[10px_0_30px_rgba(0,0,0,0.3)] flex flex-col p-6 z-[70] transition-all duration-300",
-        isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
-      )}>
+      <motion.aside
+        drag="x"
+        dragConstraints={{ left: 0, right: 0 }}
+        dragElastic={0.1}
+        onDragEnd={(_, info) => {
+          if (info.offset.x < -80 || info.velocity.x < -200) {
+            onClose();
+          }
+        }}
+        animate={{ x: isOpen ? 0 : -256 }}
+        transition={{ type: 'spring', damping: 25, stiffness: 250 }}
+        className={cn(
+          "fixed left-0 top-0 h-full w-64 sidebar-gradient border-r border-primary/20 shadow-[10px_0_30px_rgba(0,0,0,0.3)] flex flex-col p-6 z-[70] lg:translate-x-0",
+          isOpen ? "" : "-translate-x-full lg:translate-x-0"
+        )}
+      >
         <div className="flex items-center justify-between mb-10 shrink-0">
           <Link to="/" className="cursor-pointer">
             <h1 className="text-3xl font-display font-extrabold text-white leading-tight tracking-tighter">
@@ -85,7 +97,7 @@ export const Sidebar: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ is
           </div>
         )}
 
-      </aside>
+      </motion.aside>
     </>
   );
 };

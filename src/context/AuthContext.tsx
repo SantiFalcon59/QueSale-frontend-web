@@ -1,7 +1,9 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { User, signInWithEmailAndPassword } from 'firebase/auth';
+import { User, signInWithEmailAndPassword, signInWithCredential } from 'firebase/auth';
 import { auth, onAuthStateChanged, signInWithPopup, googleProvider, signOut } from '../lib/firebase';
 import { api, resolveAssetUrl } from '../services/apiClient';
+import { Capacitor } from '@capacitor/core';
+import { GoogleAuth } from '@codetrix-studio/capacitor-google-auth';
 
 interface UserProfile {
   uid: string;
@@ -107,7 +109,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const loginWithGoogle = async () => {
     try {
-      await signInWithPopup(auth, googleProvider);
+      if (Capacitor.isNativePlatform()) {
+        await GoogleAuth.initialize();
+        const result = await GoogleAuth.signIn();
+        const credential = GoogleAuthProvider.credential(result.authentication.idToken);
+        await signInWithCredential(auth, credential);
+      } else {
+        await signInWithPopup(auth, googleProvider);
+      }
     } catch (error) {
       console.error("Login failed", error);
       throw error;

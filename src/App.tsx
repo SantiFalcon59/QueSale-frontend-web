@@ -9,6 +9,7 @@ import { AuthProvider } from './context/AuthContext';
 import { Sidebar } from './components/layout/Sidebar';
 import { Navbar } from './components/layout/Navbar';
 import { Footer } from './components/layout/Footer';
+import { BottomNav } from './components/layout/BottomNav';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from './lib/utils';
 
@@ -100,6 +101,32 @@ const PageWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => (
 export default function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
+  useEffect(() => {
+    let startX = 0;
+    let startY = 0;
+    const handleTouchStart = (e: TouchEvent) => {
+      if (e.touches.length > 0) {
+        startX = e.touches[0].clientX;
+        startY = e.touches[0].clientY;
+      }
+    };
+    const handleTouchEnd = (e: TouchEvent) => {
+      if (e.changedTouches.length > 0 && startX < 40) {
+        const diffX = e.changedTouches[0].clientX - startX;
+        const diffY = e.changedTouches[0].clientY - startY;
+        if (diffX > 80 && Math.abs(diffY) < 60) {
+          setIsSidebarOpen(true);
+        }
+      }
+    };
+    document.addEventListener('touchstart', handleTouchStart, { passive: true });
+    document.addEventListener('touchend', handleTouchEnd, { passive: true });
+    return () => {
+      document.removeEventListener('touchstart', handleTouchStart);
+      document.removeEventListener('touchend', handleTouchEnd);
+    };
+  }, []);
+
   return (
     <AuthProvider>
       <Router>
@@ -121,7 +148,7 @@ export default function App() {
           )}>
             <Navbar onMenuClick={() => setIsSidebarOpen(true)} />
 
-            <main className="mt-16 min-h-[calc(100vh-64px)] overflow-x-hidden">
+            <main className="mt-16 min-h-[calc(100vh-64px)] overflow-x-hidden pb-16 lg:pb-0">
               <Suspense fallback={
                 <div className="flex items-center justify-center h-full">
                   <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
@@ -156,6 +183,7 @@ export default function App() {
             </main>
             <Footer />
           </div>
+          <BottomNav />
         </div>
       </Router>
     </AuthProvider>

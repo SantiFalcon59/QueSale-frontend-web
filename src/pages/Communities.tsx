@@ -49,7 +49,7 @@ const Communities: React.FC = () => {
   }, [debouncedQuery]);
 
   return (
-    <div className="max-w-5xl mx-auto py-12 space-y-12">
+    <div className="max-w-5xl mx-auto px-4 lg:px-0 py-12 space-y-12">
       <header className="space-y-4">
         <h1 className="text-5xl font-black italic tracking-tighter">Comunidad</h1>
         <p className="text-on-surface-variant text-lg font-medium max-w-xl">
@@ -273,7 +273,7 @@ function UserCard({ user }: { user: any }) {
       />
       <div className="flex-1 min-w-0">
         <p className="font-bold text-sm text-on-surface truncate">{user.username}</p>
-        <p className="text-xs text-on-surface-variant truncate">
+        <p className="text-xs text-on-surface-variant line-clamp-2 break-words">
           {user.description || `${user.followers_count || 0} seguidores`}
         </p>
       </div>
@@ -299,7 +299,7 @@ function OrganizerCard({ organizer }: { organizer: any }) {
             <span className="material-symbols-outlined text-primary text-[16px]">verified</span>
           )}
         </div>
-        <p className="text-xs text-on-surface-variant truncate">
+        <p className="text-xs text-on-surface-variant line-clamp-2 break-words">
           {organizer.description || `${organizer.events_count || 0} eventos`}
         </p>
       </div>

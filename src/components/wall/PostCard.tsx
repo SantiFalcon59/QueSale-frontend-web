@@ -137,15 +137,15 @@ const PostCard: React.FC<PostCardProps> = ({ post, onReact, onDelete, onComment,
               </p>
             )}
             {gifMatch && (
-              <div className="rounded-xl overflow-hidden max-h-96 max-w-full lg:max-w-2xl mx-auto bg-black/5">
-                <img src={gifMatch[1]} alt="GIF" className="w-full h-full object-contain mx-auto" />
+              <div className="rounded-xl overflow-hidden max-h-96 max-w-full lg:max-w-2xl mx-auto bg-black/5 flex items-center justify-center">
+                <img src={gifMatch[1]} alt="GIF" className="max-h-96 max-w-full object-contain mx-auto" />
               </div>
             )}
             {mediaList.length > 0 && !gifMatch && (
               <div className={cn("grid gap-3", mediaList.length > 1 ? "grid-cols-2" : "grid-cols-1")}>
                 {mediaList.map((url: string, i: number) => (
-                  <div key={i} className="rounded-xl overflow-hidden max-h-96 max-w-full lg:max-w-2xl mx-auto bg-black/5">
-                    <img src={resolveAssetUrl(url) || url} alt="" className="w-full h-full object-contain mx-auto" />
+                  <div key={i} className="rounded-xl overflow-hidden max-h-96 max-w-full lg:max-w-2xl mx-auto bg-black/5 flex items-center justify-center">
+                    <img src={resolveAssetUrl(url) || url} alt="" className="max-h-96 max-w-full object-contain mx-auto" />
                   </div>
                 ))}
               </div>

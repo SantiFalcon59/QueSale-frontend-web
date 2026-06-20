@@ -308,7 +308,7 @@ const EventDetail: React.FC = () => {
   const isPast = eventDate < new Date();
 
   return (
-    <div className="relative px-4 lg:px-8 xl:px-12 max-w-[1600px] mx-auto">
+    <div className="relative px-4 lg:px-8 xl:px-12 max-w-[1600px] mx-auto overflow-hidden">
       {isPast && (
         <motion.div 
           initial={{ opacity: 0, y: -20 }}
@@ -388,7 +388,7 @@ const EventDetail: React.FC = () => {
         )}
       </AnimatePresence>
 
-      <div className="grid grid-cols-12 gap-6 lg:gap-16">
+      <div className="grid grid-cols-12 gap-6 lg:gap-16 overflow-hidden">
         {/* Left Column: Event Core & Community */}
         <div className="col-span-12 lg:col-span-8 space-y-8 lg:space-y-12 min-w-0">
           {/* Gallery Header */}
@@ -473,7 +473,10 @@ const EventDetail: React.FC = () => {
           </section>
 
           {/* Navigation Tabs */}
-          <div className="flex gap-6 lg:gap-10 border-b border-outline-variant overflow-x-auto no-scrollbar">
+          <div className="relative overflow-hidden">
+            <div className="absolute inset-y-0 left-0 w-8 bg-gradient-to-r from-background to-transparent z-10 pointer-events-none" />
+            <div className="absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-background to-transparent z-10 pointer-events-none" />
+            <div className="flex gap-6 lg:gap-10 border-b border-outline-variant overflow-x-auto no-scrollbar">
             {[
               { id: 'info', name: 'Detalles', icon: Info },
               { id: 'announcements', name: 'Anuncios', icon: Megaphone },
@@ -494,11 +497,12 @@ const EventDetail: React.FC = () => {
               </button>
             ))}
           </div>
+          </div>
 
           <section className="min-h-[400px]">
             <AnimatePresence mode="wait">
               {activeTab === 'info' && (
-                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-12">
                     {/* Main Description Column */}
                     <div className="lg:col-span-7 space-y-12">
                       <div className="space-y-4">
@@ -651,7 +655,7 @@ const EventDetail: React.FC = () => {
                                   </div>
                                 )}
                               </div>
-                              <div className="p-10 space-y-4">
+                              <div className="p-4 sm:p-6 lg:p-10 space-y-4">
                                 <h4 className="text-xl font-black text-on-surface leading-tight group-hover:text-primary transition-colors line-clamp-1 uppercase italic tracking-tighter">{orgEvent.title}</h4>
                                 <div className="flex items-center justify-between pt-3 border-t border-outline-variant/30">
                                   <div className="flex flex-col gap-1.5">
@@ -825,7 +829,7 @@ const EventDetail: React.FC = () => {
               initial={{ opacity: 0, y: 50, scale: 0.9, transformOrigin: 'bottom right' }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 50, scale: 0.9 }}
-              className="absolute bottom-20 right-0 w-[calc(100vw-40px)] sm:w-[400px] h-[70vh] sm:h-[600px] bg-surface rounded-[2.5rem] lg:rounded-[3rem] shadow-2xl border border-outline-variant overflow-hidden flex flex-col"
+              className="absolute bottom-20 right-4 sm:right-0 left-4 sm:w-[400px] h-[70vh] sm:h-[600px] bg-surface rounded-[2.5rem] lg:rounded-[3rem] shadow-2xl border border-outline-variant overflow-hidden flex flex-col"
             >
               <div className="p-8 bg-surface-container-high border-b border-outline-variant flex items-center justify-between">
                 <div className="flex items-center gap-4">
@@ -1080,8 +1084,8 @@ const EventAnnouncements: React.FC<{ eventId: string; organizerId: string; isOrg
                     <p className="text-base lg:text-lg text-on-surface-variant leading-relaxed relative z-10">{textContent}</p>
                   )}
                   {gifMatch && (
-                    <div className="rounded-xl overflow-hidden max-h-96 bg-black/5 relative z-10">
-                      <img src={gifMatch[1]} alt="GIF" className="w-full h-full object-contain mx-auto" />
+                    <div className="rounded-xl overflow-hidden max-h-96 bg-black/5 relative z-10 flex items-center justify-center">
+                      <img src={gifMatch[1]} alt="GIF" className="max-h-96 max-w-full object-contain mx-auto" />
                     </div>
                   )}
                 </>
