@@ -23,6 +23,7 @@ const Feed: React.FC = () => {
   const [fadingMap, setFadingMap] = useState<Record<string, string>>({});
 
   useEffect(() => {
+    if (typeof window !== 'undefined' && window.innerWidth < 1024) return;
     const hasMulitpleImages = events.some(e => e.images?.length > 1);
     if (!hasMulitpleImages) return;
     const interval = setInterval(() => {
@@ -106,7 +107,7 @@ const Feed: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-[calc(100vh-64px)]">
+      <div className="flex items-center justify-center h-[calc(100vh-128px)] lg:h-[calc(100vh-64px)]">
         <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: "linear" }} className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full" />
       </div>
     );
@@ -114,7 +115,7 @@ const Feed: React.FC = () => {
 
   if (events.length === 0) {
     return (
-      <div className="flex items-center justify-center h-[calc(100vh-64px)]">
+      <div className="flex items-center justify-center h-[calc(100vh-128px)] lg:h-[calc(100vh-64px)]">
         <div className="text-center space-y-4">
           <Calendar size={48} className="mx-auto text-on-surface-variant opacity-30" />
           <h2 className="text-2xl font-black">No hay eventos disponibles</h2>
@@ -125,7 +126,7 @@ const Feed: React.FC = () => {
   }
 
   return (
-    <div className="h-[calc(100vh-64px)] overflow-y-auto snap-y snap-mandatory scroll-smooth no-scrollbar">
+    <div className="h-[calc(100vh-128px)] lg:h-[calc(100vh-64px)] overflow-y-auto snap-y snap-mandatory scroll-smooth no-scrollbar">
       <LoginPromptModal isOpen={showLoginPrompt} onClose={() => setShowLoginPrompt(false)} />
 
       {events.map((event, index) => {

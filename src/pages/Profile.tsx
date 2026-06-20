@@ -143,7 +143,7 @@ const Profile: React.FC<{ usernameFromUrl?: string }> = ({ usernameFromUrl }) =>
     }
   };
 
-  const fetchPosts = useCallback(async () => {
+  const fetchPosts = async () => {
     if (!profileUser?.id) return;
     try {
       const data: any = await api.getWallPosts('user_profile', profileUser.id, 1, 50);
@@ -152,11 +152,13 @@ const Profile: React.FC<{ usernameFromUrl?: string }> = ({ usernameFromUrl }) =>
       console.error('Error fetching wall:', err);
       setPosts([]);
     }
-  }, [profileUser?.id]);
+  };
 
   React.useEffect(() => {
-    fetchPosts();
-  }, [fetchPosts]);
+    if (profileUser?.id) {
+      fetchPosts();
+    }
+  }, [profileUser?.id]);
 
   React.useEffect(() => {
     if (!isOwnProfile || activeTab !== 'FAVORITES') return;
@@ -447,7 +449,7 @@ const Profile: React.FC<{ usernameFromUrl?: string }> = ({ usernameFromUrl }) =>
                     <UserAvatar 
                       src={profileUser?.photoURL} 
                       alt="Profile" 
-                      className={cn("w-32 h-32 lg:w-40 lg:h-40 shrink-0 rounded-[2rem] lg:rounded-[2.5rem] bg-white p-2 shadow-2xl shadow-black/10 transition-all duration-300 hover:scale-105 hover:shadow-primary/30 object-cover", profileUser?.isPremium && "ring-4 ring-amber-400 ring-offset-4 ring-offset-surface shadow-amber-500/20")}
+                      className={cn("w-32 h-32 lg:w-40 lg:h-40 shrink-0 rounded-[2rem] lg:rounded-[2.5rem] bg-white p-2 shadow-2xl shadow-black/10 transition-all duration-300 hover:scale-105 hover:shadow-primary/30 object-cover", profileUser?.isPremium && "ring-4 ring-amber-400 shadow-amber-500/20")}
                       size={60}
                     />
                     {profileUser?.isPremium && (

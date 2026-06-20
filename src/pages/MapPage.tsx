@@ -79,7 +79,7 @@ const MapPage: React.FC = () => {
   const [activeQuickFilter, setActiveQuickFilter] = useState<string | null>(null);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [showAdvanced, setShowAdvanced] = useState(false);
-  const [showFilters, setShowFilters] = useState(true);
+  const [showFilters, setShowFilters] = useState(() => typeof window !== 'undefined' ? window.innerWidth >= 1024 : false);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [events, setEvents] = useState<any[]>([]);
   const [totalActive, setTotalActive] = useState(0);
@@ -567,7 +567,7 @@ const CustomMarker = ({ event, isSelected, onSelect }: any) => {
         )}
         
         <div className={cn(
-          "relative flex items-center bg-white p-1 rounded-full shadow-2xl transition-all duration-500 border-[3px]",
+          "relative flex items-center bg-white p-1 rounded-full shadow-2xl transition-colors duration-200 border-[3px]",
           isSelected 
             ? "border-primary scale-110 z-50 ring-4 ring-primary/10" 
             : "border-outline-variant/40 hover:border-primary hover:scale-110"
@@ -588,7 +588,7 @@ const CustomMarker = ({ event, isSelected, onSelect }: any) => {
               <motion.div 
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
-                className="ml-3 pr-4 whitespace-nowrap"
+                className="ml-3 pr-4 whitespace-nowrap hidden md:block"
               >
                 <p className="text-[8px] font-black text-primary uppercase tracking-[0.15em] leading-none mb-1">
                   {category?.toUpperCase() || event.tags?.[0]?.toUpperCase() || 'EVENTO'}

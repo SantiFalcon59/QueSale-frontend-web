@@ -76,7 +76,7 @@ const AdminOrganizations: React.FC = () => {
       <header className="space-y-2">
          <div className="flex items-center gap-3">
             <ShieldCheck className="text-primary" size={32} />
-            <h1 className="text-5xl font-black italic tracking-tighter">BÓVEDA DE <span className="text-primary">ADMIN</span></h1>
+            <h1 className="text-2xl sm:text-4xl lg:text-5xl font-black italic tracking-tighter">BÓVEDA DE <span className="text-primary">ADMIN</span></h1>
          </div>
          <p className="text-on-surface-variant font-medium ml-1">Gestión y Verificación de Entidades</p>
       </header>

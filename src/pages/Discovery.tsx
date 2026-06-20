@@ -246,7 +246,7 @@ const Discovery: React.FC = () => {
           "col-span-12 lg:col-span-3 space-y-6 transition-all",
           showFilters ? "" : "hidden lg:block"
         )}>
-          <div className="bg-white/70 backdrop-blur-xl border border-outline-variant/50 p-6 rounded-3xl shadow-sm sticky top-24 space-y-6">
+          <div className="bg-white/70 backdrop-blur-xl border border-outline-variant/50 p-4 sm:p-6 rounded-3xl shadow-sm sticky top-24 space-y-4 sm:space-y-6">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-black italic text-primary flex items-center gap-2 uppercase tracking-tighter">
                 <Sparkles size={18} /> Filtros
@@ -268,12 +268,12 @@ const Discovery: React.FC = () => {
             </div>
 
             {/* Keyword Search */}
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant ml-1">Buscar</label>
               <div className="relative">
                 <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant" />
                 <input
-                  className="w-full bg-surface-container-low border border-outline-variant rounded-2xl py-3 pl-10 pr-4 text-sm font-semibold focus:border-primary outline-none transition-all placeholder:text-on-surface-variant/50"
+                  className="w-full bg-surface-container-low border border-outline-variant rounded-2xl py-2 sm:py-3 pl-10 pr-4 text-sm font-semibold focus:border-primary outline-none transition-all placeholder:text-on-surface-variant/50"
                   placeholder="Ej: Torneo Smash"
                   type="text"
                   value={searchQuery}
@@ -283,13 +283,13 @@ const Discovery: React.FC = () => {
             </div>
 
             {/* Categories */}
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant ml-1">Categorías</label>
               <div className="flex flex-wrap gap-1.5">
                 <button
                   onClick={() => setSelectedCategory('ALL')}
                   className={cn(
-                    "px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all",
+                    "px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-widest transition-all",
                     selectedCategory === 'ALL'
                       ? "bg-primary text-white shadow-lg shadow-primary/20"
                       : "bg-surface-container-high text-on-surface-variant hover:bg-primary/10 hover:text-primary"
@@ -302,7 +302,7 @@ const Discovery: React.FC = () => {
                     key={cat.id}
                     onClick={() => setSelectedCategory(cat.name)}
                     className={cn(
-                      "px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2",
+                      "px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2",
                       selectedCategory === cat.name
                         ? "text-white shadow-lg"
                         : "bg-surface-container-high text-on-surface-variant hover:bg-primary/10 hover:text-primary"
@@ -310,7 +310,7 @@ const Discovery: React.FC = () => {
                     style={selectedCategory === cat.name ? { backgroundColor: cat.color || '#732ee4', boxShadow: `0 4px 14px ${cat.color || '#732ee4'}40` } : {}}
                   >
                     <span
-                      className="w-3 h-3 rounded-sm shrink-0"
+                      className="w-2.5 h-2.5 rounded-sm shrink-0"
                       style={{ backgroundColor: cat.color || '#732ee4' }}
                     />
                     {cat.name}
@@ -321,7 +321,7 @@ const Discovery: React.FC = () => {
             </div>
 
             {/* Quick Date Filters */}
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant ml-1 flex items-center gap-1.5">
                 <CalendarDays size={14} /> Fecha
               </label>
@@ -331,7 +331,7 @@ const Discovery: React.FC = () => {
                     key={qf.id}
                     onClick={() => handleQuickFilter(qf.id)}
                     className={cn(
-                      "px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all",
+                      "px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-widest transition-all",
                       activeQuickFilter === qf.id
                         ? "bg-primary text-white shadow-lg shadow-primary/20"
                         : "bg-surface-container-high text-on-surface-variant hover:bg-primary/10 hover:text-primary"

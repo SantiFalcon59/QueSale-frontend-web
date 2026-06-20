@@ -20,8 +20,9 @@ export const NotificationsPopover: React.FC = () => {
     if (!user) return;
     try {
       const result: any = await apiRequest('/api/notifications?limit=20', { auth: true });
-      setNotifications(result.data || []);
-      setUnreadCount(result.meta?.unreadCount || 0);
+      const items = result || [];
+      setNotifications(items);
+      setUnreadCount(items.filter((n: any) => !n.is_read).length);
     } catch (err) {
       console.error('Error fetching notifications:', err);
     }
@@ -138,7 +139,7 @@ export const NotificationsPopover: React.FC = () => {
                        <UserAvatar 
                          src={n.data?.fromPhoto} 
                          className="w-12 h-12 rounded-xl object-cover bg-surface-container-high" 
-                         alt={n.data?.fromName || 'Sistema'} 
+                          alt={n.title || 'Sistema'} 
                          size={24}
                        />
                        <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-lg bg-white shadow-md flex items-center justify-center border border-outline-variant/30">
@@ -148,7 +149,7 @@ export const NotificationsPopover: React.FC = () => {
 
                     <div className="flex-1 space-y-1 overflow-hidden">
                        <p className="text-xs font-medium text-on-surface leading-snug">
-                          <span className="font-black italic">{n.data?.fromName || 'Sistema'}</span> {n.message}
+                           <span className="font-black italic">{n.title || 'Sistema'}</span> {n.message}
                        </p>
                        <p className="text-[9px] font-bold text-on-surface-variant uppercase tracking-widest">
                           {format(new Date(n.created_at), "HH:mm '•' d MMM", { locale: es })}

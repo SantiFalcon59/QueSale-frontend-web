@@ -33,10 +33,9 @@ const AdminPanel: React.FC = () => {
   return (
     <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-10 py-8 min-h-screen">
       <div className="flex flex-col lg:flex-row gap-6 lg:gap-10">
-        {/* Admin Sidebar */}
         <aside className="w-full lg:w-72 lg:shrink-0">
           <div className="sticky top-24 space-y-8">
-            <div className="bg-surface-container-low rounded-[2.5rem] p-8 border border-outline-variant space-y-8 shadow-sm">
+            <div className="bg-surface-container-low rounded-[2rem] sm:rounded-[2.5rem] p-5 sm:p-8 border border-outline-variant space-y-8 shadow-sm">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-2xl bg-primary flex items-center justify-center text-white shadow-lg shadow-primary/20">
                   <ShieldCheck size={24} />
@@ -128,7 +127,7 @@ const AdminOverview: React.FC<{ onSwitchTab: (tab: TabId) => void; isAdmin: bool
   return (
     <div className="space-y-12">
       <header className="space-y-2">
-        <h1 className="text-6xl font-black italic tracking-tighter uppercase leading-tight">VISTA GENERAL DE <br /> <span className="text-primary">OPERACIONES</span></h1>
+        <h1 className="text-4xl sm:text-6xl font-black italic tracking-tighter uppercase leading-tight">VISTA GENERAL DE <br /> <span className="text-primary">OPERACIONES</span></h1>
         <p className="text-on-surface-variant font-medium text-lg italic">Panel de control de alto nivel para QueSale Geek</p>
       </header>
 
@@ -137,7 +136,7 @@ const AdminOverview: React.FC<{ onSwitchTab: (tab: TabId) => void; isAdmin: bool
           <motion.div 
             whileHover={{ scale: 1.02 }}
             onClick={() => onSwitchTab('orgs')}
-            className="col-span-12 lg:col-span-8 p-10 rounded-[3rem] bg-linear-to-br from-primary to-primary-container text-on-primary shadow-2xl shadow-primary/20 cursor-pointer flex justify-between items-center group overflow-hidden relative"
+            className="col-span-12 lg:col-span-8 p-6 sm:p-10 rounded-[2.5rem] sm:rounded-[3rem] bg-linear-to-br from-primary to-primary-container text-on-primary shadow-2xl shadow-primary/20 cursor-pointer flex flex-col sm:flex-row gap-6 justify-between items-start sm:items-center group overflow-hidden relative"
           >
             <div className="relative z-10 space-y-4">
                <div className="space-y-1">

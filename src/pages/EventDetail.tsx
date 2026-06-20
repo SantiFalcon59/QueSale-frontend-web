@@ -7,7 +7,8 @@ import {
   ShieldCheck, Ticket as TicketIcon, ThumbsUp, Reply, 
   Instagram, Twitter, Globe, Info, Megaphone, Users2,
   X, Image as ImageIcon, Plus, CheckCircle2, Trash2, Gavel,
-  ZoomIn, ZoomOut, Crosshair, ChevronLeft, ChevronRight
+  ZoomIn, ZoomOut, Crosshair, ChevronLeft, ChevronRight,
+  Crown, QrCode
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { cn, formatPrice, NO_EVENT_IMAGE } from '../lib/utils';
@@ -18,6 +19,8 @@ import { LoginPromptModal } from '../components/ui/LoginPromptModal';
 import { api, resolveAssetUrl } from '../services/apiClient';
 import { UserAvatar } from '../components/ui/UserAvatar';
 import { OrganizerAvatar } from '../components/ui/OrganizerAvatar';
+import Swal from 'sweetalert2';
+import { Html5QrcodeScanner } from 'html5-qrcode';
 import { io, Socket } from 'socket.io-client';
 import PostFeed from '../components/wall/PostFeed';
 import PostComposer from '../components/wall/PostComposer';
@@ -124,6 +127,63 @@ const EventDetail: React.FC = () => {
   const [isModerator, setIsModerator] = useState(false);
   const [isOrganizer, setIsOrganizer] = useState(false);
   const [replyingTo, setReplyingTo] = useState<{ id: string; userId: string; displayName: string; message: string } | null>(null);
+  const [qrScannerOpen, setQrScannerOpen] = useState(false);
+
+  useEffect(() => {
+    if (!qrScannerOpen) return;
+    
+    const timer = setTimeout(() => {
+      const scanner = new Html5QrcodeScanner(
+        "qr-reader-container",
+        { fps: 10, qrbox: { width: 250, height: 250 } },
+        false
+      );
+      
+      const onScanSuccess = async (decodedText: string) => {
+        try {
+          await scanner.clear();
+        } catch (e) {
+          console.error(e);
+        }
+        setQrScannerOpen(false);
+        
+        try {
+          const res: any = await api.validateTicket(decodedText);
+          Swal.fire({
+            title: '¡Entrada Válida!',
+            html: `<div class="text-left space-y-2">
+              <p><b>Evento:</b> ${res.event_title || event?.title}</p>
+              <p><b>Usuario ID:</b> ${res.user_id || 'N/D'}</p>
+              <p class="text-green-500 font-bold uppercase tracking-wider mt-2">Acceso Registrado Exitosamente</p>
+            </div>`,
+            icon: 'success',
+            confirmButtonText: 'Siguiente',
+            background: '#1a1a2e',
+            color: '#fff'
+          });
+        } catch (err: any) {
+          Swal.fire({
+            title: 'Error de Validación',
+            text: err.message || 'La entrada no es válida o ya fue usada.',
+            icon: 'error',
+            confirmButtonText: 'Entendido',
+            background: '#1a1a2e',
+            color: '#fff'
+          });
+        }
+      };
+
+      const onScanFailure = () => {};
+
+      scanner.render(onScanSuccess, onScanFailure);
+
+      return () => {
+        scanner.clear().catch(err => console.error("Error clearing scanner on unmount:", err));
+      };
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, [qrScannerOpen, event]);
 
   const handleInteraction = (e?: React.MouseEvent) => {
     if (!user) {
@@ -335,6 +395,31 @@ const EventDetail: React.FC = () => {
           onClose={() => setFeedbackModal(prev => ({ ...prev, isOpen: false }))}
           event={event}
         />
+      )}
+
+      {qrScannerOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+          <div className="w-full max-w-md bg-[#1a1a2e] border border-white/10 rounded-3xl p-6 space-y-4 shadow-2xl relative text-white">
+            <div className="flex justify-between items-center pb-2 border-b border-white/10">
+              <div className="flex items-center gap-2">
+                <QrCode size={20} className="text-primary" />
+                <h3 className="text-lg font-black uppercase tracking-tight italic">Escanear Entrada QR</h3>
+              </div>
+              <button 
+                onClick={() => setQrScannerOpen(false)}
+                className="p-1 hover:bg-white/10 rounded-lg text-white/60 hover:text-red-400 cursor-pointer"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            
+            <div id="qr-reader-container" className="w-full overflow-hidden rounded-2xl border border-white/10 bg-black text-black" />
+            
+            <p className="text-[10px] text-center text-white/50 font-bold uppercase tracking-widest leading-relaxed">
+              Colocá el código QR del asistente dentro del recuadro del visor.
+            </p>
+          </div>
+        </div>
       )}
       
       {/* Image Gallery Modal */}
@@ -706,8 +791,28 @@ const EventDetail: React.FC = () => {
           </section>
         </div>
 
-        {/* Right Column: Interaction & Tickets */}
         <div className="col-span-12 lg:col-span-4 space-y-6 lg:space-y-8 relative lg:sticky lg:top-28 self-start lg:pl-8">
+          {(isOrganizer || isModerator) && (
+            <section className="p-5 sm:p-8 rounded-[2rem] bg-[#1a1a2e] border border-purple-500/30 text-white shadow-xl space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-purple-600 flex items-center justify-center text-white shadow-lg shadow-purple-500/20">
+                  <Crown size={20} />
+                </div>
+                <div>
+                  <h3 className="text-sm font-black italic text-purple-400 uppercase tracking-tight leading-none">Acciones de Staff</h3>
+                  <p className="text-[9px] uppercase font-black tracking-widest text-purple-500/70 mt-1">Control de Accesos</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setQrScannerOpen(true)}
+                className="w-full btn-primary bg-purple-600 hover:bg-purple-700 text-white h-12 rounded-xl text-xs font-black tracking-widest uppercase flex items-center justify-center gap-2 cursor-pointer transition-all shadow-md shadow-purple-600/20"
+              >
+                <QrCode size={16} />
+                ESCANEAR ENTRADA QR
+              </button>
+            </section>
+          )}
+
            <section className="p-5 sm:p-8 lg:p-10 rounded-2xl sm:rounded-[2.5rem] lg:rounded-[3.5rem] bg-linear-to-br from-primary-container/20 to-surface border border-primary/20 shadow-2xl shadow-primary/10 space-y-8 lg:space-y-10">
               {isPast ? (
                 <div className="space-y-6 text-center">

@@ -7,6 +7,7 @@ import EmojiPicker, { EmojiClickData } from 'emoji-picker-react';
 import { GifPicker } from '../post/GifPicker';
 import { motion, AnimatePresence } from 'motion/react';
 import { UserAvatar } from '../ui/UserAvatar';
+import { toastError } from '../../lib/swal';
 
 const GridIcon = (props: any) => (
   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
@@ -65,6 +66,7 @@ const PostComposer: React.FC<PostComposerProps> = ({ placeholder = '¿Qué tiene
       if (url) setUploadedImages(prev => [...prev, url]);
     } catch (err) {
       console.error('Error uploading image:', err);
+      toastError('Error al subir la imagen. Puede que sea demasiado grande.');
     } finally {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
@@ -102,6 +104,7 @@ const PostComposer: React.FC<PostComposerProps> = ({ placeholder = '¿Qué tiene
       if (url) setUploadedImages(prev => [...prev, url]);
     } catch (err) {
       console.error('Error uploading dropped image:', err);
+      toastError('Error al subir la imagen. Puede que sea demasiado grande.');
     } finally {
       setUploading(false);
     }

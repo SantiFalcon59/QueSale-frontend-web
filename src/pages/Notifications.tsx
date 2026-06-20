@@ -17,7 +17,7 @@ const Notifications: React.FC = () => {
   const fetchNotifications = async () => {
     try {
       const result: any = await apiRequest('/api/notifications', { auth: true });
-      setNotifications(result.data || []);
+      setNotifications(result || []);
       setLoading(false);
     } catch (err) {
       console.error('Error fetching notifications:', err);
@@ -118,7 +118,7 @@ const Notifications: React.FC = () => {
                     <UserAvatar 
                       src={n.data?.fromPhoto} 
                       className="w-16 h-16 rounded-[1.5rem] object-cover bg-surface-container-high border-2 border-white shadow-sm" 
-                      alt={n.data?.fromName || 'Sistema'} 
+                      alt={n.title || 'Sistema'} 
                       size={28}
                     />
                     <div className="absolute -bottom-2 -right-2 w-8 h-8 rounded-xl bg-white shadow-lg flex items-center justify-center border border-outline-variant/30">
@@ -130,7 +130,7 @@ const Notifications: React.FC = () => {
                <div className="flex-1 space-y-2">
                   <div className="flex flex-col md:flex-row md:items-center justify-between gap-2">
                      <p className="text-lg font-medium leading-tight">
-                        <span className="font-black italic text-on-surface">{n.data?.fromName || 'Sistema'}</span> {n.message}
+                         <span className="font-black italic text-on-surface">{n.title || 'Sistema'}</span> {n.message}
                      </p>
                      <span className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant shrink-0">
                         {format(new Date(n.created_at), "HH:mm '•' d 'de' MMMM", { locale: es })}
