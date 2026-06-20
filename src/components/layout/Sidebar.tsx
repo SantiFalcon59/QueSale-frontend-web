@@ -41,11 +41,10 @@ export const Sidebar: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ is
             onClose();
           }
         }}
-        animate={{ x: isOpen ? 0 : -256 }}
         transition={{ type: 'spring', damping: 25, stiffness: 250 }}
         className={cn(
-          "fixed left-0 top-0 h-full w-64 sidebar-gradient border-r border-primary/20 shadow-[10px_0_30px_rgba(0,0,0,0.3)] flex flex-col p-6 z-[70] lg:translate-x-0",
-          isOpen ? "" : "-translate-x-full lg:translate-x-0"
+          "fixed left-0 top-0 h-full w-64 sidebar-gradient border-r border-primary/20 shadow-[10px_0_30px_rgba(0,0,0,0.3)] flex flex-col p-6 z-[70] transition-transform duration-300",
+          isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         )}
       >
         <div className="flex items-center justify-between mb-10 shrink-0">
