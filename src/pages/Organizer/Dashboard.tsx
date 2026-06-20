@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Users, Ticket, DollarSign, Calendar, Plus, Edit, Trash, BarChart3, TrendingUp, Users as UsersIcon, Sparkles, Building, ArrowRight, Upload, X, Camera, Loader2, Search, Shield, UserPlus, Check, Link, Copy, Star, ExternalLink, Eye, Heart, MessageCircle, Percent, ShieldCheck, MessageSquare, CheckCircle, BadgeCheck, Globe, Twitter, Instagram } from 'lucide-react';
+import { Users, Ticket, DollarSign, Calendar, Plus, Edit, Trash, BarChart3, TrendingUp, Users as UsersIcon, Sparkles, Building, ArrowRight, Upload, X, Camera, Loader2, Search, Shield, UserPlus, Check, Link, Copy, Star, ExternalLink, Eye, Heart, MessageCircle, Percent, ShieldCheck, MessageSquare, CheckCircle, BadgeCheck, Globe, Twitter, Instagram, Settings } from 'lucide-react';
 
 const TikTokIcon = () => (
   <svg viewBox="0 0 24 24" fill="currentColor" className="w-[12px] h-[12px]">
@@ -16,7 +16,7 @@ import { OrganizerAvatar } from '../../components/ui/OrganizerAvatar';
 import { toastSuccess, toastError, confirmAction } from '../../lib/swal';
 
 const OrganizerDashboard: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'insights' | 'events' | 'staff'>('insights');
+  const [activeTab, setActiveTab] = useState<'insights' | 'events' | 'staff' | 'settings'>('insights');
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { profile, user } = useAuth();
@@ -644,105 +644,7 @@ const OrganizerDashboard: React.FC = () => {
 
 
 
-                {organization?.verified ? (
-                  <div className="pt-4 border-t border-outline-variant space-y-4">
-                    <div className="flex items-center gap-2 mb-1">
-                       <img src="https://www.mercadopago.com/instore/merchant/bundles/mptheme/images/logo-mercadopago.png" alt="MP" className="h-3" />
-                       <h4 className="text-[9px] font-black uppercase tracking-[0.2em] text-on-surface-variant">Configuración de Cobros</h4>
-                    </div>
-                    
-                    {organization.mp_access_token ? (
-                      <div className="p-4 rounded-xl bg-green-50 border border-green-200">
-                        <p className="text-xs text-green-800 font-bold flex items-center gap-2">
-                          <Check size={16} /> Cuenta de Mercado Pago Conectada
-                        </p>
-                        <p className="text-[10px] text-green-700 mt-1">
-                          Los pagos de tus eventos irán directamente a tu cuenta.
-                        </p>
-                        <button 
-                          type="button"
-                          onClick={async () => {
-                              const confirmed = await confirmAction('¿Desconectar Mercado Pago?', 'Dejarás de recibir pagos de entradas a través de Mercado Pago.');
-                              if (!confirmed) return;
-                              try {
-                                  await api.delete(`/api/organizers/${organization.id}/oauth/mercadopago`, { auth: true });
-                                  await fetchAll();
-                                  toastSuccess('Cuenta de Mercado Pago desconectada');
-                               } catch (e) {
-                                  toastError('Error al desconectar');
-                               }
-                           }}
-                          className="mt-3 text-[10px] font-bold text-red-600 hover:underline"
-                        >
-                          Desconectar cuenta
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="space-y-3">
-                        <p className="text-xs text-on-surface-variant font-medium">
-                          Conecta tu cuenta de Mercado Pago para recibir el dinero de las entradas directamente.
-                        </p>
-                        <button
-                          type="button"
-                          onClick={async () => {
-                              try {
-                                const res: any = await api.get(`/api/organizers/${organization.id}/oauth/mercadopago`, { auth: true });
-                                if (res && res.url) {
-                                  window.location.href = res.url;
-                                }
-                              } catch (e) {
-                                 toastError('Error al iniciar la conexión con Mercado Pago');
-                              }
-                           }}
-                           className="w-full bg-[#009EE3] hover:bg-[#0089C5] text-white rounded-xl px-4 py-3 text-sm font-bold transition-colors flex items-center justify-center gap-2"
-                         >
-                           <img src="https://www.mercadopago.com/instore/merchant/bundles/mptheme/images/logo-mercadopago.png" className="h-5 w-auto" alt="MP" />
-                           Conectar con Mercado Pago
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <div className="pt-4 border-t border-outline-variant space-y-4">
-                    <div className="p-4 rounded-xl bg-amber-50 border border-amber-200">
-                      <p className="text-[10px] text-amber-800 font-bold uppercase tracking-widest flex items-center gap-2">
-                        <Shield size={14} /> Función de Pagos Bloqueada
-                      </p>
-                      <p className="text-xs text-amber-700 mt-2 font-medium">
-                        La integración con Mercado Pago está disponible solo para organizaciones verificadas. Contáctate con soporte para verificar tu organización.
-                      </p>
-                    </div>
-                  </div>
-                )}
 
-                <div className="pt-4 border-t border-outline-variant space-y-4">
-                  <h4 className="text-[10px] uppercase font-black tracking-widest text-on-surface-variant flex items-center gap-2">
-                     <Shield size={14} className="text-primary" /> Datos de Verificación (Nivel 2)
-                  </h4>
-                  <p className="text-[11px] text-on-surface-variant font-medium">
-                     Completa estos datos legales para solicitar la verificación y habilitar el cobro de entradas.
-                  </p>
-                  <div className="space-y-3">
-                     <div className="space-y-1">
-                        <label className="text-[10px] uppercase font-black tracking-widest text-on-surface-variant ml-4">Nombre Legal o Razón Social</label>
-                        <input value={editOrgData.real_name} onChange={e => setEditOrgData(prev => ({ ...prev, real_name: e.target.value }))} placeholder="Ej: Productora S.A." className="w-full bg-surface-container-low border border-outline-variant rounded-xl px-4 py-3 text-sm outline-none focus:border-primary/50 transition-all font-medium" />
-                     </div>
-                     <div className="grid grid-cols-2 gap-3">
-                        <div className="space-y-1">
-                           <label className="text-[10px] uppercase font-black tracking-widest text-on-surface-variant ml-4">DNI / CUIT</label>
-                           <input value={editOrgData.dni} onChange={e => setEditOrgData(prev => ({ ...prev, dni: e.target.value }))} placeholder="Sin guiones" className="w-full bg-surface-container-low border border-outline-variant rounded-xl px-4 py-3 text-sm outline-none focus:border-primary/50 transition-all font-medium" />
-                        </div>
-                        <div className="space-y-1">
-                           <label className="text-[10px] uppercase font-black tracking-widest text-on-surface-variant ml-4">Teléfono</label>
-                           <input value={editOrgData.phone_number} onChange={e => setEditOrgData(prev => ({ ...prev, phone_number: e.target.value }))} placeholder="+54 9..." className="w-full bg-surface-container-low border border-outline-variant rounded-xl px-4 py-3 text-sm outline-none focus:border-primary/50 transition-all font-medium" />
-                        </div>
-                     </div>
-                     <div className="space-y-1">
-                        <label className="text-[10px] uppercase font-black tracking-widest text-on-surface-variant ml-4">Dirección Fiscal</label>
-                        <input value={editOrgData.address} onChange={e => setEditOrgData(prev => ({ ...prev, address: e.target.value }))} placeholder="Calle 123, Ciudad, Provincia" className="w-full bg-surface-container-low border border-outline-variant rounded-xl px-4 py-3 text-sm outline-none focus:border-primary/50 transition-all font-medium" />
-                     </div>
-                   </div>
-                 </div>
                </div>
               <div className="flex gap-3 p-6 border-t border-outline-variant shrink-0">
                 <button onClick={() => setEditingOrg(false)} className="btn-secondary flex-1">CANCELAR</button>
@@ -1115,6 +1017,7 @@ const OrganizerDashboard: React.FC = () => {
           { id: 'insights', label: 'Dashboard', icon: BarChart3 },
           { id: 'events', label: 'Mis Eventos', icon: Calendar },
           { id: 'staff', label: 'Staff', icon: UsersIcon },
+          { id: 'settings', label: 'Configuración', icon: Settings },
         ].map((tab) => (
           <button
             key={tab.id}
@@ -1592,6 +1495,170 @@ const OrganizerDashboard: React.FC = () => {
               Los <span className="font-bold">Moderadores</span> pueden crear y modificar eventos.
             </p>
           </section>
+        </div>
+      )}
+
+      {/* Settings Tab */}
+      {activeTab === 'settings' && (
+        <div className="max-w-4xl space-y-10">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            {/* Left Column: Mercado Pago Connection */}
+            <div className="lg:col-span-5 space-y-6">
+              <section className="bg-white rounded-[2.5rem] border border-outline-variant p-8 space-y-6 shadow-sm">
+                <div>
+                  <h3 className="text-xl font-black italic tracking-tight">Cobros Automáticos</h3>
+                  <p className="text-xs text-on-surface-variant font-medium mt-1">Conecta tu cuenta de Mercado Pago para procesar y recibir el dinero de las ventas de entradas de tus eventos de manera directa e inmediata.</p>
+                </div>
+
+                {organization?.verified ? (
+                  <div className="space-y-4">
+                    {organization.mp_access_token ? (
+                      <div className="p-5 rounded-2xl bg-green-50 border border-green-200 space-y-3">
+                        <p className="text-xs text-green-800 font-bold flex items-center gap-2">
+                          <CheckCircle size={18} className="text-green-600" /> Cuenta Conectada
+                        </p>
+                        <p className="text-[10px] text-green-700 font-medium">
+                          Los fondos de las entradas vendidas se acreditarán directamente en tu cuenta de Mercado Pago asociada.
+                        </p>
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            const confirmed = await confirmAction('¿Desconectar Mercado Pago?', 'Dejarás de recibir pagos de entradas a través de Mercado Pago.');
+                            if (!confirmed) return;
+                            try {
+                              await api.delete(`/api/organizers/${organization.id}/oauth/mercadopago`, { auth: true });
+                              await fetchAll();
+                              toastSuccess('Cuenta de Mercado Pago desconectada');
+                            } catch (e) {
+                              toastError('Error al desconectar');
+                            }
+                          }}
+                          className="w-full mt-2 py-2.5 rounded-xl border border-red-200 hover:bg-red-50 text-red-600 text-[10px] font-black uppercase tracking-widest transition-all"
+                        >
+                          Desconectar cuenta
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            try {
+                              const res: any = await api.get(`/api/organizers/${organization.id}/oauth/mercadopago`, { auth: true });
+                              if (res && res.url) {
+                                window.location.href = res.url;
+                              }
+                            } catch (e) {
+                              toastError('Error al iniciar la conexión con Mercado Pago');
+                            }
+                          }}
+                          className="w-full bg-[#009EE3] hover:bg-[#0089C5] text-white rounded-2xl py-4 text-xs font-black uppercase tracking-widest transition-colors flex items-center justify-center gap-2 shadow-lg shadow-[#009EE3]/20"
+                        >
+                          Conectar con Mercado Pago
+                        </button>
+                        <p className="text-[10px] text-on-surface-variant font-medium text-center">
+                          Serás redirigido a Mercado Pago para autorizar la conexión de forma segura.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="p-5 rounded-2xl bg-amber-50 border border-amber-200 space-y-2">
+                    <p className="text-[10px] text-amber-800 font-black uppercase tracking-widest flex items-center gap-2">
+                      <Shield size={14} /> Requiere Verificación
+                    </p>
+                    <p className="text-xs text-amber-700 font-medium leading-relaxed">
+                      La integración con Mercado Pago está bloqueada temporalmente. Para habilitar cobros, primero debes completar tus datos de verificación y obtener el Nivel 2.
+                    </p>
+                  </div>
+                )}
+              </section>
+            </div>
+
+            {/* Right Column: Nivel 2 Verification Form */}
+            <div className="lg:col-span-7 space-y-6">
+              <section className="bg-white rounded-[2.5rem] border border-outline-variant p-8 space-y-6 shadow-sm">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div>
+                    <h3 className="text-xl font-black italic tracking-tight">Verificación (Nivel 2)</h3>
+                    <p className="text-xs text-on-surface-variant font-medium mt-1">Completa la información fiscal y legal de tu organización para solicitar la aprobación.</p>
+                  </div>
+                  <div className="shrink-0">
+                    {organization?.verified ? (
+                      <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-blue-50 border border-blue-200 text-blue-600 shadow-sm text-[10px] font-black uppercase tracking-wider">
+                        <BadgeCheck size={14} className="fill-blue-500 text-white" /> Verificado PRO
+                      </span>
+                    ) : (organization?.real_name && organization?.dni && organization?.phone_number && organization?.address) ? (
+                      <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-amber-50 border border-amber-200 text-amber-600 shadow-sm text-[10px] font-black uppercase tracking-wider animate-pulse">
+                        <Sparkles size={14} className="fill-amber-500 text-white" /> En Revisión
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary shadow-sm text-[10px] font-black uppercase tracking-wider">
+                        Sin Solicitar
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="space-y-4 pt-2">
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] uppercase font-black tracking-widest text-on-surface-variant ml-4">Nombre Legal o Razón Social</label>
+                    <input
+                      value={editOrgData.real_name}
+                      onChange={e => setEditOrgData(prev => ({ ...prev, real_name: e.target.value }))}
+                      placeholder="Ej: Productora S.A."
+                      className="w-full bg-surface-container-low border border-outline-variant rounded-xl px-4 py-3 text-sm outline-none focus:border-primary/50 transition-all font-medium"
+                    />
+                  </div>
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] uppercase font-black tracking-widest text-on-surface-variant ml-4">DNI / CUIT</label>
+                      <input
+                        value={editOrgData.dni}
+                        onChange={e => setEditOrgData(prev => ({ ...prev, dni: e.target.value }))}
+                        placeholder="Sin guiones"
+                        className="w-full bg-surface-container-low border border-outline-variant rounded-xl px-4 py-3 text-sm outline-none focus:border-primary/50 transition-all font-medium"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] uppercase font-black tracking-widest text-on-surface-variant ml-4">Teléfono de Contacto</label>
+                      <input
+                        value={editOrgData.phone_number}
+                        onChange={e => setEditOrgData(prev => ({ ...prev, phone_number: e.target.value }))}
+                        placeholder="+54 9..."
+                        className="w-full bg-surface-container-low border border-outline-variant rounded-xl px-4 py-3 text-sm outline-none focus:border-primary/50 transition-all font-medium"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] uppercase font-black tracking-widest text-on-surface-variant ml-4">Dirección Fiscal</label>
+                    <input
+                      value={editOrgData.address}
+                      onChange={e => setEditOrgData(prev => ({ ...prev, address: e.target.value }))}
+                      placeholder="Calle 123, Ciudad, Provincia"
+                      className="w-full bg-surface-container-low border border-outline-variant rounded-xl px-4 py-3 text-sm outline-none focus:border-primary/50 transition-all font-medium"
+                    />
+                  </div>
+
+                  <button
+                    onClick={async () => {
+                      try {
+                        await handleUpdateOrg();
+                        toastSuccess('Datos de verificación guardados correctamente. Si completaste todos los campos, tu solicitud pasará a revisión.');
+                      } catch (err: any) {
+                        toastError(err.message || 'Error al guardar los datos de verificación');
+                      }
+                    }}
+                    className="w-full btn-primary h-12 text-[10px] font-black uppercase tracking-widest mt-4"
+                  >
+                    Guardar Datos de Verificación
+                  </button>
+                </div>
+              </section>
+            </div>
+          </div>
         </div>
       )}
     </div>
