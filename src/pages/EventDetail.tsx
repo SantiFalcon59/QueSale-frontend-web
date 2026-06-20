@@ -414,7 +414,7 @@ const EventDetail: React.FC = () => {
               </button>
             </div>
             
-            <div id="qr-reader-container" className="w-full overflow-hidden rounded-2xl border border-white/10 bg-black text-black" />
+            <div id="qr-reader-container" className="w-full overflow-hidden rounded-2xl border border-white/10 bg-neutral-900 text-white" />
             
             <p className="text-[10px] text-center text-white/50 font-bold uppercase tracking-widest leading-relaxed">
               Colocá el código QR del asistente dentro del recuadro del visor.
@@ -476,7 +476,7 @@ const EventDetail: React.FC = () => {
 
       <div className="grid grid-cols-12 gap-6 lg:gap-16 overflow-hidden">
         {/* Left Column: Event Core & Community */}
-        <div className="col-span-12 lg:col-span-8 space-y-8 lg:space-y-12 min-w-0">
+        <div className="col-span-12 lg:col-span-8 space-y-8 lg:space-y-12 min-w-0 order-2 lg:order-1">
           {/* Gallery Header */}
           <section className="relative h-[350px] sm:h-[400px] lg:h-[500px] rounded-[1.5rem] lg:rounded-[3.5rem] overflow-hidden group">
             {/* Desktop grid layout */}
@@ -570,24 +570,25 @@ const EventDetail: React.FC = () => {
             
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent pointer-events-none" />
             
-            <div className="absolute bottom-6 lg:bottom-10 left-6 lg:left-10 right-6 lg:right-10 flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
-              <div className="space-y-2 lg:space-y-4">
+            {/* Desktop-only details overlay inside gallery */}
+            <div className="hidden lg:flex absolute bottom-10 left-10 right-10 justify-between items-end gap-4">
+              <div className="space-y-4">
                 <div className="flex gap-2">
-                   <div className="px-3 lg:px-4 py-1 lg:py-1.5 rounded-full bg-primary text-white text-[9px] lg:text-[10px] font-black tracking-widest uppercase flex items-center gap-2">
+                   <div className="px-4 py-1.5 rounded-full bg-primary text-white text-[10px] font-black tracking-widest uppercase flex items-center gap-2">
                       <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
                       EN VIVO
                    </div>
-                   <span className="px-3 lg:px-4 py-1 lg:py-1.5 rounded-full bg-white/20 backdrop-blur-md border border-white/10 text-[9px] lg:text-[10px] font-bold text-white uppercase tracking-widest">
+                   <span className="px-4 py-1.5 rounded-full bg-white/20 backdrop-blur-md border border-white/10 text-[10px] font-bold text-white uppercase tracking-widest">
                      {event.category}
                    </span>
                 </div>
-                <h1 className="text-2xl sm:text-4xl lg:text-6xl font-black tracking-tighter text-white leading-tight lg:leading-none uppercase">{event.title}</h1>
+                <h1 className="text-4xl lg:text-6xl font-black tracking-tighter text-white leading-none uppercase">{event.title}</h1>
               </div>
-              <div className="flex gap-2 lg:gap-3 self-end sm:self-auto">
+              <div className="flex gap-3">
                 <button 
                   onClick={handleToggleSave}
                   className={cn(
-                    "w-12 h-12 rounded-full backdrop-blur-md border flex items-center justify-center transition-all",
+                    "w-12 h-12 rounded-full backdrop-blur-md border flex items-center justify-center transition-all cursor-pointer",
                     isSaved 
                       ? "bg-red-500 border-red-500 text-white shadow-lg shadow-red-500/30" 
                       : "bg-white/20 border-white/20 text-white hover:bg-primary"
@@ -597,13 +598,50 @@ const EventDetail: React.FC = () => {
                 </button>
                 <button 
                   onClick={() => handleInteraction()}
-                  className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-md border border-white/20 flex items-center justify-center text-white hover:bg-primary transition-all"
+                  className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-md border border-white/20 flex items-center justify-center text-white hover:bg-primary transition-all cursor-pointer"
                 >
                   <Share2 size={20} />
                 </button>
               </div>
             </div>
           </section>
+
+          {/* Mobile-only Event Title & Actions (rendered below gallery to prevent text clashing on smaller screens) */}
+          <div className="lg:hidden mt-6 space-y-4 px-2">
+            <div className="flex items-center justify-between gap-4">
+              <div className="space-y-2">
+                <div className="flex gap-2">
+                  <div className="px-3 py-1 rounded-full bg-primary text-white text-[9px] font-black tracking-widest uppercase flex items-center gap-1.5">
+                    <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                    EN VIVO
+                  </div>
+                  <span className="px-3 py-1 rounded-full bg-surface-container-high border border-outline-variant/30 text-[9px] font-bold text-on-surface uppercase tracking-widest">
+                    {event.category}
+                  </span>
+                </div>
+                <h1 className="text-2xl font-black tracking-tight text-on-surface leading-tight uppercase">{event.title}</h1>
+              </div>
+              <div className="flex gap-2 shrink-0">
+                <button 
+                  onClick={handleToggleSave}
+                  className={cn(
+                    "w-11 h-11 rounded-full border flex items-center justify-center transition-all cursor-pointer",
+                    isSaved 
+                      ? "bg-red-500 border-red-500 text-white shadow-lg shadow-red-500/30" 
+                      : "bg-surface-container-high border-outline-variant text-on-surface-variant hover:bg-primary hover:text-white"
+                  )}
+                >
+                  <Heart size={18} fill={isSaved ? "currentColor" : "none"} />
+                </button>
+                <button 
+                  onClick={() => handleInteraction()}
+                  className="w-11 h-11 rounded-full bg-surface-container-high border border-outline-variant flex items-center justify-center text-on-surface-variant hover:bg-primary hover:text-white transition-all cursor-pointer"
+                >
+                  <Share2 size={18} />
+                </button>
+              </div>
+            </div>
+          </div>
 
           {/* Navigation Tabs */}
           <div className="relative overflow-hidden">
@@ -839,7 +877,7 @@ const EventDetail: React.FC = () => {
           </section>
         </div>
 
-        <div className="col-span-12 lg:col-span-4 space-y-6 lg:space-y-8 relative lg:sticky lg:top-28 self-start lg:pl-8">
+        <div className="col-span-12 lg:col-span-4 space-y-6 lg:space-y-8 relative lg:sticky lg:top-28 self-start lg:pl-8 order-1 lg:order-2">
           {(isOrganizer || isModerator) && (
             <section className="p-5 sm:p-8 rounded-[2rem] bg-[#1a1a2e] border border-purple-500/30 text-white shadow-xl space-y-4">
               <div className="flex items-center gap-3">
@@ -983,9 +1021,9 @@ const EventDetail: React.FC = () => {
               initial={{ opacity: 0, y: 50, scale: 0.9, transformOrigin: 'bottom right' }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 50, scale: 0.9 }}
-              className="fixed bottom-24 left-4 right-4 sm:left-auto sm:right-[calc(6rem+72px)] sm:w-[400px] h-[70vh] sm:h-[600px] bg-surface rounded-[2.5rem] lg:rounded-[3rem] shadow-2xl border border-outline-variant overflow-hidden flex flex-col"
+              className="fixed bottom-20 left-3 right-3 sm:left-auto sm:right-[calc(6rem+72px)] sm:w-[400px] h-[72vh] sm:h-[600px] bg-surface rounded-[1.5rem] sm:rounded-[2.5rem] lg:rounded-[3rem] shadow-2xl border border-outline-variant overflow-hidden flex flex-col"
             >
-              <div className="p-8 bg-surface-container-high border-b border-outline-variant flex items-center justify-between">
+              <div className="p-4 sm:p-6 lg:p-8 bg-surface-container-high border-b border-outline-variant flex items-center justify-between shrink-0">
                 <div className="flex items-center gap-4">
                   <div className="w-3 h-3 rounded-full bg-primary animate-pulse shadow-[0_0_12px_rgba(var(--primary),0.5)]" />
                   <div>
@@ -995,11 +1033,11 @@ const EventDetail: React.FC = () => {
                 </div>
               </div>
 
-              <div className="flex-1 overflow-y-auto p-8 space-y-6 no-scrollbar">
+              <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-6 no-scrollbar">
                 <LiveChat eventId={event.id} isModerator={isModerator} organizerId={event.organizerId} onReply={setReplyingTo} />
               </div>
 
-              <div className="p-8 border-t border-outline-variant bg-surface-container-low/50">
+              <div className="p-4 sm:p-6 lg:p-8 border-t border-outline-variant bg-surface-container-low/50 shrink-0">
                 <ChatMessageInput eventId={event.id} replyingTo={replyingTo} onCancelReply={() => setReplyingTo(null)} />
               </div>
             </motion.div>

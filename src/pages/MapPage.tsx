@@ -139,7 +139,7 @@ const MapPage: React.FC = () => {
   const selectedEvent = events.find(e => e.id_event === selectedEventId);
 
   return (
-    <div className="h-screen lg:h-[calc(100vh-64px)] lg:-mt-16 relative overflow-hidden bg-[#0b0e14]">
+    <div className="h-[calc(100vh-128px)] lg:h-[calc(100vh-64px)] lg:-mt-16 relative overflow-hidden bg-[#0b0e14]">
       {/* Search Input Injected into Header (Visual Only) */}
       <style>{`
         .navbar-glass input {
@@ -206,7 +206,7 @@ const MapPage: React.FC = () => {
                <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
                <span className="text-[10px] text-white font-black uppercase tracking-widest">{events.length} Eventos mostrados</span>
              </div>
-             <button onClick={() => setShowFilters(false)} className="lg:hidden p-1 text-white/50 hover:text-white transition-colors">
+             <button onClick={() => setShowFilters(false)} className="p-1 text-white/50 hover:text-white transition-colors">
                <X size={14} />
              </button>
            </div>
@@ -356,13 +356,13 @@ const MapPage: React.FC = () => {
             exit={{ opacity: 0, y: 50, x: "-50%", scale: 0.95 }}
             className="absolute bottom-6 left-1/2 w-[90%] max-w-2xl z-50 pointer-events-auto"
           >
-            <div className="bg-white/90 backdrop-blur-3xl rounded-[2.5rem] overflow-hidden shadow-[0_25px_60px_-15px_rgba(0,0,0,0.3)] border border-white/60 flex h-40 ring-1 ring-primary/5">
+            <div className="bg-white/90 backdrop-blur-3xl rounded-[1.5rem] sm:rounded-[2.5rem] overflow-hidden shadow-[0_25px_60px_-15px_rgba(0,0,0,0.3)] border border-white/60 flex h-36 sm:h-40 ring-1 ring-primary/5">
               {/* Left: Image Section */}
-              <div className="w-1/3 relative overflow-hidden group shrink-0">
+              <div className="w-[100px] sm:w-1/3 relative overflow-hidden group shrink-0">
                 <img className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" src={selectedEvent.images?.[0] || selectedEvent.thumbnail_url || NO_EVENT_IMAGE} alt={selectedEvent.title} />
-                <div className="absolute top-3 left-3">
+                <div className="absolute top-2 left-2 sm:top-3 sm:left-3">
                   <span
-                    className="text-white text-[8px] font-black px-3 py-1 rounded-md uppercase tracking-wider"
+                    className="text-white text-[7px] sm:text-[8px] font-black px-2 py-0.5 sm:px-3 sm:py-1 rounded-md uppercase tracking-wider"
                     style={{ backgroundColor: categories.find((c: any) => c.name === (selectedEvent.interests?.[0]?.name))?.color || '#732ee4' }}
                   >
                     {selectedEvent.interests?.[0]?.name || 'EVENTO'}
@@ -372,52 +372,52 @@ const MapPage: React.FC = () => {
               </div>
 
               {/* Right: Details Section */}
-              <div className="flex-1 flex flex-col p-5 lg:p-6 justify-between bg-white/20">
+              <div className="flex-1 flex flex-col p-3.5 sm:p-5 lg:p-6 justify-between bg-white/20 min-w-0">
                 <div>
                   <div className="flex justify-between items-start gap-2">
-                    <h2 className="text-lg lg:text-xl font-display font-black italic tracking-tighter text-on-surface leading-tight uppercase line-clamp-2">{selectedEvent.title}</h2>
+                    <h2 className="text-sm sm:text-lg lg:text-xl font-display font-black italic tracking-tighter text-on-surface leading-tight uppercase line-clamp-2 truncate-2-lines">{selectedEvent.title}</h2>
                     {!isNaN(Number(selectedEvent.price)) && Number(selectedEvent.price) > 0 && (
-                      <span className="text-primary font-black text-xl leading-none italic shrink-0">
+                      <span className="text-primary font-black text-base sm:text-xl leading-none italic shrink-0">
                         {formatPrice(selectedEvent.price)}
                       </span>
                     )}
                   </div>
                   
-                  <div className="flex gap-4 items-center mt-3">
+                  <div className="flex gap-3 sm:gap-4 items-center mt-2">
                     {selectedEvent.date && (
-                      <div className="flex items-center gap-2">
-                        <Calendar size={14} className="text-primary shrink-0" />
-                        <p className="text-[10px] font-bold text-on-surface">
+                      <div className="flex items-center gap-1.5">
+                        <Calendar size={12} className="text-primary shrink-0" />
+                        <p className="text-[9px] sm:text-[10px] font-bold text-on-surface">
                           {new Date(selectedEvent.date).toLocaleDateString('es-AR', { day: 'numeric', month: 'short' })}
                         </p>
                       </div>
                     )}
                     {selectedEvent.ubication && (
-                      <div className="flex items-center gap-2">
-                        <MapPin size={14} className="text-primary shrink-0" />
-                        <p className="text-[10px] font-bold text-on-surface truncate max-w-[120px]">{selectedEvent.ubication}</p>
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <MapPin size={12} className="text-primary shrink-0" />
+                        <p className="text-[9px] sm:text-[10px] font-bold text-on-surface truncate">{selectedEvent.ubication}</p>
                       </div>
                     )}
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between mt-auto">
+                <div className="flex items-center justify-between mt-auto gap-2">
                   <button 
                     onClick={() => navigate(`/events/${selectedEvent.id_event}`)}
-                    className="bg-primary text-white font-black px-6 py-2.5 rounded-xl text-[9px] tracking-[0.15em] flex items-center gap-2 hover:bg-primary-container hover:shadow-xl hover:shadow-primary/30 transition-all active:scale-95 group uppercase"
+                    className="bg-primary text-white font-black px-4 py-2 sm:px-6 sm:py-2.5 rounded-xl text-[8px] sm:text-[9px] tracking-[0.1em] sm:tracking-[0.15em] flex items-center gap-1.5 sm:gap-2 hover:bg-primary-container hover:shadow-xl hover:shadow-primary/30 transition-all active:scale-95 group uppercase shrink-0"
                   >
                     VER DETALLES
-                    <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform" />
+                    <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" />
                   </button>
-                  <div className="flex gap-2">
-                    <button className="w-9 h-9 rounded-xl bg-surface-container-low flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-all border border-primary/10">
-                      <Share2 size={14} />
+                  <div className="flex gap-1.5">
+                    <button className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-surface-container-low flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-all border border-primary/10 shrink-0">
+                      <Share2 size={12} />
                     </button>
                     <button 
                       onClick={() => setSelectedEventId(null)}
-                      className="w-9 h-9 rounded-xl bg-surface-container-low flex items-center justify-center text-outline-variant hover:text-red-500 hover:bg-red-50 transition-all border border-outline-variant/30"
+                      className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-surface-container-low flex items-center justify-center text-outline-variant hover:text-red-500 hover:bg-red-50 transition-all border border-outline-variant/30 shrink-0"
                     >
-                      <X size={14} />
+                      <X size={12} />
                     </button>
                   </div>
                 </div>
@@ -534,7 +534,7 @@ const MapWrapper = ({ userLocation, selectedEventId, onSelectEvent, activeCatego
       {!showFilters && (
         <button
           onClick={() => setShowFilters(true)}
-          className="fixed bottom-24 left-4 z-50 w-12 h-12 rounded-2xl bg-primary text-white shadow-xl hover:shadow-primary/40 transition-all active:scale-95 flex items-center justify-center border border-white/20 lg:hidden"
+          className="fixed bottom-24 left-4 z-50 w-12 h-12 rounded-2xl bg-primary text-white shadow-xl hover:shadow-primary/40 transition-all active:scale-95 flex items-center justify-center border border-white/20"
         >
           <span className="material-symbols-outlined text-[22px]">tune</span>
         </button>

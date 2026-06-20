@@ -12,6 +12,9 @@ import { Footer } from './components/layout/Footer';
 import { BottomNav } from './components/layout/BottomNav';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from './lib/utils';
+import { Capacitor } from '@capacitor/core';
+
+const isCapacitor = Capacitor.isNativePlatform();
 
 // Lazy load pages for performance
 const Home = React.lazy(() => import('./pages/Home'));
@@ -102,6 +105,12 @@ export default function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   useEffect(() => {
+    if (isCapacitor) {
+      document.body.classList.add('is-capacitor');
+    } else {
+      document.body.classList.remove('is-capacitor');
+    }
+
     let startX = 0;
     let startY = 0;
     const handleTouchStart = (e: TouchEvent) => {
@@ -133,12 +142,14 @@ export default function App() {
         <ScrollToTop />
         <div className="relative flex min-h-screen bg-background overflow-x-hidden font-sans">
           {/* Hyper-Cosmic Ambient Elements */}
-          <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-            <div className="absolute top-[-10%] left-[-10%] w-[70%] h-[70%] bg-primary/20 blur-[180px] rounded-full animate-pulse mix-blend-screen" style={{ animationDuration: '6s' }} />
-            <div className="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] bg-secondary/15 blur-[180px] rounded-full animate-pulse mix-blend-screen" style={{ animationDuration: '10s' }} />
-            <div className="absolute top-[20%] right-[-15%] w-[50%] h-[50%] bg-tertiary/15 blur-[160px] rounded-full animate-pulse mix-blend-screen" style={{ animationDuration: '8s' }} />
-            <div className="absolute middle-[50%] left-[-20%] w-[45%] h-[45%] bg-primary/10 blur-[140px] rounded-full animate-pulse mix-blend-screen" style={{ animationDuration: '12s' }} />
-          </div>
+          {!isCapacitor && (
+            <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
+              <div className="absolute top-[-10%] left-[-10%] w-[70%] h-[70%] bg-primary/20 blur-[180px] rounded-full animate-pulse mix-blend-screen" style={{ animationDuration: '6s' }} />
+              <div className="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] bg-secondary/15 blur-[180px] rounded-full animate-pulse mix-blend-screen" style={{ animationDuration: '10s' }} />
+              <div className="absolute top-[20%] right-[-15%] w-[50%] h-[50%] bg-tertiary/15 blur-[160px] rounded-full animate-pulse mix-blend-screen" style={{ animationDuration: '8s' }} />
+              <div className="absolute middle-[50%] left-[-20%] w-[45%] h-[45%] bg-primary/10 blur-[140px] rounded-full animate-pulse mix-blend-screen" style={{ animationDuration: '12s' }} />
+            </div>
+          )}
 
           <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
 

@@ -50,6 +50,7 @@ const OrganizerDashboard: React.FC = () => {
   const [selectedEventToFeature, setSelectedEventToFeature] = useState<any>(null);
   const [featuredPricing, setFeaturedPricing] = useState<any>(null);
   const [isProcessingFeatured, setIsProcessingFeatured] = useState(false);
+  const [pricingLoading, setPricingLoading] = useState(false);
 
   const handleLogoSelect = (file: File) => {
     if (!file.type.startsWith('image/')) return;
@@ -152,6 +153,14 @@ const OrganizerDashboard: React.FC = () => {
   useEffect(() => {
     api.getOrganizerRoles().then(setAvailableRoles).catch(() => setAvailableRoles(['admin', 'moderator']));
   }, []);
+
+  // Fetch pricing when modal opens
+  useEffect(() => {
+    if (showFeaturedModal && !featuredPricing) {
+      setPricingLoading(true);
+      api.getFeaturedPricing().then(setFeaturedPricing).catch(() => {}).finally(() => setPricingLoading(false));
+    }
+  }, [showFeaturedModal]);
 
   const handleCreateOrg = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -735,7 +744,7 @@ const OrganizerDashboard: React.FC = () => {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
               onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-xl bg-white rounded-[3rem] shadow-2xl overflow-hidden"
+              className="w-full max-w-xl bg-white rounded-[3rem] shadow-2xl overflow-y-auto max-h-[85vh]"
             >
               <div className="p-8 border-b border-outline-variant relative">
                 <button onClick={() => setShowFeaturedModal(false)} className="absolute top-8 right-8 p-2 rounded-xl hover:bg-surface-container-low transition-colors"><X size={20} /></button>
@@ -748,27 +757,33 @@ const OrganizerDashboard: React.FC = () => {
 
               <div className="p-8 space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {featuredPricing && Object.values(featuredPricing).map((tier: any) => (
-                    <button
-                      key={tier.level}
-                      onClick={() => handleConfirmFeature(tier.level)}
-                      disabled={isProcessingFeatured}
-                      className="group p-6 rounded-[2rem] border border-outline-variant hover:border-primary/50 hover:bg-primary/5 transition-all text-left space-y-4 relative overflow-hidden"
-                    >
-                      <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                         <ArrowRight size={20} className="text-primary" />
-                      </div>
-                      <div>
-                        <h4 className="text-lg font-black italic tracking-tight">{tier.name}</h4>
-                        <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">{tier.duration_days} días de visibilidad</p>
-                      </div>
-                      <p className="text-xs text-on-surface-variant font-medium leading-relaxed">{tier.description}</p>
-                      <div className="pt-2">
-                        <span className="text-2xl font-black">${tier.price}</span>
-                        <span className="text-[10px] font-bold text-on-surface-variant uppercase ml-2">ARS</span>
-                      </div>
-                    </button>
-                  ))}
+                  {pricingLoading ? (
+                    <div className="col-span-full py-12 text-center text-on-surface-variant text-sm font-medium">Cargando planes...</div>
+                  ) : featuredPricing ? (
+                    Object.values(featuredPricing).map((tier: any) => (
+                      <button
+                        key={tier.level}
+                        onClick={() => handleConfirmFeature(tier.level)}
+                        disabled={isProcessingFeatured}
+                        className="group p-6 rounded-[2rem] border border-outline-variant hover:border-primary/50 hover:bg-primary/5 transition-all text-left space-y-4 relative overflow-hidden"
+                      >
+                        <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                           <ArrowRight size={20} className="text-primary" />
+                        </div>
+                        <div>
+                          <h4 className="text-lg font-black italic tracking-tight">{tier.name}</h4>
+                          <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">{tier.duration_days} días de visibilidad</p>
+                        </div>
+                        <p className="text-xs text-on-surface-variant font-medium leading-relaxed">{tier.description}</p>
+                        <div className="pt-2">
+                          <span className="text-2xl font-black">${tier.price}</span>
+                          <span className="text-[10px] font-bold text-on-surface-variant uppercase ml-2">ARS</span>
+                        </div>
+                      </button>
+                    ))
+                  ) : (
+                    <div className="col-span-full py-12 text-center text-on-surface-variant text-sm font-medium">No se pudieron cargar los planes de destacado.</div>
+                  )}
                 </div>
 
                 <div className="p-6 rounded-2xl bg-surface-container-low border border-outline-variant flex items-start gap-4">

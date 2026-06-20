@@ -191,31 +191,36 @@ button, a, [role="button"], label[for], .cursor-click {
   border: 3px solid #fdf8ff;
 }
 
-/* WebView Performance & Flickering Optimizations for Mobile Responsive (Capacitor) */
-@media (max-width: 1023px) {
-  /* Strip heavy backdrop-filters on mobile viewports to prevent GPU render glitches/flickering */
-  *, ::before, ::after {
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
-  }
-  
-  /* Solid fallbacks for semi-translucent elements */
-  .glass-card {
-    background: rgba(255, 255, 255, 0.95) !important;
-    border: 1px solid rgba(255, 255, 255, 0.9) !important;
-  }
-  
-  .navbar-glass {
-    background: rgba(15, 10, 26, 0.97) !important;
-    border-bottom: 1px solid rgba(115, 46, 228, 0.3) !important;
-  }
-  
-  /* Fallback color for dark blurred overlays like modal backdrop and drawer */
-  .backdrop-blur-md, 
-  .backdrop-blur-lg, 
-  .backdrop-blur-xl {
-    background-color: rgba(0, 0, 0, 0.75) !important;
-  }
+/* WebView Performance & Flickering Optimizations specifically for Capacitor Native Mobile App */
+body.is-capacitor::before,
+body.is-capacitor::after {
+  display: none !important;
+}
+
+body.is-capacitor *, 
+body.is-capacitor ::before, 
+body.is-capacitor ::after {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* Solid fallbacks for semi-translucent elements in Capacitor mobile app */
+body.is-capacitor .glass-card {
+  background: rgba(255, 255, 255, 0.95) !important;
+  border: 1px solid rgba(255, 255, 255, 0.9) !important;
+}
+
+body.is-capacitor .navbar-glass {
+  background: rgba(15, 10, 26, 0.97) !important;
+  border-bottom: 1px solid rgba(115, 46, 228, 0.3) !important;
+}
+
+/* Fallback color only for actual dark full-screen backdrops (fixed inset-0) inside Capacitor */
+body.is-capacitor .fixed.inset-0.backdrop-blur-md, 
+body.is-capacitor .fixed.inset-0.backdrop-blur-lg, 
+body.is-capacitor .fixed.inset-0.backdrop-blur-xl, 
+body.is-capacitor .modal-overlay {
+  background-color: rgba(0, 0, 0, 0.75) !important;
 }
 
 /* Promote fixed and absolute layers to their own GPU compositor tree */
@@ -231,4 +236,51 @@ aside,
   backface-visibility: hidden;
   -webkit-perspective: 1000;
   perspective: 1000;
+}
+
+/* Custom styling for html5-qrcode library UI so text and buttons are fully visible and readable on dark theme */
+#qr-reader-container {
+  color: #ffffff !important;
+  background-color: #0b0e14 !important;
+  border-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+#qr-reader-container button {
+  background-color: #732ee4 !important;
+  color: #ffffff !important;
+  padding: 8px 16px !important;
+  border-radius: 12px !important;
+  font-weight: 800 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.1em !important;
+  font-size: 10px !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  cursor: pointer !important;
+  margin: 8px auto !important;
+  display: inline-block !important;
+  transition: all 0.2s ease !important;
+}
+
+#qr-reader-container button:hover {
+  background-color: #8c4bf7 !important;
+  transform: scale(1.02) !important;
+}
+
+#qr-reader-container select {
+  background-color: #1b1529 !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  padding: 6px 12px !important;
+  border-radius: 8px !important;
+  font-size: 12px !important;
+  margin: 6px !important;
+}
+
+#qr-reader-container a {
+  color: #00dbe7 !important;
+  text-decoration: underline !important;
+}
+
+#qr-reader-container img {
+  filter: invert(1) !important;
 }

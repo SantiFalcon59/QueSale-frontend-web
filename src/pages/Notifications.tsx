@@ -9,6 +9,16 @@ import { Link } from 'react-router-dom';
 import { api, apiRequest } from '../services/apiClient';
 import { UserAvatar } from '../components/ui/UserAvatar';
 
+const isValidUsername = (str: string) => str.length < 25 && /^[a-z0-9._-]+$/i.test(str);
+
+const notificationLink = (n: any): string | null => {
+  const link = n.data?.targetLink;
+  if (!link) return null;
+  const match = link.match(/^\/@(.+)$/);
+  if (match && !isValidUsername(match[1])) return null;
+  return link;
+};
+
 const Notifications: React.FC = () => {
   const [notifications, setNotifications] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -138,9 +148,9 @@ const Notifications: React.FC = () => {
                   </div>
                   
                   <div className="flex items-center gap-4 pt-2">
-                     {n.data?.targetLink && (
-                       <Link 
-                         to={n.data.targetLink} 
+                     {notificationLink(n) && (
+                        <Link 
+                          to={notificationLink(n)!} 
                          onClick={() => markAsRead(n.id_notification)}
                          className="h-8 px-4 rounded-xl bg-on-surface text-surface text-[9px] font-black uppercase tracking-widest hover:scale-105 transition-all shadow-md"
                        >

@@ -9,6 +9,16 @@ import { Link } from 'react-router-dom';
 import { apiRequest } from '../../services/apiClient';
 import { UserAvatar } from '../ui/UserAvatar';
 
+const isValidUsername = (str: string) => str.length < 25 && /^[a-z0-9._-]+$/i.test(str);
+
+const notificationLink = (n: any): string => {
+  const link = n.data?.targetLink;
+  if (!link) return '#';
+  const match = link.match(/^\/@(.+)$/);
+  if (match && !isValidUsername(match[1])) return '#';
+  return link;
+};
+
 export const NotificationsPopover: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [notifications, setNotifications] = useState<any[]>([]);
@@ -123,7 +133,7 @@ export const NotificationsPopover: React.FC = () => {
                 notifications.map((n) => (
                   <Link
                     key={n.id_notification}
-                    to={n.data?.targetLink || '#'}
+                    to={notificationLink(n)}
                     onClick={() => {
                        markAsRead(n.id_notification);
                        setIsOpen(false);
