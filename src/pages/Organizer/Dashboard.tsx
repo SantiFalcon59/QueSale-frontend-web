@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Users, Ticket, DollarSign, Calendar, Plus, Edit, Trash, BarChart3, TrendingUp, Users as UsersIcon, Sparkles, Building, ArrowRight, Upload, X, Camera, Loader2, Search, Shield, UserPlus, Check, Link, Copy, Star, ExternalLink, Eye, Heart, MessageCircle, Percent, ShieldCheck, MessageSquare, CheckCircle, Globe, Twitter, Instagram } from 'lucide-react';
+import { Users, Ticket, DollarSign, Calendar, Plus, Edit, Trash, BarChart3, TrendingUp, Users as UsersIcon, Sparkles, Building, ArrowRight, Upload, X, Camera, Loader2, Search, Shield, UserPlus, Check, Link, Copy, Star, ExternalLink, Eye, Heart, MessageCircle, Percent, ShieldCheck, MessageSquare, CheckCircle, BadgeCheck, Globe, Twitter, Instagram } from 'lucide-react';
 
 const TikTokIcon = () => (
   <svg viewBox="0 0 24 24" fill="currentColor" className="w-[12px] h-[12px]">
@@ -493,7 +493,7 @@ const OrganizerDashboard: React.FC = () => {
             <p className="text-[10px] text-primary uppercase tracking-[0.4em] font-black italic">Panel de Organización</p>
             {organization?.verified && (
               <div className="flex items-center gap-1 px-3 py-1 rounded-full bg-blue-50 border border-blue-200 text-blue-600 shadow-sm">
-                <CheckCircle size={12} className="fill-blue-500 text-white" />
+                <BadgeCheck size={14} className="fill-blue-500 text-white" />
                 <span className="text-[10px] font-black uppercase tracking-[0.1em]">Verificada</span>
               </div>
             )}
@@ -1154,7 +1154,7 @@ const OrganizerDashboard: React.FC = () => {
                   <p className="text-[9px] uppercase font-black tracking-widest text-on-surface-variant">Estado de Solicitud</p>
                   {organization?.verified ? (
                     <p className="text-lg font-black text-blue-600 mt-1 flex items-center justify-center lg:justify-end gap-1.5">
-                      <CheckCircle size={20} className="fill-blue-500 text-white" /> VERIFICADO PRO
+                      <BadgeCheck size={20} className="fill-blue-500 text-white" /> VERIFICADO PRO
                     </p>
                   ) : (organization?.real_name && organization?.dni && organization?.phone_number && organization?.address) ? (
                     <p className="text-lg font-black text-amber-600 mt-1 flex items-center justify-center lg:justify-end gap-1.5">
@@ -1242,12 +1242,20 @@ const OrganizerDashboard: React.FC = () => {
                           </div>
                         )}
                       </div>
-                      <span className={cn(
-                        "px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest",
-                        event.status === 'active' ? "bg-green-50 text-green-600" : "bg-gray-100 text-gray-500"
-                      )}>
-                        {event.status === 'active' ? 'Activo' : 'Finalizado'}
-                      </span>
+                      {(() => {
+                        const isPast = event.date && new Date(event.date) < new Date();
+                        const isActive = event.status === 'active';
+                        const label = !isActive ? 'Finalizado' : (isPast ? 'Pasado' : 'Activo');
+                        const bgClass = !isActive ? "bg-gray-100 text-gray-500" : (isPast ? "bg-gray-100 text-gray-500" : "bg-green-50 text-green-600");
+                        return (
+                          <span className={cn(
+                            "px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest",
+                            bgClass
+                          )}>
+                            {label}
+                          </span>
+                        );
+                      })()}
                     </div>
                   );
                 })}
@@ -1290,12 +1298,20 @@ const OrganizerDashboard: React.FC = () => {
                     <Calendar size={24} className="text-on-surface-variant" />
                   </div>
                   <div className="flex flex-col items-end gap-2">
-                    <div className={cn(
-                      "px-3 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest border",
-                      event.status === 'active' ? "bg-green-50 text-green-600 border-green-100" : "bg-red-50 text-red-600 border-red-100"
-                    )}>
-                      {event.status === 'active' ? 'Publicado' : 'Finalizado'}
-                    </div>
+                    {(() => {
+                      const isPast = event.date && new Date(event.date) < new Date();
+                      const isActive = event.status === 'active';
+                      const label = !isActive ? 'Finalizado' : (isPast ? 'Pasado' : 'Publicado');
+                      const bgClass = !isActive ? "bg-red-50 text-red-600 border-red-100" : (isPast ? "bg-gray-100 text-gray-500 border-gray-200" : "bg-green-50 text-green-600 border-green-100");
+                      return (
+                        <div className={cn(
+                          "px-3 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest border",
+                          bgClass
+                        )}>
+                          {label}
+                        </div>
+                      );
+                    })()}
                     {event.featured_level > 0 && (
                       <div className="px-3 py-1 rounded-lg bg-amber-50 text-amber-600 border border-amber-100 text-[8px] font-black uppercase tracking-widest flex items-center gap-1">
                         <Star size={10} className="fill-amber-500" /> Destacado

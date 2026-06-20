@@ -589,9 +589,14 @@ const Discovery: React.FC = () => {
                       )}
                     </div>
                     <Link to={`/events/${event.id_event}`}>
-                      <h3 className="text-xl font-black text-on-surface leading-tight mb-6 group-hover:text-primary transition-colors line-clamp-2 uppercase italic tracking-tighter">
+                      <h3 className="text-xl font-black text-on-surface leading-tight mb-2 group-hover:text-primary transition-colors line-clamp-2 uppercase italic tracking-tighter">
                         {event.title}
                       </h3>
+                      {event.description && (
+                        <p className="text-xs text-on-surface-variant font-medium line-clamp-2 mb-4">
+                          {event.description}
+                        </p>
+                      )}
                     </Link>
                     <div className="mt-auto pt-6 border-t border-outline-variant/30 space-y-3">
                       <div className="flex items-center gap-3 text-on-surface-variant">
