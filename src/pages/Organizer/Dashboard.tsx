@@ -1,6 +1,12 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Users, Ticket, DollarSign, Calendar, Plus, Edit, Trash, BarChart3, TrendingUp, Users as UsersIcon, Sparkles, Building, ArrowRight, Upload, X, Camera, Loader2, Search, Shield, UserPlus, Check, Link, Copy, Star, ExternalLink, Eye, Heart, MessageCircle, Percent, ShieldCheck, MessageSquare, CheckCircle } from 'lucide-react';
+import { Users, Ticket, DollarSign, Calendar, Plus, Edit, Trash, BarChart3, TrendingUp, Users as UsersIcon, Sparkles, Building, ArrowRight, Upload, X, Camera, Loader2, Search, Shield, UserPlus, Check, Link, Copy, Star, ExternalLink, Eye, Heart, MessageCircle, Percent, ShieldCheck, MessageSquare, CheckCircle, Globe, Twitter, Instagram } from 'lucide-react';
+
+const TikTokIcon = () => (
+  <svg viewBox="0 0 24 24" fill="currentColor" className="w-[12px] h-[12px]">
+    <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.9 2.89 2.89 0 0 1-2.88-2.89 2.89 2.89 0 0 1 2.88-2.89c.28 0 .56.04.84.1V8.77a6.2 6.2 0 0 0-.84-.06A6.34 6.34 0 0 0 3.1 15.05a6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.34-6.34V8.75a8.24 8.24 0 0 0 4.73 1.49V6.69Z"/>
+  </svg>
+);
 import { cn } from '../../lib/utils';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
@@ -586,19 +592,19 @@ const OrganizerDashboard: React.FC = () => {
 
                 <div className="grid grid-cols-2 gap-3">
                    <div className="space-y-1">
-                      <label className="text-[10px] uppercase font-black tracking-widest text-on-surface-variant ml-4">Instagram</label>
+                      <label className="text-[10px] uppercase font-black tracking-widest text-on-surface-variant ml-4 flex items-center gap-1.5"><Instagram size={12} /> Instagram</label>
                       <input value={editOrgData.instagram} onChange={e => setEditOrgData(prev => ({ ...prev, instagram: e.target.value }))} placeholder="@usuario" className="w-full bg-surface-container-low border border-outline-variant rounded-xl px-4 py-3 text-sm outline-none focus:border-primary/50 transition-all font-medium" />
                    </div>
                    <div className="space-y-1">
-                      <label className="text-[10px] uppercase font-black tracking-widest text-on-surface-variant ml-4">TikTok</label>
+                      <label className="text-[10px] uppercase font-black tracking-widest text-on-surface-variant ml-4 flex items-center gap-1.5"><TikTokIcon /> TikTok</label>
                       <input value={editOrgData.tiktok} onChange={e => setEditOrgData(prev => ({ ...prev, tiktok: e.target.value }))} placeholder="@usuario" className="w-full bg-surface-container-low border border-outline-variant rounded-xl px-4 py-3 text-sm outline-none focus:border-primary/50 transition-all font-medium" />
                    </div>
                    <div className="space-y-1">
-                      <label className="text-[10px] uppercase font-black tracking-widest text-on-surface-variant ml-4">Twitter / X</label>
+                      <label className="text-[10px] uppercase font-black tracking-widest text-on-surface-variant ml-4 flex items-center gap-1.5"><Twitter size={12} /> Twitter / X</label>
                       <input value={editOrgData.twitter} onChange={e => setEditOrgData(prev => ({ ...prev, twitter: e.target.value }))} placeholder="@usuario" className="w-full bg-surface-container-low border border-outline-variant rounded-xl px-4 py-3 text-sm outline-none focus:border-primary/50 transition-all font-medium" />
                    </div>
                    <div className="space-y-1">
-                      <label className="text-[10px] uppercase font-black tracking-widest text-on-surface-variant ml-4">Sitio Web</label>
+                      <label className="text-[10px] uppercase font-black tracking-widest text-on-surface-variant ml-4 flex items-center gap-1.5"><Globe size={12} /> Sitio Web</label>
                       <input value={editOrgData.website} onChange={e => setEditOrgData(prev => ({ ...prev, website: e.target.value }))} placeholder="https://..." className="w-full bg-surface-container-low border border-outline-variant rounded-xl px-4 py-3 text-sm outline-none focus:border-primary/50 transition-all font-medium" />
                    </div>
                 </div>
@@ -657,7 +663,7 @@ const OrganizerDashboard: React.FC = () => {
                            }}
                            className="w-full bg-[#009EE3] hover:bg-[#0089C5] text-white rounded-xl px-4 py-3 text-sm font-bold transition-colors flex items-center justify-center gap-2"
                          >
-                           <img src="https://www.mercadopago.com/instore/merchant/bundles/mptheme/images/logo-mercadopago.png" className="h-5" alt="MP" />
+                           <img src="https://www.mercadopago.com/instore/merchant/bundles/mptheme/images/logo-mercadopago.png" className="h-5 w-auto" alt="MP" />
                            Conectar con Mercado Pago
                         </button>
                       </div>
