@@ -273,9 +273,14 @@ function UserCard({ user }: { user: any }) {
       />
       <div className="flex-1 min-w-0">
         <p className="font-bold text-sm text-on-surface truncate">{user.username}</p>
-        <p className="text-xs text-on-surface-variant line-clamp-2 break-words">
-          {user.description || `${user.followers_count || 0} seguidores`}
-        </p>
+        <div className="flex flex-col gap-0.5 mt-0.5">
+          <p className="text-xs text-primary font-semibold">{user.followers_count || 0} seguidores</p>
+          {user.description && (
+            <p className="text-xs text-on-surface-variant line-clamp-1 break-words">
+              {user.description}
+            </p>
+          )}
+        </div>
       </div>
     </div>
   );

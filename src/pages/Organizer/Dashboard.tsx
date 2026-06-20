@@ -8,7 +8,7 @@ const TikTokIcon = () => (
   </svg>
 );
 import { cn, NO_EVENT_IMAGE } from '../../lib/utils';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { api, resolveAssetUrl } from '../../services/apiClient';
 import { UserAvatar } from '../../components/ui/UserAvatar';
@@ -18,6 +18,7 @@ import { toastSuccess, toastError, confirmAction } from '../../lib/swal';
 const OrganizerDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'insights' | 'events' | 'staff'>('insights');
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { profile, user } = useAuth();
 
   const [organization, setOrganization] = useState<any>(null);
@@ -36,6 +37,8 @@ const OrganizerDashboard: React.FC = () => {
   const [showFollowersModal, setShowFollowersModal] = useState(false);
   const [showReportsModal, setShowReportsModal] = useState(false);
   const [showAddStaffModal, setShowAddStaffModal] = useState(false);
+  const [showFeaturedSuccess, setShowFeaturedSuccess] = useState(false);
+  const [featuredFailureReason, setFeaturedFailureReason] = useState<string | null>(null);
   const [followers, setFollowers] = useState<any[]>([]);
   const [staffSearch, setStaffSearch] = useState('');
   const [staffSearchResults, setStaffSearchResults] = useState<any[]>([]);
@@ -161,6 +164,27 @@ const OrganizerDashboard: React.FC = () => {
       api.getFeaturedPricing().then(setFeaturedPricing).catch(() => {}).finally(() => setPricingLoading(false));
     }
   }, [showFeaturedModal]);
+
+  // Check return from Mercado Pago
+  useEffect(() => {
+    const status = searchParams.get('status');
+    if (status === 'featured_success') {
+      setShowFeaturedSuccess(true);
+      // Clean URL
+      const url = new URL(window.location.href);
+      url.searchParams.delete('status');
+      url.searchParams.delete('featured_event_id');
+      window.history.replaceState({}, '', url.toString());
+      fetchAll();
+    } else if (status === 'featured_failure') {
+      setFeaturedFailureReason('El pago fue cancelado o no pudo procesarse.');
+      setShowFeaturedSuccess(true);
+      const url = new URL(window.location.href);
+      url.searchParams.delete('status');
+      url.searchParams.delete('featured_event_id');
+      window.history.replaceState({}, '', url.toString());
+    }
+  }, []);
 
   const handleCreateOrg = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -801,6 +825,57 @@ const OrganizerDashboard: React.FC = () => {
           )}
         </AnimatePresence>
 
+      {/* Featured Success/Failure Modal */}
+      <AnimatePresence>
+        {showFeaturedSuccess && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+            onClick={() => setShowFeaturedSuccess(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-md bg-white rounded-[3rem] shadow-2xl p-8 text-center"
+            >
+              {featuredFailureReason ? (
+                <>
+                  <div className="w-16 h-16 rounded-2xl bg-red-50 border border-red-200 flex items-center justify-center mx-auto mb-4">
+                    <X size={28} className="text-red-500" />
+                  </div>
+                  <h3 className="text-2xl font-black italic tracking-tight uppercase">Pago no completado</h3>
+                  <p className="text-on-surface-variant font-medium mt-2">{featuredFailureReason}</p>
+                  <button
+                    onClick={() => setShowFeaturedSuccess(false)}
+                    className="mt-6 h-12 px-8 rounded-xl bg-surface text-primary border border-outline-variant text-[10px] font-black uppercase tracking-widest hover:bg-primary/10 transition-all"
+                  >
+                    Cerrar
+                  </button>
+                </>
+              ) : (
+                <>
+                  <div className="w-16 h-16 rounded-2xl bg-green-50 border border-green-200 flex items-center justify-center mx-auto mb-4">
+                    <CheckCircle size={28} className="text-green-500" />
+                  </div>
+                  <h3 className="text-2xl font-black italic tracking-tight uppercase">¡Evento Destacado!</h3>
+                  <p className="text-on-surface-variant font-medium mt-2">Tu evento ya está destacado y tiene prioridad en el feed de descubrimiento.</p>
+                  <button
+                    onClick={() => setShowFeaturedSuccess(false)}
+                    className="mt-6 h-12 px-8 rounded-xl bg-primary text-white text-[10px] font-black uppercase tracking-widest hover:bg-primary/90 transition-all"
+                  >
+                    Perfecto
+                  </button>
+                </>
+              )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Followers Modal */}
       <AnimatePresence>
         {showFollowersModal && (
@@ -1382,6 +1457,7 @@ const OrganizerDashboard: React.FC = () => {
                   </button>
                   <button
                     onClick={() => {
+                      if (!organization?.verified) return;
                       setSelectedEventToFeature(event);
                       setShowFeaturedModal(true);
                     }}
@@ -1389,12 +1465,18 @@ const OrganizerDashboard: React.FC = () => {
                       "h-10 px-4 rounded-xl text-[9px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all border",
                       event.featured_level > 0 
                         ? "bg-amber-50 text-amber-600 border-amber-200"
+                        : !organization?.verified
+                        ? "bg-surface text-on-surface-variant/40 border-outline-variant/30 cursor-not-allowed"
                         : "bg-surface text-primary border-outline-variant hover:bg-primary/10"
                     )}
-                    disabled={event.featured_level > 0}
+                    disabled={event.featured_level > 0 || !organization?.verified}
+                    title={!organization?.verified ? 'Requiere verificación Nivel 2' : ''}
                   >
-                    <Star size={14} className={event.featured_level > 0 ? "fill-amber-500" : ""} />
-                    {event.featured_level > 0 ? 'Destacado' : 'Destacar'}
+                    <Star size={14} className={cn(
+                      event.featured_level > 0 ? "fill-amber-500" : "",
+                      !organization?.verified && "text-on-surface-variant/40"
+                    )} />
+                    {event.featured_level > 0 ? 'Destacado' : !organization?.verified ? 'Nivel 2 requerido' : 'Destacar'}
                   </button>
                   <div className="flex gap-2 w-full md:w-auto">
                     <button

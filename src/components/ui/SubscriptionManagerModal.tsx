@@ -85,8 +85,8 @@ export const SubscriptionManagerModal: React.FC<SubscriptionManagerModalProps> =
           >
             <div className={`relative shrink-0 h-36 bg-gradient-to-br ${headerGradient} flex flex-col items-center justify-center text-center p-6`}>
               <div className="absolute inset-0 overflow-hidden opacity-20">
-                <div className="absolute -top-10 -left-10 w-40 h-40 bg-white rounded-full blur-3xl animate-pulse" />
-                <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-white rounded-full blur-3xl animate-pulse delay-1000" />
+                <div className="absolute -top-10 -left-10 w-40 h-40 bg-white rounded-full blur-3xl" />
+                <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-white rounded-full blur-3xl" />
               </div>
               <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-xl flex items-center justify-center mb-3 shadow-xl border border-white/30">
                 <Crown size={28} className="text-white fill-white" />

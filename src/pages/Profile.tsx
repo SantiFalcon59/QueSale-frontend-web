@@ -767,7 +767,7 @@ const Profile: React.FC<{ usernameFromUrl?: string }> = ({ usernameFromUrl }) =>
                          className="flex flex-col sm:flex-row gap-4 lg:gap-6 p-4 lg:p-6 bg-surface-container-low rounded-[1.5rem] lg:rounded-[2rem] border border-transparent hover:border-primary/20 hover:shadow-md hover:shadow-primary/5 transition-all duration-300 cursor-pointer"
                        >
                            <div className="w-full sm:w-24 h-40 sm:h-24 rounded-2xl overflow-hidden bg-white shrink-0">
-                              <img src={event.images?.[0] || event.thumbnail_url || NO_EVENT_IMAGE} className="w-full h-full object-cover transition-transform hover:scale-110 duration-500" />
+                              <img src={resolveAssetUrl(event.images?.[0] || event.thumbnail_url) || NO_EVENT_IMAGE} className="w-full h-full object-cover transition-transform hover:scale-110 duration-500" />
                            </div>
                            <div className="flex-1 space-y-2">
                               <div className="flex justify-between items-start">

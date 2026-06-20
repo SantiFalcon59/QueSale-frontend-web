@@ -20,7 +20,7 @@ import { api, resolveAssetUrl } from '../services/apiClient';
 import { UserAvatar } from '../components/ui/UserAvatar';
 import { OrganizerAvatar } from '../components/ui/OrganizerAvatar';
 import Swal from 'sweetalert2';
-import { Html5QrcodeScanner } from 'html5-qrcode';
+import { Html5Qrcode } from 'html5-qrcode';
 import { io, Socket } from 'socket.io-client';
 import PostFeed from '../components/wall/PostFeed';
 import PostComposer from '../components/wall/PostComposer';
@@ -133,57 +133,79 @@ const EventDetail: React.FC = () => {
   useEffect(() => {
     if (!qrScannerOpen) return;
     
+    let html5QrCode: Html5Qrcode | null = null;
+    
     const timer = setTimeout(() => {
-      const scanner = new Html5QrcodeScanner(
-        "qr-reader-container",
-        { fps: 10, qrbox: { width: 250, height: 250 } },
-        false
-      );
-      
-      const onScanSuccess = async (decodedText: string) => {
-        try {
-          await scanner.clear();
-        } catch (e) {
-          console.error(e);
-        }
-        setQrScannerOpen(false);
+      try {
+        html5QrCode = new Html5Qrcode("qr-reader-container");
         
-        try {
-          const res: any = await api.validateTicket(decodedText);
+        const onScanSuccess = async (decodedText: string) => {
+          if (html5QrCode) {
+            try {
+              await html5QrCode.stop();
+            } catch (e) {
+              console.error("Error stopping scanner on success:", e);
+            }
+          }
+          setQrScannerOpen(false);
+          
+          try {
+            const res: any = await api.validateTicket(decodedText);
+            Swal.fire({
+              title: '¡Entrada Válida!',
+              html: `<div class="text-left space-y-2">
+                <p><b>Evento:</b> ${res.event_title || event?.title}</p>
+                <p><b>Usuario ID:</b> ${res.user_id || 'N/D'}</p>
+                <p class="text-green-500 font-bold uppercase tracking-wider mt-2">Acceso Registrado Exitosamente</p>
+              </div>`,
+              icon: 'success',
+              confirmButtonText: 'Siguiente',
+              background: '#1a1a2e',
+              color: '#fff'
+            });
+          } catch (err: any) {
+            Swal.fire({
+              title: 'Error de Validación',
+              text: err.message || 'La entrada no es válida o ya fue usada.',
+              icon: 'error',
+              confirmButtonText: 'Entendido',
+              background: '#1a1a2e',
+              color: '#fff'
+            });
+          }
+        };
+
+        html5QrCode.start(
+          { facingMode: "environment" },
+          {
+            fps: 10,
+            qrbox: { width: 250, height: 250 }
+          },
+          onScanSuccess,
+          () => {} // scan failure is ignored to avoid spam
+        ).catch(err => {
+          console.error("Error starting camera:", err);
           Swal.fire({
-            title: '¡Entrada Válida!',
-            html: `<div class="text-left space-y-2">
-              <p><b>Evento:</b> ${res.event_title || event?.title}</p>
-              <p><b>Usuario ID:</b> ${res.user_id || 'N/D'}</p>
-              <p class="text-green-500 font-bold uppercase tracking-wider mt-2">Acceso Registrado Exitosamente</p>
-            </div>`,
-            icon: 'success',
-            confirmButtonText: 'Siguiente',
-            background: '#1a1a2e',
-            color: '#fff'
-          });
-        } catch (err: any) {
-          Swal.fire({
-            title: 'Error de Validación',
-            text: err.message || 'La entrada no es válida o ya fue usada.',
+            title: 'Error de Cámara',
+            text: 'No se pudo iniciar la cámara trasera. Asegúrate de conceder los permisos.',
             icon: 'error',
             confirmButtonText: 'Entendido',
             background: '#1a1a2e',
             color: '#fff'
           });
-        }
-      };
+          setQrScannerOpen(false);
+        });
+      } catch (err) {
+        console.error("Failed to initialize Html5Qrcode:", err);
+      }
+    }, 150);
 
-      const onScanFailure = () => {};
-
-      scanner.render(onScanSuccess, onScanFailure);
-
-      return () => {
-        scanner.clear().catch(err => console.error("Error clearing scanner on unmount:", err));
-      };
-    }, 100);
-
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      if (html5QrCode && html5QrCode.isScanning) {
+        html5QrCode.stop().catch(err => console.error("Error stopping scanner on unmount:", err));
+      }
+    };
   }, [qrScannerOpen, event]);
 
   const handleInteraction = (e?: React.MouseEvent) => {
@@ -476,7 +498,7 @@ const EventDetail: React.FC = () => {
 
       <div className="grid grid-cols-12 gap-6 lg:gap-16 overflow-hidden">
         {/* Left Column: Event Core & Community */}
-        <div className="col-span-12 lg:col-span-8 space-y-8 lg:space-y-12 min-w-0 order-2 lg:order-1">
+        <div className="col-span-12 lg:col-span-8 space-y-8 lg:space-y-12 min-w-0">
           {/* Gallery Header */}
           <section className="relative h-[350px] sm:h-[400px] lg:h-[500px] rounded-[1.5rem] lg:rounded-[3.5rem] overflow-hidden group">
             {/* Desktop grid layout */}
@@ -673,9 +695,9 @@ const EventDetail: React.FC = () => {
           <section className="min-h-[400px]">
             <AnimatePresence mode="wait">
               {activeTab === 'info' && (
-                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-12">
+                  <div className="grid grid-cols-12 gap-6 lg:gap-12">
                     {/* Main Description Column */}
-                    <div className="lg:col-span-7 space-y-12">
+                    <div className="col-span-12 lg:col-span-7 space-y-12">
                       <div className="space-y-4">
                         <h3 className="text-xl font-black italic uppercase tracking-tighter text-primary">Sobre el Evento</h3>
                         <p className="text-base lg:text-lg text-on-surface-variant leading-relaxed font-medium">
@@ -707,7 +729,7 @@ const EventDetail: React.FC = () => {
                     </div>
 
                     {/* Sidebar Info Column */}
-                    <div className="lg:col-span-5 space-y-12">
+                    <div className="col-span-12 lg:col-span-5 space-y-12">
                       <CalendarWidget eventDate={eventDate} />
 
                       {event.is_external ? (
@@ -800,12 +822,12 @@ const EventDetail: React.FC = () => {
                           <h3 className="text-2xl font-black italic uppercase tracking-tighter">Más de {organizer?.name}</h3>
                           <Link to={`/organizer/${organizer?.id}`} className="text-[10px] font-black uppercase tracking-widest text-primary hover:underline">Ver todo</Link>
                         </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-10">
+                        <div className="grid grid-cols-2 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-10">
                           {organizerEvents.slice(0, 4).map(orgEvent => (
                             <Link
                               key={orgEvent.id_event}
                               to={`/events/${orgEvent.id_event}`}
-                              className="group bg-white rounded-[2.5rem] border border-outline-variant overflow-hidden hover:border-primary/50 transition-all hover:shadow-2xl hover:-translate-y-2"
+                              className="group bg-white rounded-[1.5rem] sm:rounded-[2.5rem] border border-outline-variant overflow-hidden hover:border-primary/50 transition-all hover:shadow-2xl hover:-translate-y-2"
                             >
                               <div className="relative aspect-[4/3] overflow-hidden">
                                 <img
@@ -815,31 +837,31 @@ const EventDetail: React.FC = () => {
                                   onError={(e) => { (e.target as HTMLImageElement).src = NO_EVENT_IMAGE; }}
                                 />
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
-                                <div className="absolute top-4 left-4">
-                                  <span className="px-2.5 py-1 rounded-xl bg-white/20 backdrop-blur-md text-white text-[9px] font-black uppercase tracking-widest border border-white/10">
+                                <div className="absolute top-2 left-2 sm:top-4 sm:left-4">
+                                  <span className="px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-xl bg-white/20 backdrop-blur-md text-white text-[8px] sm:text-[9px] font-black uppercase tracking-widest border border-white/10">
                                     {orgEvent.interests?.[0]?.name || orgEvent.tags?.[0] || 'Evento'}
                                   </span>
                                 </div>
                                 {(!orgEvent.price || Number(orgEvent.price) === 0) && (
-                                  <div className="absolute top-4 right-4 px-2.5 py-1 rounded-xl bg-green-500 text-white text-[9px] font-black tracking-widest uppercase shadow-lg">
+                                  <div className="absolute top-2 right-2 sm:top-4 sm:right-4 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-xl bg-green-500 text-white text-[8px] sm:text-[9px] font-black tracking-widest uppercase shadow-lg">
                                     Gratis
                                   </div>
                                 )}
                               </div>
-                              <div className="p-4 sm:p-6 lg:p-10 space-y-4">
-                                <h4 className="text-xl font-black text-on-surface leading-tight group-hover:text-primary transition-colors line-clamp-1 uppercase italic tracking-tighter">{orgEvent.title}</h4>
-                                <div className="flex items-center justify-between pt-3 border-t border-outline-variant/30">
-                                  <div className="flex flex-col gap-1.5">
-                                    <span className="text-[11px] text-on-surface-variant font-black uppercase tracking-widest flex items-center gap-1.5">
-                                      <CalendarDays size={13} className="text-primary" />
+                              <div className="p-3.5 sm:p-6 lg:p-10 space-y-3">
+                                <h4 className="text-sm sm:text-xl font-black text-on-surface leading-tight group-hover:text-primary transition-colors line-clamp-1 uppercase italic tracking-tighter">{orgEvent.title}</h4>
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between pt-2.5 border-t border-outline-variant/30 gap-1.5 sm:gap-4">
+                                  <div className="flex flex-col gap-1">
+                                    <span className="text-[9px] sm:text-[11px] text-on-surface-variant font-black uppercase tracking-widest flex items-center gap-1">
+                                      <CalendarDays size={11} className="text-primary shrink-0" />
                                       {new Date(orgEvent.date).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}
                                     </span>
-                                    <span className="text-[11px] text-on-surface-variant font-black uppercase tracking-widest flex items-center gap-1.5">
-                                      <MapPin size={13} className="text-primary" />
-                                      {orgEvent.ubication || 'Ubicación'}
+                                    <span className="text-[9px] sm:text-[11px] text-on-surface-variant font-black uppercase tracking-widest flex items-center gap-1 min-w-0">
+                                      <MapPin size={11} className="text-primary shrink-0" />
+                                      <span className="truncate">{orgEvent.ubication || 'Ubicación'}</span>
                                     </span>
                                   </div>
-                                  <span className="text-base font-black text-primary italic">{formatPrice(orgEvent.price)}</span>
+                                  <span className="text-sm sm:text-base font-black text-primary italic shrink-0">{formatPrice(orgEvent.price)}</span>
                                 </div>
                               </div>
                             </Link>
@@ -877,7 +899,7 @@ const EventDetail: React.FC = () => {
           </section>
         </div>
 
-        <div className="col-span-12 lg:col-span-4 space-y-6 lg:space-y-8 relative lg:sticky lg:top-28 self-start lg:pl-8 order-1 lg:order-2">
+        <div className="col-span-12 lg:col-span-4 space-y-6 lg:space-y-8 relative lg:sticky lg:top-28 self-start lg:pl-8">
           {(isOrganizer || isModerator) && (
             <section className="p-5 sm:p-8 rounded-[2rem] bg-[#1a1a2e] border border-purple-500/30 text-white shadow-xl space-y-4">
               <div className="flex items-center gap-3">

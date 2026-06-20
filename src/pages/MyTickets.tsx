@@ -29,7 +29,7 @@ const MyTickets: React.FC = () => {
   const fetchTickets = async () => {
     try {
       const response = await api.getUserTickets();
-      setTickets(response.tickets || []);
+      setTickets(Array.isArray(response) ? response : (response as any).tickets || []);
     } catch (error) {
       console.error('Error fetching tickets:', error);
     } finally {
