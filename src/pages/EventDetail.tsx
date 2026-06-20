@@ -1239,6 +1239,7 @@ const LiveChat: React.FC<{ eventId: string; isModerator: boolean; organizerId: s
   const { profile, getSocketToken } = useAuth();
   const socketRef = useRef<Socket | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const isNearBottomRef = useRef(true);
   const modRoles = propIsModerator || profile?.role === 'admin' || profile?.role === 'moderator';
 
   useEffect(() => {
@@ -1264,6 +1265,13 @@ const LiveChat: React.FC<{ eventId: string; isModerator: boolean; organizerId: s
 
     socket.on('new-message', (msg: ChatMessage) => {
       setMessages(prev => [...prev, msg]);
+      // Auto-scroll if user is near bottom
+      requestAnimationFrame(() => {
+        const el = scrollRef.current;
+        if (el && isNearBottomRef.current) {
+          el.scrollTop = el.scrollHeight;
+        }
+      });
     });
 
     socket.on('older-messages', (older: ChatMessage[]) => {
@@ -1304,6 +1312,7 @@ const LiveChat: React.FC<{ eventId: string; isModerator: boolean; organizerId: s
     const el = scrollRef.current;
     if (!el) return;
     const onScroll = () => {
+      isNearBottomRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < 100;
       if (el.scrollTop < 50 && hasMore && !loadingHistory) {
         loadOlder();
       }
