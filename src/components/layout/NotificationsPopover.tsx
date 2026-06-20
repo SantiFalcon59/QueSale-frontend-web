@@ -103,7 +103,7 @@ export const NotificationsPopover: React.FC = () => {
             initial={{ opacity: 0, y: 10, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 10, scale: 0.95 }}
-            className="absolute top-full right-0 mt-3 w-80 lg:w-96 bg-white rounded-3xl shadow-2xl border border-outline-variant p-2 flex flex-col z-50 overflow-hidden"
+            className="absolute top-full right-[-48px] sm:right-0 mt-3 w-[calc(100vw-32px)] sm:w-80 lg:w-96 max-w-[360px] sm:max-w-none bg-white rounded-3xl shadow-2xl border border-outline-variant p-2 flex flex-col z-50 overflow-hidden"
           >
             <div className="p-5 flex items-center justify-between border-b border-outline-variant/30 mb-2">
                <h3 className="text-sm font-black uppercase tracking-widest italic">Notificaciones</h3>

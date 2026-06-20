@@ -105,7 +105,7 @@ const Notifications: React.FC = () => {
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: index * 0.05 }}
               className={cn(
-                "p-6 rounded-[2.5rem] border transition-all flex flex-col md:flex-row md:items-center gap-6 group relative",
+                "p-4 sm:p-6 rounded-[2.5rem] border transition-all flex flex-col md:flex-row md:items-center gap-6 group relative",
                 n.is_read ? "bg-white border-outline-variant/50 opacity-70 hover:opacity-100" : "bg-primary/5 border-primary/20 shadow-lg shadow-primary/5"
               )}
             >
@@ -142,7 +142,7 @@ const Notifications: React.FC = () => {
                        <Link 
                          to={n.data.targetLink} 
                          onClick={() => markAsRead(n.id_notification)}
-                         className="h-10 px-6 rounded-xl bg-on-surface text-surface text-[10px] font-black uppercase tracking-widest hover:scale-105 transition-all shadow-md"
+                         className="h-8 px-4 rounded-xl bg-on-surface text-surface text-[9px] font-black uppercase tracking-widest hover:scale-105 transition-all shadow-md"
                        >
                          VER DETALLE
                        </Link>

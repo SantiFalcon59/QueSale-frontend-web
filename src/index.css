@@ -190,3 +190,45 @@ button, a, [role="button"], label[for], .cursor-click {
   border-radius: 20px;
   border: 3px solid #fdf8ff;
 }
+
+/* WebView Performance & Flickering Optimizations for Mobile Responsive (Capacitor) */
+@media (max-width: 1023px) {
+  /* Strip heavy backdrop-filters on mobile viewports to prevent GPU render glitches/flickering */
+  *, ::before, ::after {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+  
+  /* Solid fallbacks for semi-translucent elements */
+  .glass-card {
+    background: rgba(255, 255, 255, 0.95) !important;
+    border: 1px solid rgba(255, 255, 255, 0.9) !important;
+  }
+  
+  .navbar-glass {
+    background: rgba(15, 10, 26, 0.97) !important;
+    border-bottom: 1px solid rgba(115, 46, 228, 0.3) !important;
+  }
+  
+  /* Fallback color for dark blurred overlays like modal backdrop and drawer */
+  .backdrop-blur-md, 
+  .backdrop-blur-lg, 
+  .backdrop-blur-xl {
+    background-color: rgba(0, 0, 0, 0.75) !important;
+  }
+}
+
+/* Promote fixed and absolute layers to their own GPU compositor tree */
+.fixed, 
+.absolute, 
+.navbar-glass, 
+aside, 
+.modal-overlay, 
+[role="dialog"] {
+  -webkit-transform: translate3d(0, 0, 0);
+  transform: translate3d(0, 0, 0);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  -webkit-perspective: 1000;
+  perspective: 1000;
+}

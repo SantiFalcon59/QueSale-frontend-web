@@ -22,6 +22,18 @@ const Feed: React.FC = () => {
   const [imageIndex, setImageIndex] = useState(0);
   const [fadingMap, setFadingMap] = useState<Record<string, string>>({});
 
+  const [activeImageIndices, setActiveImageIndices] = useState<Record<string, number>>({});
+
+  const handleImageScroll = (eventId: string, e: React.UIEvent<HTMLDivElement>) => {
+    const container = e.currentTarget;
+    if (container.clientWidth === 0) return;
+    const index = Math.round(container.scrollLeft / container.clientWidth);
+    setActiveImageIndices(prev => {
+      if (prev[eventId] === index) return prev;
+      return { ...prev, [eventId]: index };
+    });
+  };
+
   useEffect(() => {
     if (typeof window !== 'undefined' && window.innerWidth < 1024) return;
     const hasMulitpleImages = events.some(e => e.images?.length > 1);
@@ -139,7 +151,8 @@ const Feed: React.FC = () => {
             <div className="w-full h-full snap-start snap-always p-4 lg:p-8">
               <div className="relative w-full h-full rounded-[40px] overflow-hidden bg-black shadow-2xl flex flex-col justify-end border border-white/5 group">
                 <div className="absolute inset-0 z-0 overflow-hidden">
-                  <div className="w-full h-full transition-transform duration-1000 group-hover:scale-105">
+                  {/* Desktop automatic slideshow */}
+                  <div className="hidden lg:block w-full h-full transition-transform duration-1000 group-hover:scale-105 relative">
                     <img src={currentSrc} className="absolute inset-0 w-full h-full object-cover opacity-70" alt={event.title} />
                     {fadingMap[event.id_event] && (
                       <motion.img
@@ -153,6 +166,46 @@ const Feed: React.FC = () => {
                         })}
                         src={resolveAssetUrl(fadingMap[event.id_event])}
                         className="absolute inset-0 w-full h-full object-cover z-10"
+                      />
+                    )}
+                  </div>
+
+                  {/* Mobile responsive swipeable gallery (Instagram style) */}
+                  <div className="block lg:hidden w-full h-full relative">
+                    {images.length > 1 ? (
+                      <>
+                        <div 
+                          className="w-full h-full flex overflow-x-auto snap-x snap-mandatory no-scrollbar"
+                          onScroll={(e) => handleImageScroll(event.id_event, e)}
+                        >
+                          {images.map((img: string, i: number) => (
+                            <div key={i} className="w-full h-full shrink-0 snap-start snap-always relative">
+                              <img 
+                                src={resolveAssetUrl(img) || NO_EVENT_IMAGE} 
+                                className="absolute inset-0 w-full h-full object-cover opacity-70" 
+                                alt="" 
+                              />
+                            </div>
+                          ))}
+                        </div>
+                        {/* Dot indicator controls at top-right */}
+                        <div className="absolute top-6 right-6 z-30 flex gap-1 bg-black/40 backdrop-blur-md px-2.5 py-1.5 rounded-full border border-white/10">
+                          {images.map((_, i) => (
+                            <div 
+                              key={i} 
+                              className={cn(
+                                "w-1.5 h-1.5 rounded-full transition-all duration-300",
+                                (activeImageIndices[event.id_event] || 0) === i ? "bg-primary w-3" : "bg-white/40"
+                              )} 
+                            />
+                          ))}
+                        </div>
+                      </>
+                    ) : (
+                      <img 
+                        src={resolveAssetUrl(event.thumbnail_url || NO_EVENT_IMAGE) || NO_EVENT_IMAGE} 
+                        className="absolute inset-0 w-full h-full object-cover opacity-70" 
+                        alt={event.title} 
                       />
                     )}
                   </div>

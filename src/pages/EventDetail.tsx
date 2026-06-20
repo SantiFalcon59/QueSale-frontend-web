@@ -121,6 +121,7 @@ const EventDetail: React.FC = () => {
     message?: string;
   }>({ isOpen: false, mode: 'success' });
   const [galleryIdx, setGalleryIdx] = useState<number | null>(null);
+  const [activeImageIdx, setActiveImageIdx] = useState(0);
   const galleryImages = event?.media || [];
   const [isSaved, setIsSaved] = useState(false);
   const [organizerEvents, setOrganizerEvents] = useState<any[]>([]);
@@ -478,7 +479,8 @@ const EventDetail: React.FC = () => {
         <div className="col-span-12 lg:col-span-8 space-y-8 lg:space-y-12 min-w-0">
           {/* Gallery Header */}
           <section className="relative h-[350px] sm:h-[400px] lg:h-[500px] rounded-[1.5rem] lg:rounded-[3.5rem] overflow-hidden group">
-            <div className="grid grid-cols-4 grid-rows-2 h-full gap-1 lg:gap-2 cursor-pointer">
+            {/* Desktop grid layout */}
+            <div className="hidden lg:grid grid-cols-4 grid-rows-2 h-full gap-1 lg:gap-2 cursor-pointer">
               <div
                 className="col-span-4 lg:col-span-3 row-span-2 relative overflow-hidden"
                 onClick={() => setGalleryIdx(0)}
@@ -491,7 +493,7 @@ const EventDetail: React.FC = () => {
               </div>
               {event.media.length > 1 && (
               <div
-                className="hidden lg:block col-span-1 row-span-1 overflow-hidden"
+                className="col-span-1 row-span-1 overflow-hidden"
                 onClick={() => setGalleryIdx(1)}
               >
                 <img
@@ -503,7 +505,7 @@ const EventDetail: React.FC = () => {
               )}
               {event.media.length > 2 && (
               <div
-                className="hidden lg:block col-span-1 row-span-1 relative overflow-hidden"
+                className="col-span-1 row-span-1 relative overflow-hidden"
                 onClick={() => setGalleryIdx(event.media.length > 3 ? 3 : 2)}
               >
                 <img
@@ -517,6 +519,52 @@ const EventDetail: React.FC = () => {
                 </div>
                 )}
               </div>
+              )}
+            </div>
+
+            {/* Mobile responsive swipeable gallery (Instagram style with dots) */}
+            <div className="block lg:hidden w-full h-full relative cursor-pointer">
+              {event.media && event.media.length > 1 ? (
+                <>
+                  <div 
+                    className="w-full h-full flex overflow-x-auto snap-x snap-mandatory no-scrollbar scroll-smooth"
+                    onScroll={(e) => {
+                      const container = e.currentTarget;
+                      if (container.clientWidth === 0) return;
+                      const index = Math.round(container.scrollLeft / container.clientWidth);
+                      setActiveImageIdx(index);
+                    }}
+                  >
+                    {event.media.map((img: string, i: number) => (
+                      <div key={i} className="w-full h-full shrink-0 snap-start snap-always relative" onClick={() => setGalleryIdx(i)}>
+                        <img 
+                          src={img || NO_EVENT_IMAGE} 
+                          className="absolute inset-0 w-full h-full object-cover" 
+                          alt="" 
+                        />
+                      </div>
+                    ))}
+                  </div>
+                  {/* Dot indicator controls at bottom-center */}
+                  <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30 flex gap-1.5 bg-black/40 backdrop-blur-md px-3 py-2 rounded-full border border-white/10">
+                    {event.media.map((_, i) => (
+                      <div 
+                        key={i} 
+                        className={cn(
+                          "w-2 h-2 rounded-full transition-all duration-300",
+                          activeImageIdx === i ? "bg-primary w-4" : "bg-white/40"
+                        )} 
+                      />
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <img 
+                  src={event.media?.[0] || NO_EVENT_IMAGE} 
+                  className="w-full h-full object-cover" 
+                  alt={event.title} 
+                  onClick={() => setGalleryIdx(0)}
+                />
               )}
             </div>
             

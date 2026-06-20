@@ -518,6 +518,15 @@ const Discovery: React.FC = () => {
                 </div>
               </div>
             )}
+
+            {/* Bottom minimize/apply button for mobile */}
+            <button
+              onClick={() => setShowFilters(false)}
+              className="w-full lg:hidden h-11 bg-primary hover:bg-primary/95 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 mt-6 shadow-lg shadow-primary/20 cursor-pointer"
+            >
+              <SlidersHorizontal size={14} />
+              Aplicar y Cerrar
+            </button>
           </div>
         </aside>
 
@@ -542,29 +551,29 @@ const Discovery: React.FC = () => {
               )}
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3">
               <button
                 onClick={() => setShowFilters(!showFilters)}
                 className={cn(
-                  "flex items-center gap-2 h-12 px-6 rounded-2xl transition-all border text-[10px] font-black uppercase tracking-widest",
+                  "flex items-center gap-1.5 h-10 px-4 rounded-xl lg:h-12 lg:px-6 lg:rounded-2xl transition-all border text-[9px] lg:text-[10px] font-black uppercase tracking-widest cursor-pointer",
                   showFilters ? "bg-primary text-white border-primary shadow-lg shadow-primary/20" : "bg-white text-on-surface-variant border-outline-variant hover:border-primary"
                 )}
               >
-                <SlidersHorizontal size={16} />
-                {showFilters ? 'Ocultar Filtros' : 'Filtros'}
+                <SlidersHorizontal size={14} className="lg:w-4 lg:h-4" />
+                {showFilters ? 'Ocultar' : 'Filtros'}
               </button>
-              <div className="h-12 bg-surface-container-low rounded-2xl p-1 flex gap-1 border border-outline-variant shadow-sm">
+              <div className="h-10 lg:h-12 bg-surface-container-low rounded-xl lg:rounded-2xl p-1 flex gap-1 border border-outline-variant shadow-sm">
                 <button
                   onClick={() => setView('grid')}
-                  className={cn("w-10 h-10 flex items-center justify-center rounded-xl transition-all", view === 'grid' ? "bg-white text-primary shadow-sm" : "text-on-surface-variant hover:bg-white/50")}
+                  className={cn("w-8 h-8 lg:w-10 lg:h-10 flex items-center justify-center rounded-lg lg:rounded-xl transition-all cursor-pointer", view === 'grid' ? "bg-white text-primary shadow-sm" : "text-on-surface-variant hover:bg-white/50")}
                 >
-                  <GridIcon size={18} />
+                  <GridIcon size={16} className="lg:w-[18px] lg:h-[18px]" />
                 </button>
                 <button
                   onClick={() => setView('list')}
-                  className={cn("w-10 h-10 flex items-center justify-center rounded-xl transition-all", view === 'list' ? "bg-white text-primary shadow-sm" : "text-on-surface-variant hover:bg-white/50")}
+                  className={cn("w-8 h-8 lg:w-10 lg:h-10 flex items-center justify-center rounded-lg lg:rounded-xl transition-all cursor-pointer", view === 'list' ? "bg-white text-primary shadow-sm" : "text-on-surface-variant hover:bg-white/50")}
                 >
-                  <List size={18} />
+                  <List size={16} className="lg:w-[18px] lg:h-[18px]" />
                 </button>
               </div>
             </div>

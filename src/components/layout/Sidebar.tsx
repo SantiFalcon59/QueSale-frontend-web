@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavLink, Link, useNavigate } from 'react-router-dom';
 import { cn } from '../../lib/utils';
 import { useAuth } from '../../context/AuthContext';
@@ -11,6 +11,15 @@ export const Sidebar: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ is
   const { user, profile, logout } = useAuth() as any;
   const navigate = useNavigate();
   const isPremium = profile?.is_premium || profile?.role === 'admin';
+
+  const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth < 1024 : false);
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 1024);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const navItems = [
     { name: 'Inicio', icon: 'home', path: '/' },
@@ -35,18 +44,19 @@ export const Sidebar: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ is
       </AnimatePresence>
 
       <motion.aside
-        drag="x"
-        dragConstraints={{ left: 0, right: 0 }}
-        dragElastic={0.1}
+        drag={isMobile ? "x" : false}
+        dragDirectionLock
+        dragConstraints={{ left: -260, right: 0 }}
+        dragElastic={0.15}
         onDragEnd={(_, info) => {
-          if (info.offset.x < -80 || info.velocity.x < -200) {
+          if (info.offset.x < -40 || info.velocity.x < -150) {
             onClose();
           }
         }}
-        transition={{ type: 'spring', damping: 25, stiffness: 250 }}
+        animate={isMobile ? (isOpen ? { x: 0 } : { x: -260 }) : { x: 0 }}
+        transition={{ type: 'spring', damping: 25, stiffness: 220 }}
         className={cn(
-          "fixed left-0 top-0 h-full w-64 sidebar-gradient border-r border-primary/20 shadow-[10px_0_30px_rgba(0,0,0,0.3)] flex flex-col p-6 z-[70] transition-transform duration-300",
-          isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+          "fixed left-0 top-0 h-full w-64 sidebar-gradient border-r border-primary/20 shadow-[10px_0_30px_rgba(0,0,0,0.3)] flex flex-col p-6 z-[70]"
         )}
       >
         <div className="flex items-center justify-between mb-10 shrink-0">
