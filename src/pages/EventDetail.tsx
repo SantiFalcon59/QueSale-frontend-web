@@ -1201,6 +1201,8 @@ const EventAnnouncements: React.FC<{ eventId: string; organizerId: string; isOrg
         content: item.content,
         createdAt: item.created_at,
         media: item.media || [],
+        author: item.author,
+        authorPhotoUrl: item.author_photo_url,
       }));
       setAnnouncements(mapped);
     } catch (err) {
@@ -1248,6 +1250,7 @@ const EventAnnouncements: React.FC<{ eventId: string; organizerId: string; isOrg
             <PostComposer
               placeholder="Escribe un anuncio oficial..."
               onSubmit={handleCreate}
+              hideTypeSelector={true}
             />
           ) : (
             <button onClick={() => setShowCreate(true)} className="w-full p-4 rounded-[1.5rem] border-2 border-dashed border-outline-variant text-on-surface-variant font-bold text-xs uppercase tracking-widest hover:border-primary hover:text-primary transition-all flex items-center justify-center gap-3">
@@ -1270,24 +1273,32 @@ const EventAnnouncements: React.FC<{ eventId: string; organizerId: string; isOrg
       ) : (
         announcements.map(ann => (
           <div key={ann.id} className="p-6 lg:p-10 rounded-[2rem] lg:rounded-[3rem] bg-indigo-50/20 border border-indigo-100 space-y-6 relative overflow-hidden group">
-            <div className="flex flex-col sm:flex-row justify-between items-start gap-4 relative z-10">
-               <div className="space-y-1">
-                  <span className="text-[9px] lg:text-[10px] font-black italic text-indigo-500 uppercase tracking-widest">COMUNICADO OFICIAL</span>
-                  <h3 className="text-2xl lg:text-3xl font-black italic tracking-tight uppercase leading-none">{ann.title}</h3>
+            <div className="flex flex-col sm:flex-row justify-between items-start gap-4 relative z-10 w-full">
+              <div className="flex gap-4 items-center">
+                <UserAvatar
+                  src={resolveAssetUrl(ann.authorPhotoUrl)}
+                  alt="Avatar"
+                  className="w-12 h-12 lg:w-14 lg:h-14 rounded-xl lg:rounded-2xl bg-surface-container-high object-cover"
+                  size={22}
+                />
+                <div className="space-y-1">
+                  <span className="text-[9px] lg:text-[10px] font-black italic text-indigo-500 uppercase tracking-widest block">COMUNICADO OFICIAL</span>
+                  <h4 className="text-base lg:text-lg font-black italic text-on-surface truncate">{ann.author || 'Organizador'}</h4>
                   <p className="text-[9px] lg:text-[10px] text-on-surface-variant font-bold uppercase tracking-widest">
                     {ann.createdAt ? format(new Date(ann.createdAt), 'PPP', { locale: es }) : 'N/A'}
                   </p>
-               </div>
-               <div className="flex items-center gap-2">
-                 {isOrganizer && (
-                   <button onClick={() => handleDelete(ann.id)} className="w-10 h-10 lg:w-12 lg:h-12 bg-red-50 rounded-xl lg:rounded-2xl flex items-center justify-center text-red-500 border border-red-100 opacity-0 group-hover:opacity-100 transition-all hover:bg-red-500 hover:text-white shrink-0">
-                     <Trash2 size={16} />
-                   </button>
-                 )}
-                 <div className="w-10 h-10 lg:w-12 lg:h-12 bg-white rounded-xl lg:rounded-2xl flex items-center justify-center text-indigo-600 shadow-sm shrink-0">
-                   <Megaphone size={20} />
-                 </div>
-               </div>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 self-end sm:self-center">
+                {isOrganizer && (
+                  <button onClick={() => handleDelete(ann.id)} className="w-10 h-10 lg:w-12 lg:h-12 bg-red-50 rounded-xl lg:rounded-2xl flex items-center justify-center text-red-500 border border-red-100 opacity-0 group-hover:opacity-100 transition-all hover:bg-red-500 hover:text-white shrink-0">
+                    <Trash2 size={16} />
+                  </button>
+                )}
+                <div className="w-10 h-10 lg:w-12 lg:h-12 bg-white rounded-xl lg:rounded-2xl flex items-center justify-center text-indigo-600 shadow-sm shrink-0">
+                  <Megaphone size={20} />
+                </div>
+              </div>
             </div>
             {(() => {
               const gifMatch = ann.content?.match(/\[GIF:(https?:\/\/[^\]]+)\]/);
@@ -1295,7 +1306,7 @@ const EventAnnouncements: React.FC<{ eventId: string; organizerId: string; isOrg
               return (
                 <>
                   {textContent && (
-                    <p className="text-base lg:text-lg text-on-surface-variant leading-relaxed relative z-10">{textContent}</p>
+                    <p className="text-base lg:text-lg text-on-surface leading-relaxed relative z-10 font-medium">{textContent}</p>
                   )}
                   {gifMatch && (
                     <div className="rounded-xl overflow-hidden max-h-96 bg-black/5 relative z-10 flex items-center justify-center">
@@ -1308,7 +1319,7 @@ const EventAnnouncements: React.FC<{ eventId: string; organizerId: string; isOrg
             {ann.media && ann.media.length > 0 && (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 relative z-10">
                 {ann.media.map((m, i) => (
-                  <img key={i} src={m} className="w-full h-40 lg:h-48 object-cover rounded-2xl lg:rounded-3xl" alt="Ann photo" />
+                  <img key={i} src={resolveAssetUrl(m) || m} className="w-full h-40 lg:h-48 object-cover rounded-2xl lg:rounded-3xl border border-outline-variant" alt="Ann photo" />
                 ))}
               </div>
             )}

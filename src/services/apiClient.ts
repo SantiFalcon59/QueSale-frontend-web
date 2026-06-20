@@ -530,4 +530,34 @@ export const api = {
     apiRequest(`/api/subscriptions/verify-payment?payment_id=${encodeURIComponent(paymentId)}`, {
       auth: true,
     }),
+
+  // --- Allowed Locations ---
+  getAllowedLocations: (activeOnly = false) =>
+    apiRequest<any[]>(`/api/allowed-locations${activeOnly ? '/active' : ''}`, { auth: true }),
+
+  createAllowedLocation: (payload: { name: string; type: string; state?: string; country?: string }) =>
+    apiRequest('/api/allowed-locations', {
+      method: 'POST',
+      body: payload,
+      auth: true,
+    }),
+
+  updateAllowedLocation: (id: number, payload: { active: boolean; name?: string; type?: string; state?: string; country?: string }) =>
+    apiRequest(`/api/allowed-locations/${id}`, {
+      method: 'PUT',
+      body: payload,
+      auth: true,
+    }),
+
+  deleteAllowedLocation: (id: number) =>
+    apiRequest(`/api/allowed-locations/${id}`, {
+      method: 'DELETE',
+      auth: true,
+    }),
+
+  checkLocationAllowed: (city: string, state: string, country: string) =>
+    apiRequest<{ allowed: boolean }>(
+      `/api/allowed-locations/check?city=${encodeURIComponent(city)}&state=${encodeURIComponent(state)}&country=${encodeURIComponent(country)}`,
+      { auth: true }
+    ),
 };

@@ -19,7 +19,7 @@ const STEPS = [
   { id: 'tags', label: 'Tags' },
 ];
 
-const MapPicker: React.FC<{ lat: number; lng: number; address: string; onLocationChange: (lat: number, lng: number, address: string) => void }> = ({ lat, lng, address, onLocationChange }) => {
+const MapPicker: React.FC<{ lat: number; lng: number; address: string; onLocationChange: (lat: number, lng: number, address: string, components?: any) => void }> = ({ lat, lng, address, onLocationChange }) => {
   const map = useMap();
   const [markerPos, setMarkerPos] = useState({ lat, lng });
   const places = useMapsLibrary('places');
@@ -39,7 +39,13 @@ const MapPicker: React.FC<{ lat: number; lng: number; address: string; onLocatio
         setMarkerPos({ lat: newLat, lng: newLng });
         map?.panTo({ lat: newLat, lng: newLng });
         map?.setZoom(16);
-        onLocationChange(newLat, newLng, place.formatted_address || '');
+        
+        const locality = place.address_components?.find((c: any) => c.types.includes('locality'))?.long_name || '';
+        const partido = place.address_components?.find((c: any) => c.types.includes('administrative_area_level_2'))?.long_name || '';
+        const state = place.address_components?.find((c: any) => c.types.includes('administrative_area_level_1'))?.long_name || '';
+        const country = place.address_components?.find((c: any) => c.types.includes('country'))?.long_name || '';
+
+        onLocationChange(newLat, newLng, place.formatted_address || '', { locality, administrative_area_level_2: partido, administrative_area_level_1: state, country });
       }
     });
   }, [places, map]);
@@ -74,7 +80,21 @@ const MapPicker: React.FC<{ lat: number; lng: number; address: string; onLocatio
               const newLat = Number(typeof ll.lat === 'function' ? ll.lat() : ll.lat);
               const newLng = Number(typeof ll.lng === 'function' ? ll.lng() : ll.lng);
               setMarkerPos({ lat: newLat, lng: newLng });
-              onLocationChange(newLat, newLng, `${newLat.toFixed(6)}, ${newLng.toFixed(6)}`);
+              
+              const geocoder = new google.maps.Geocoder();
+              geocoder.geocode({ location: { lat: newLat, lng: newLng } }, (results, status) => {
+                if (status === 'OK' && results?.[0]) {
+                  const place = results[0];
+                  const locality = place.address_components?.find((c: any) => c.types.includes('locality'))?.long_name || '';
+                  const partido = place.address_components?.find((c: any) => c.types.includes('administrative_area_level_2'))?.long_name || '';
+                  const state = place.address_components?.find((c: any) => c.types.includes('administrative_area_level_1'))?.long_name || '';
+                  const country = place.address_components?.find((c: any) => c.types.includes('country'))?.long_name || '';
+
+                  onLocationChange(newLat, newLng, place.formatted_address || `${newLat.toFixed(6)}, ${newLng.toFixed(6)}`, { locality, administrative_area_level_2: partido, administrative_area_level_1: state, country });
+                } else {
+                  onLocationChange(newLat, newLng, `${newLat.toFixed(6)}, ${newLng.toFixed(6)}`);
+                }
+              });
             }
           }}
         >
@@ -86,6 +106,7 @@ const MapPicker: React.FC<{ lat: number; lng: number; address: string; onLocatio
   );
 };
 
+
 const EditEvent: React.FC = () => {
   const navigate = useNavigate();
   const { eventId } = useParams<{ eventId?: string }>();
@@ -96,6 +117,8 @@ const EditEvent: React.FC = () => {
   const [organization, setOrganization] = useState<any>(null);
   const [currentStep, setCurrentStep] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [locationError, setLocationError] = useState<string | null>(null);
+  const [activeLocations, setActiveLocations] = useState<any[]>([]);
 
   const [formData, setFormData] = useState({
     title: '',
@@ -119,6 +142,9 @@ const EditEvent: React.FC = () => {
     externalInstagram: '',
     externalTikTok: '',
     externalTwitter: '',
+    city: '',
+    state: '',
+    country: '',
   });
 
   const [categories, setCategories] = useState<{ id: number; name: string }[]>([]);
@@ -140,6 +166,9 @@ const EditEvent: React.FC = () => {
         const catsData: any = await api.getCategories();
         const cats = catsData?.data || catsData || [];
         setCategories(cats);
+
+        const locs: any = await api.getAllowedLocations(true);
+        setActiveLocations(locs || []);
 
         if (isEditing && eventId) {
           const eventData: any = await api.getEventById(eventId);
@@ -167,6 +196,9 @@ const EditEvent: React.FC = () => {
               externalInstagram: eventData.external_instagram || '',
               externalTikTok: eventData.external_tiktok || '',
               externalTwitter: eventData.external_twitter || '',
+              city: '',
+              state: '',
+              country: '',
             });
             
             // Set existing media previews (assuming images is an array of paths/urls)
@@ -187,6 +219,28 @@ const EditEvent: React.FC = () => {
     };
     fetchData();
   }, [user, navigate, isEditing, eventId]);
+
+  const validateLocation = async (components: any) => {
+    if (!components) {
+      setLocationError(null);
+      return;
+    }
+    const { locality, administrative_area_level_2, administrative_area_level_1, country } = components;
+    const city = locality || administrative_area_level_2;
+    const state = administrative_area_level_1;
+    
+    try {
+      const res: any = await api.checkLocationAllowed(city, state, country);
+      if (res.allowed) {
+        setLocationError(null);
+      } else {
+        setLocationError(`La aplicación todavía no está disponible en esta ubicación (${city || 'ubicación seleccionada'}).`);
+      }
+    } catch (err) {
+      console.error("Error validating location:", err);
+      setLocationError(null);
+    }
+  };
 
   const handleMediaSelect = (files: FileList | File[]) => {
     const fileArray = Array.from(files);
@@ -252,6 +306,9 @@ const EditEvent: React.FC = () => {
         external_instagram: formData.isExternal ? formData.externalInstagram : null,
         external_tiktok: formData.isExternal ? formData.externalTikTok : null,
         external_twitter: formData.isExternal ? formData.externalTwitter : null,
+        city: formData.city,
+        state: formData.state,
+        country: formData.country,
       };
 
       if (isEditing && eventId) {
@@ -283,7 +340,7 @@ const EditEvent: React.FC = () => {
   };
 
   const canProceed = () => {
-    // Basic validation only for essential fields
+    if (locationError) return false;
     return formData.title.trim() && formData.date && formData.time;
   };
 
@@ -584,13 +641,33 @@ const EditEvent: React.FC = () => {
                   lat={formData.lat}
                   lng={formData.lng}
                   address={formData.address}
-                  onLocationChange={(lat, lng, address) => {
-                    setFormData(prev => ({ ...prev, lat, lng, address: address || prev.address }));
+                  onLocationChange={(lat, lng, address, components) => {
+                    setFormData(prev => ({ 
+                      ...prev, 
+                      lat, 
+                      lng, 
+                      address: address || prev.address,
+                      city: components?.locality || components?.administrative_area_level_2 || '',
+                      state: components?.administrative_area_level_1 || '',
+                      country: components?.country || ''
+                    }));
+                    validateLocation(components);
                   }}
                 />
               </APIProvider>
 
-
+              {locationError && (
+                <div className="p-5 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-500 space-y-2">
+                  <p className="text-sm font-black uppercase tracking-tight flex items-center gap-2">
+                    <span className="material-symbols-outlined text-[20px]">error</span>
+                    Ubicación no disponible
+                  </p>
+                  <p className="text-xs font-bold leading-relaxed">{locationError}</p>
+                  <p className="text-[10px] text-red-500/70 font-semibold leading-relaxed">
+                    Nuestra aplicación está actualmente limitada a AMBA. Áreas soportadas: CABA y partidos del Gran Buenos Aires (Vicente López, San Isidro, Tigre, Quilmes, Lanús, Morón, etc.).
+                  </p>
+                </div>
+              )}
             </div>
           </motion.div>
         )}
@@ -645,14 +722,25 @@ const EditEvent: React.FC = () => {
                   </button>
                   <button
                     type="button"
+                    disabled={organization && !organization.verified}
                     onClick={() => setFormData(prev => ({ ...prev, ticketType: 'mercadopago' }))}
+                    title={organization && !organization.verified ? "Requiere verificación nivel 2" : undefined}
                     className={cn(
                       "p-4 rounded-xl border-2 flex flex-col items-center gap-2 transition-all",
-                      formData.ticketType === 'mercadopago' ? "border-primary bg-primary/5" : "border-outline-variant hover:border-primary/30"
+                      organization && !organization.verified
+                        ? "opacity-40 cursor-not-allowed bg-surface-container-low border-outline-variant"
+                        : formData.ticketType === 'mercadopago'
+                          ? "border-primary bg-primary/5"
+                          : "border-outline-variant hover:border-primary/30"
                     )}
                   >
                     <DollarSign size={20} className={cn(formData.ticketType === 'mercadopago' ? "text-primary" : "text-on-surface-variant")} />
-                    <span className="text-[10px] font-black uppercase tracking-widest text-center">Mercado Pago</span>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-center">
+                      Mercado Pago
+                      {organization && !organization.verified && (
+                        <span className="block text-[8px] text-red-500 font-bold lowercase mt-0.5">(req. nivel 2)</span>
+                      )}
+                    </span>
                   </button>
                 </div>
               </div>

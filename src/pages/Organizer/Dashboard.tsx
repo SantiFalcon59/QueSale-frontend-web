@@ -379,12 +379,12 @@ const OrganizerDashboard: React.FC = () => {
 
   if (!organization && !showCreateForm) {
     return (
-      <div className="max-w-5xl mx-auto py-20 text-center space-y-10">
+      <div className="max-w-5xl mx-auto py-12 lg:py-20 px-4 sm:px-6 text-center space-y-10">
         <div className="space-y-4">
           <div className="w-24 h-24 bg-primary/10 rounded-[2.5rem] flex items-center justify-center mx-auto mb-6 transform -rotate-12">
             <Sparkles size={48} className="text-primary" />
           </div>
-          <h1 className="text-5xl lg:text-7xl font-black italic tracking-tighter decoration-primary decoration-8 underline-offset-8">
+          <h1 className="text-3xl sm:text-5xl lg:text-7xl font-black italic tracking-tighter decoration-primary decoration-8 underline-offset-8">
             CONVIÉRTETE EN <span className="text-primary">ORGANIZADOR</span>
           </h1>
           <p className="text-xl text-on-surface-variant max-w-xl mx-auto font-medium leading-relaxed">
@@ -430,7 +430,7 @@ const OrganizerDashboard: React.FC = () => {
 
   if (showCreateForm) {
     return (
-      <div className="max-w-2xl mx-auto py-12 space-y-8">
+      <div className="max-w-2xl mx-auto py-12 px-4 sm:px-6 space-y-8">
         <header className="space-y-4">
           <button
             onClick={() => setShowCreateForm(false)}

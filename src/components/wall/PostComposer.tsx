@@ -18,9 +18,10 @@ const GridIcon = (props: any) => (
 interface PostComposerProps {
   placeholder?: string;
   onSubmit: (content: string, type?: string, media?: string[], pollOptions?: string[]) => void;
+  hideTypeSelector?: boolean;
 }
 
-const PostComposer: React.FC<PostComposerProps> = ({ placeholder = '¿Qué tienes en mente?', onSubmit }) => {
+const PostComposer: React.FC<PostComposerProps> = ({ placeholder = '¿Qué tienes en mente?', onSubmit, hideTypeSelector = false }) => {
   const { user, profile } = useAuth();
   const [content, setContent] = useState('');
   const [postType, setPostType] = useState<string>('comment');
@@ -210,26 +211,28 @@ const PostComposer: React.FC<PostComposerProps> = ({ placeholder = '¿Qué tiene
               )}
             </div>
           )}
-          <div className="flex flex-wrap gap-2">
-            {[
-              { id: 'comment', name: 'Comentario', icon: MessageSquare },
-              { id: 'query', name: 'Pregunta', icon: Info },
-              { id: 'poll', name: 'Encuesta', icon: GridIcon },
-              { id: 'feedback', name: 'Feedback', icon: ThumbsUp }
-            ].map(t => (
-              <button
-                key={t.id}
-                onClick={() => setPostType(t.id as any)}
-                className={cn(
-                  "px-5 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-2 transition-all border",
-                  postType === t.id ? "bg-primary text-white border-primary" : "bg-white text-on-surface-variant border-outline-variant hover:border-primary/30"
-                )}
-              >
-                <t.icon size={14} />
-                {t.name}
-              </button>
-            ))}
-          </div>
+          {!hideTypeSelector && (
+            <div className="flex flex-wrap gap-2">
+              {[
+                { id: 'comment', name: 'Comentario', icon: MessageSquare },
+                { id: 'query', name: 'Pregunta', icon: Info },
+                { id: 'poll', name: 'Encuesta', icon: GridIcon },
+                { id: 'feedback', name: 'Feedback', icon: ThumbsUp }
+              ].map(t => (
+                <button
+                  key={t.id}
+                  onClick={() => setPostType(t.id as any)}
+                  className={cn(
+                    "px-5 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-2 transition-all border",
+                    postType === t.id ? "bg-primary text-white border-primary" : "bg-white text-on-surface-variant border-outline-variant hover:border-primary/30"
+                  )}
+                >
+                  <t.icon size={14} />
+                  {t.name}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </div>
       <div className="flex items-center justify-between pt-6 border-t border-outline-variant/30">
