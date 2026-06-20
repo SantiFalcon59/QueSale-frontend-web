@@ -244,7 +244,7 @@ const Discovery: React.FC = () => {
         {/* Filter Sidebar */}
         <aside className={cn(
           "col-span-12 lg:col-span-3 space-y-6 transition-all",
-          showFilters ? "" : "hidden lg:block lg:hidden"
+          showFilters ? "" : "hidden lg:block"
         )}>
           <div className="bg-white/70 backdrop-blur-xl border border-outline-variant/50 p-6 rounded-3xl shadow-sm sticky top-24 space-y-6">
             <div className="flex items-center justify-between">

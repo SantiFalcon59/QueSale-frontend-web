@@ -807,11 +807,12 @@ const EventDetail: React.FC = () => {
       </div>
 
       {/* Floating Live Chat Toggle */}
-      <div className="fixed bottom-24 lg:bottom-10 right-6 lg:right-10 z-50">
+      {/* Chat Panel + Button */}
+      <div className="fixed bottom-24 lg:bottom-10 right-6 lg:right-10 z-50 flex flex-col items-end">
         <button 
           onClick={() => setIsChatOpen(!isChatOpen)}
           className={cn(
-            "w-16 h-16 rounded-full shadow-2xl flex items-center justify-center transition-all duration-500",
+            "w-16 h-16 rounded-full shadow-2xl flex items-center justify-center transition-all duration-500 relative z-10",
             isChatOpen ? "bg-surface text-on-surface rotate-90 scale-90" : "bg-primary text-white hover:scale-110 active:scale-95"
           )}
         >
@@ -829,7 +830,7 @@ const EventDetail: React.FC = () => {
               initial={{ opacity: 0, y: 50, scale: 0.9, transformOrigin: 'bottom right' }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 50, scale: 0.9 }}
-              className="absolute bottom-20 right-4 sm:right-0 left-4 sm:w-[400px] h-[70vh] sm:h-[600px] bg-surface rounded-[2.5rem] lg:rounded-[3rem] shadow-2xl border border-outline-variant overflow-hidden flex flex-col"
+              className="fixed bottom-24 left-4 right-4 sm:left-auto sm:right-[calc(6rem+72px)] sm:w-[400px] h-[70vh] sm:h-[600px] bg-surface rounded-[2.5rem] lg:rounded-[3rem] shadow-2xl border border-outline-variant overflow-hidden flex flex-col"
             >
               <div className="p-8 bg-surface-container-high border-b border-outline-variant flex items-center justify-between">
                 <div className="flex items-center gap-4">
