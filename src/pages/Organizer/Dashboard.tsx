@@ -102,7 +102,7 @@ const OrganizerDashboard: React.FC = () => {
           real_name: org.real_name || '',
           dni: org.dni || '',
           address: org.address || '',
-          phone_number: org.phone_number || ''
+          phone_number: org.phone_number || '',
         });
 
         const eventsData: any = await api.getOrganizerEvents(org.id_organizer, 1, 50);
@@ -532,7 +532,7 @@ const OrganizerDashboard: React.FC = () => {
                   real_name: organization.real_name || '',
                   dni: organization.dni || '',
                   address: organization.address || '',
-                  phone_number: organization.phone_number || ''
+                  phone_number: organization.phone_number || '',
                 });
               }
             }}
@@ -708,9 +708,9 @@ const OrganizerDashboard: React.FC = () => {
                         <label className="text-[10px] uppercase font-black tracking-widest text-on-surface-variant ml-4">Dirección Fiscal</label>
                         <input value={editOrgData.address} onChange={e => setEditOrgData(prev => ({ ...prev, address: e.target.value }))} placeholder="Calle 123, Ciudad, Provincia" className="w-full bg-surface-container-low border border-outline-variant rounded-xl px-4 py-3 text-sm outline-none focus:border-primary/50 transition-all font-medium" />
                      </div>
-                  </div>
-                </div>
-              </div>
+                   </div>
+                 </div>
+               </div>
               <div className="flex gap-3 p-6 border-t border-outline-variant shrink-0">
                 <button onClick={() => setEditingOrg(false)} className="btn-secondary flex-1">CANCELAR</button>
                 <button onClick={handleUpdateOrg} className="btn-primary flex-1">GUARDAR</button>

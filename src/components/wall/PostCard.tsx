@@ -68,7 +68,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, onReact, onDelete, onComment,
 
   return (
     <div className={cn(
-      "p-6 lg:p-10 rounded-[2.5rem] lg:rounded-[4rem] bg-white border transition-all space-y-6 lg:space-y-8 group",
+      "p-6 lg:p-10 rounded-[2.5rem] lg:rounded-[4rem] bg-white border transition-all space-y-6 lg:space-y-8 group overflow-hidden",
       isAuthorPremium ? "border-amber-400/50 shadow-xl shadow-amber-500/5" : "border-outline-variant hover:border-primary/20"
     )}>
       <div className="flex justify-between items-start">
@@ -137,14 +137,14 @@ const PostCard: React.FC<PostCardProps> = ({ post, onReact, onDelete, onComment,
               </p>
             )}
             {gifMatch && (
-              <div className="rounded-xl overflow-hidden max-h-96 max-w-2xl mx-auto bg-black/5">
+              <div className="rounded-xl overflow-hidden max-h-96 max-w-full lg:max-w-2xl mx-auto bg-black/5">
                 <img src={gifMatch[1]} alt="GIF" className="w-full h-full object-contain mx-auto" />
               </div>
             )}
             {mediaList.length > 0 && !gifMatch && (
               <div className={cn("grid gap-3", mediaList.length > 1 ? "grid-cols-2" : "grid-cols-1")}>
                 {mediaList.map((url: string, i: number) => (
-                  <div key={i} className="rounded-xl overflow-hidden max-h-96 max-w-2xl mx-auto bg-black/5">
+                  <div key={i} className="rounded-xl overflow-hidden max-h-96 max-w-full lg:max-w-2xl mx-auto bg-black/5">
                     <img src={resolveAssetUrl(url) || url} alt="" className="w-full h-full object-contain mx-auto" />
                   </div>
                 ))}
@@ -262,6 +262,14 @@ const PostCard: React.FC<PostCardProps> = ({ post, onReact, onDelete, onComment,
         <div className="space-y-4 pt-4 ml-6 lg:ml-10 border-l-2 border-outline-variant/30 pl-6">
           {post.comments.map((comment: any) => (
             <div key={comment.id_comment} className="flex items-start gap-3 group/comment">
+              <Link to={`/@${comment.author}`} className="shrink-0 mt-0.5">
+                <UserAvatar
+                  src={resolveAssetUrl(comment.author_photo_url)}
+                  alt={comment.author}
+                  className="w-7 h-7 rounded-lg object-cover bg-surface-container-high"
+                  size={14}
+                />
+              </Link>
               <div className="flex-1 space-y-1">
                 <div className="flex items-center gap-2">
                   <Link to={`/@${comment.author}`} className="text-[10px] font-black italic hover:text-primary transition-colors">{comment.author}</Link>

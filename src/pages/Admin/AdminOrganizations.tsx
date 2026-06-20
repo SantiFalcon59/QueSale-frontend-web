@@ -24,7 +24,8 @@ const AdminOrganizations: React.FC = () => {
                ownerId: org.id_creator,
                verificationLevel: org.verified ? 2 : 1,
                status: org.verified ? 'verified' : 'pending_verification',
-               instagram: '',
+               instagram: org.instagram || '',
+               tiktok: org.tiktok || '',
                verificationInfo: {
                  realName: org.real_name,
                  dni: org.dni,
@@ -121,12 +122,12 @@ const AdminOrganizations: React.FC = () => {
                     <p className="text-[10px] text-on-surface-variant">Tel: {org.verificationInfo?.phone || 'N/A'}</p>
                     <p className="text-[10px] text-on-surface-variant truncate" title={org.verificationInfo?.address || ''}>Dir: {org.verificationInfo?.address || 'N/A'}</p>
                  </div>
-                 <div className="space-y-1">
-                    <p className="text-[9px] uppercase font-black tracking-widest text-on-surface-variant">Social</p>
-                    <a href={`https://instagram.com/${org.instagram?.replace('@', '')}`} target="_blank" className="text-xs font-black text-primary flex items-center gap-1">
-                       {org.instagram} <ExternalLink size={10} />
-                    </a>
-                 </div>
+                  <div className="space-y-1">
+                     <p className="text-[9px] uppercase font-black tracking-widest text-on-surface-variant">Social</p>
+                     <a href={`https://instagram.com/${org.instagram?.replace('@', '')}`} target="_blank" className="text-xs font-black text-primary flex items-center gap-1">
+                        {org.instagram} <ExternalLink size={10} />
+                     </a>
+                  </div>
               </div>
 
               <div className="col-span-4 flex items-center justify-end gap-3">

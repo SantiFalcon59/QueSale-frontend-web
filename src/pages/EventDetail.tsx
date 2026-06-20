@@ -625,14 +625,14 @@ const EventDetail: React.FC = () => {
                           <h3 className="text-2xl font-black italic uppercase tracking-tighter">Más de {organizer?.name}</h3>
                           <Link to={`/organizer/${organizer?.id}`} className="text-[10px] font-black uppercase tracking-widest text-primary hover:underline">Ver todo</Link>
                         </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-10">
                           {organizerEvents.slice(0, 4).map(orgEvent => (
                             <Link
                               key={orgEvent.id_event}
                               to={`/events/${orgEvent.id_event}`}
                               className="group bg-white rounded-[2.5rem] border border-outline-variant overflow-hidden hover:border-primary/50 transition-all hover:shadow-2xl hover:-translate-y-2"
                             >
-                              <div className="relative aspect-[16/10] overflow-hidden">
+                              <div className="relative aspect-[4/3] overflow-hidden">
                                 <img
                                   src={resolveAssetUrl(orgEvent.images?.[0] || orgEvent.thumbnail_url) || NO_EVENT_IMAGE}
                                   alt={orgEvent.title}
@@ -651,20 +651,20 @@ const EventDetail: React.FC = () => {
                                   </div>
                                 )}
                               </div>
-                              <div className="p-8 space-y-4">
-                                <h4 className="text-lg font-black text-on-surface leading-tight group-hover:text-primary transition-colors line-clamp-1 uppercase italic tracking-tighter">{orgEvent.title}</h4>
-                                <div className="flex items-center justify-between pt-2 border-t border-outline-variant/30">
-                                  <div className="flex flex-col gap-1">
-                                    <span className="text-[10px] text-on-surface-variant font-black uppercase tracking-widest flex items-center gap-1.5">
-                                      <CalendarDays size={12} className="text-primary" />
+                              <div className="p-10 space-y-4">
+                                <h4 className="text-xl font-black text-on-surface leading-tight group-hover:text-primary transition-colors line-clamp-1 uppercase italic tracking-tighter">{orgEvent.title}</h4>
+                                <div className="flex items-center justify-between pt-3 border-t border-outline-variant/30">
+                                  <div className="flex flex-col gap-1.5">
+                                    <span className="text-[11px] text-on-surface-variant font-black uppercase tracking-widest flex items-center gap-1.5">
+                                      <CalendarDays size={13} className="text-primary" />
                                       {new Date(orgEvent.date).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}
                                     </span>
-                                    <span className="text-[10px] text-on-surface-variant font-black uppercase tracking-widest flex items-center gap-1.5">
-                                      <MapPin size={12} className="text-primary" />
+                                    <span className="text-[11px] text-on-surface-variant font-black uppercase tracking-widest flex items-center gap-1.5">
+                                      <MapPin size={13} className="text-primary" />
                                       {orgEvent.ubication || 'Ubicación'}
                                     </span>
                                   </div>
-                                  <span className="text-sm font-black text-primary italic">{formatPrice(orgEvent.price)}</span>
+                                  <span className="text-base font-black text-primary italic">{formatPrice(orgEvent.price)}</span>
                                 </div>
                               </div>
                             </Link>

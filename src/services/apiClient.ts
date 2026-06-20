@@ -181,7 +181,7 @@ export const api = {
   getOrganizerEvents: (organizerId: string, page = 1, limit = 50) =>
     apiRequest(`/api/organizers/${encodeURIComponent(organizerId)}/events?page=${page}&limit=${limit}`),
 
-  updateOrganizer: (organizerId: string, payload: { name?: string; description?: string; logo_url?: string; instagram?: string; tiktok?: string; twitter?: string; website?: string }) =>
+  updateOrganizer: (organizerId: string, payload: { name?: string; description?: string; logo_url?: string; instagram?: string; tiktok?: string; twitter?: string; website?: string; real_name?: string; dni?: string; address?: string; phone_number?: string }) =>
     apiRequest(`/api/organizers/${encodeURIComponent(organizerId)}`, {
       method: 'PUT',
       body: payload,
