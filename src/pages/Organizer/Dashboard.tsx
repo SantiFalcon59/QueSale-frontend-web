@@ -7,7 +7,7 @@ const TikTokIcon = () => (
     <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.9 2.89 2.89 0 0 1-2.88-2.89 2.89 2.89 0 0 1 2.88-2.89c.28 0 .56.04.84.1V8.77a6.2 6.2 0 0 0-.84-.06A6.34 6.34 0 0 0 3.1 15.05a6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.34-6.34V8.75a8.24 8.24 0 0 0 4.73 1.49V6.69Z"/>
   </svg>
 );
-import { cn } from '../../lib/utils';
+import { cn, NO_EVENT_IMAGE } from '../../lib/utils';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { api, resolveAssetUrl } from '../../services/apiClient';
@@ -1226,8 +1226,8 @@ const OrganizerDashboard: React.FC = () => {
                   const evMetrics = (d.per_event || []).find((p: any) => p.id_event === event.id_event);
                   return (
                     <div key={event.id_event} className="p-4 rounded-2xl bg-white/50 border border-transparent hover:border-primary/20 transition-all flex items-center gap-4 group">
-                      <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
-                        <Calendar size={18} />
+                      <div className="w-12 h-12 rounded-xl overflow-hidden shrink-0 bg-surface-container-high">
+                        <img src={resolveAssetUrl(event.thumbnail_url) || (event.images?.[0] ? resolveAssetUrl(event.images[0]) : undefined) || NO_EVENT_IMAGE} alt={event.title} className="w-full h-full object-cover" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <h4 className="text-sm font-bold truncate">{event.title}</h4>
@@ -1294,8 +1294,8 @@ const OrganizerDashboard: React.FC = () => {
             events.map(event => (
               <div key={event.id_event} className="group bg-white rounded-[2.5rem] border border-outline-variant hover:border-primary/50 transition-all overflow-hidden shadow-sm hover:shadow-xl hover:shadow-black/5 p-8 space-y-6">
                 <div className="flex justify-between items-start">
-                  <div className="w-16 h-16 rounded-2xl bg-surface-container-high border border-outline-variant flex items-center justify-center">
-                    <Calendar size={24} className="text-on-surface-variant" />
+                  <div className="w-16 h-16 rounded-2xl border border-outline-variant overflow-hidden shrink-0 bg-surface-container-high">
+                    <img src={resolveAssetUrl(event.thumbnail_url) || (event.images?.[0] ? resolveAssetUrl(event.images[0]) : undefined) || NO_EVENT_IMAGE} alt={event.title} className="w-full h-full object-cover" />
                   </div>
                   <div className="flex flex-col items-end gap-2">
                     {(() => {
