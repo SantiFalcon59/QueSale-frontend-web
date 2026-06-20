@@ -765,10 +765,10 @@ const OrganizerDashboard: React.FC = () => {
                         key={tier.level}
                         onClick={() => handleConfirmFeature(tier.level)}
                         disabled={isProcessingFeatured}
-                        className="group p-6 rounded-[2rem] border border-outline-variant hover:border-primary/50 hover:bg-primary/5 transition-all text-left space-y-4 relative overflow-hidden"
+                        className="group p-6 rounded-[2rem] border border-outline-variant hover:border-primary/50 hover:bg-primary/5 transition-all text-left space-y-4 relative overflow-hidden disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                           <ArrowRight size={20} className="text-primary" />
+                           {isProcessingFeatured ? <Loader2 size={20} className="animate-spin text-primary" /> : <ArrowRight size={20} className="text-primary" />}
                         </div>
                         <div>
                           <h4 className="text-lg font-black italic tracking-tight">{tier.name}</h4>
@@ -796,15 +796,10 @@ const OrganizerDashboard: React.FC = () => {
                   </div>
                 </div>
               </div>
-
-              <div className="p-8 bg-surface-container-low border-t border-outline-variant flex items-center justify-center gap-2">
-                <img src="https://www.mercadopago.com/instore/merchant/bundles/mptheme/images/logo-mercadopago.png" alt="Mercado Pago" className="h-4 opacity-50" />
-                <span className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant opacity-50">Pagos seguros y rápidos</span>
-              </div>
             </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
       {/* Followers Modal */}
       <AnimatePresence>
