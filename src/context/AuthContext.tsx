@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { User, signInWithEmailAndPassword, signInWithCredential } from 'firebase/auth';
+import { User, signInWithEmailAndPassword, signInWithCredential, GoogleAuthProvider } from 'firebase/auth';
 import { auth, onAuthStateChanged, signInWithPopup, googleProvider, signOut } from '../lib/firebase';
 import { api, resolveAssetUrl } from '../services/apiClient';
 import { Capacitor } from '@capacitor/core';

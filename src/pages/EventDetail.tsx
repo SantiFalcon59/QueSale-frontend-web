@@ -392,7 +392,7 @@ const EventDetail: React.FC = () => {
         {/* Left Column: Event Core & Community */}
         <div className="col-span-12 lg:col-span-8 space-y-8 lg:space-y-12 min-w-0">
           {/* Gallery Header */}
-          <section className="relative h-[300px] lg:h-[500px] rounded-[1.5rem] lg:rounded-[3.5rem] overflow-hidden group">
+          <section className="relative h-[350px] sm:h-[400px] lg:h-[500px] rounded-[1.5rem] lg:rounded-[3.5rem] overflow-hidden group">
             <div className="grid grid-cols-4 grid-rows-2 h-full gap-1 lg:gap-2 cursor-pointer">
               <div
                 className="col-span-4 lg:col-span-3 row-span-2 relative overflow-hidden"
@@ -448,7 +448,7 @@ const EventDetail: React.FC = () => {
                      {event.category}
                    </span>
                 </div>
-                <h1 className="text-3xl lg:text-6xl font-black tracking-tighter text-white leading-tight lg:leading-none uppercase">{event.title}</h1>
+                <h1 className="text-2xl sm:text-4xl lg:text-6xl font-black tracking-tighter text-white leading-tight lg:leading-none uppercase">{event.title}</h1>
               </div>
               <div className="flex gap-2 lg:gap-3 self-end sm:self-auto">
                 <button 
@@ -542,7 +542,7 @@ const EventDetail: React.FC = () => {
                       {event.is_external ? (
                         <div className="space-y-6">
                           <h3 className="text-xs font-black uppercase tracking-[0.3em] opacity-40">Organizador Externo</h3>
-                          <div className="p-8 rounded-[2.5rem] bg-amber-50/50 border border-amber-100 flex flex-col gap-6 relative overflow-hidden">
+                          <div className="p-5 sm:p-6 lg:p-8 rounded-[2rem] lg:rounded-[2.5rem] bg-amber-50/50 border border-amber-100 flex flex-col gap-6 relative overflow-hidden">
                             <div className="flex items-center gap-4 relative z-10">
                               <div className="w-16 h-16 rounded-2xl bg-amber-100 flex items-center justify-center text-amber-600">
                                  <Users size={32} />
@@ -582,7 +582,7 @@ const EventDetail: React.FC = () => {
                       ) : organizer && (
                         <div className="space-y-6">
                           <h3 className="text-xs font-black uppercase tracking-[0.3em] opacity-40">Organizador</h3>
-                          <div className="p-8 rounded-[2.5rem] bg-indigo-50/30 border border-indigo-100 flex flex-col gap-6 shadow-sm">
+                          <div className="p-5 sm:p-6 lg:p-8 rounded-[2rem] lg:rounded-[2.5rem] bg-indigo-50/30 border border-indigo-100 flex flex-col gap-6 shadow-sm">
                             <Link to={`/organizer/${organizer.id}`} className="flex items-center gap-5 group/link">
                               <OrganizerAvatar src={organizer.logo} alt={organizer.name} className="w-16 h-16 rounded-2xl object-cover shadow-sm" size={24} />
                               <div className="min-w-0">
@@ -708,7 +708,7 @@ const EventDetail: React.FC = () => {
 
         {/* Right Column: Interaction & Tickets */}
         <div className="col-span-12 lg:col-span-4 space-y-6 lg:space-y-8 relative lg:sticky lg:top-28 self-start lg:pl-8">
-           <section className="p-6 lg:p-10 rounded-[2rem] lg:rounded-[3.5rem] bg-linear-to-br from-primary-container/20 to-surface border border-primary/20 shadow-2xl shadow-primary/10 space-y-8 lg:space-y-10">
+           <section className="p-5 sm:p-8 lg:p-10 rounded-2xl sm:rounded-[2.5rem] lg:rounded-[3.5rem] bg-linear-to-br from-primary-container/20 to-surface border border-primary/20 shadow-2xl shadow-primary/10 space-y-8 lg:space-y-10">
               {isPast ? (
                 <div className="space-y-6 text-center">
                    <div className="w-16 h-16 rounded-full bg-surface-container-high flex items-center justify-center mx-auto">
@@ -807,7 +807,7 @@ const EventDetail: React.FC = () => {
       </div>
 
       {/* Floating Live Chat Toggle */}
-      <div className="fixed bottom-10 right-10 z-50">
+      <div className="fixed bottom-24 lg:bottom-10 right-6 lg:right-10 z-50">
         <button 
           onClick={() => setIsChatOpen(!isChatOpen)}
           className={cn(
@@ -919,7 +919,7 @@ const CalendarWidget: React.FC<{ eventDate: Date }> = ({ eventDate }) => {
   return (
     <div className="space-y-4">
       <h3 className="text-xl font-bold uppercase tracking-widest opacity-60">Calendario</h3>
-      <div className="p-6 lg:p-8 rounded-[1.5rem] lg:rounded-[2.5rem] bg-surface-container-low border border-outline-variant space-y-6">
+      <div className="p-4 sm:p-6 lg:p-8 rounded-[1.5rem] lg:rounded-[2.5rem] bg-surface-container-low border border-outline-variant space-y-6">
         <div className="flex items-center justify-between">
           <button onClick={() => setViewMonth(new Date(viewMonth.getFullYear(), viewMonth.getMonth() - 1, 1))} className="p-2 rounded-xl hover:bg-surface-container-high transition-all">
             <ChevronLeft size={18} />

@@ -125,7 +125,7 @@ const Feed: React.FC = () => {
   }
 
   return (
-    <div className="h-[calc(100vh-64px)] overflow-y-auto snap-y snap-mandatory scroll-smooth hide-scrollbar">
+    <div className="h-[calc(100vh-64px)] overflow-y-auto snap-y snap-mandatory scroll-smooth no-scrollbar">
       <LoginPromptModal isOpen={showLoginPrompt} onClose={() => setShowLoginPrompt(false)} />
 
       {events.map((event, index) => {
@@ -135,7 +135,7 @@ const Feed: React.FC = () => {
         
         return (
           <React.Fragment key={event.id_event}>
-            <div className="w-full h-full snap-start p-4 lg:p-8">
+            <div className="w-full h-full snap-start snap-always p-4 lg:p-8">
               <div className="relative w-full h-full rounded-[40px] overflow-hidden bg-black shadow-2xl flex flex-col justify-end border border-white/5 group">
                 <div className="absolute inset-0 z-0 overflow-hidden">
                   <div className="w-full h-full transition-transform duration-1000 group-hover:scale-105">
@@ -207,7 +207,7 @@ const Feed: React.FC = () => {
 
             {/* Show an Ad after every 4 events — hidden for premium users */}
             {(index + 1) % 4 === 0 && !isPremium && (
-              <div className="w-full h-full snap-start p-4 lg:p-8 flex items-center justify-center">
+              <div className="w-full h-full snap-start snap-always p-4 lg:p-8 flex items-center justify-center">
                 <div className="max-w-4xl w-full h-full glass-card rounded-[40px] p-12 border border-white/10 flex flex-col items-center justify-center gap-6">
                   <div className="text-center space-y-2">
                     <p className="text-[10px] font-black uppercase tracking-[0.4em] text-primary">Publicidad Sugerida</p>

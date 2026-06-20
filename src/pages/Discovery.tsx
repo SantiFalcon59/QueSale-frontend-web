@@ -96,7 +96,10 @@ const Discovery: React.FC = () => {
   const { profile } = useAuth() as any;
   const isPremium = profile?.is_premium || profile?.role === 'admin';
   const [view, setView] = useState<'grid' | 'list'>('grid');
-  const [showFilters, setShowFilters] = useState(true);
+  const [showFilters, setShowFilters] = useState(() => typeof window !== 'undefined' ? window.innerWidth >= 1024 : true);
+  const [showCalendar, setShowCalendar] = useState(false);
+  const [showTags, setShowTags] = useState(false);
+  const [showPrice, setShowPrice] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('ALL');
   const [priceType, setPriceType] = useState<'all' | 'free' | 'paid'>('all');
@@ -248,11 +251,20 @@ const Discovery: React.FC = () => {
               <h3 className="text-lg font-black italic text-primary flex items-center gap-2 uppercase tracking-tighter">
                 <Sparkles size={18} /> Filtros
               </h3>
-              {hasActiveFilters && (
-                <button onClick={handleReset} className="text-[10px] font-bold text-primary underline uppercase tracking-widest transition-colors flex items-center gap-1">
-                  <RotateCcw size={12} /> Limpiar
+              <div className="flex items-center gap-3">
+                {hasActiveFilters && (
+                  <button onClick={handleReset} className="text-[10px] font-bold text-primary underline uppercase tracking-widest transition-colors flex items-center gap-1">
+                    <RotateCcw size={12} /> Limpiar
+                  </button>
+                )}
+                <button 
+                  onClick={() => setShowFilters(false)}
+                  className="lg:hidden p-1.5 hover:bg-surface-container-high rounded-xl text-on-surface-variant hover:text-red-500 transition-all cursor-pointer"
+                  title="Ocultar Filtros"
+                >
+                  <X size={18} />
                 </button>
-              )}
+              </div>
             </div>
 
             {/* Keyword Search */}
@@ -332,134 +344,165 @@ const Discovery: React.FC = () => {
             </div>
 
             {/* Calendar */}
-            <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant ml-1">Calendario</label>
-              <CalendarPicker selectedDate={selectedDate} onSelect={handleDateSelect} />
-              {selectedDate && (
-                <p className="text-[10px] text-primary font-bold text-center">
-                  {format(selectedDate, "d 'de' MMMM", { locale: es })}
-                </p>
+            <div className="space-y-2 border-t border-outline-variant/20 pt-4">
+              <button
+                type="button"
+                onClick={() => setShowCalendar(!showCalendar)}
+                className="w-full flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-on-surface-variant hover:text-primary transition-colors cursor-pointer"
+              >
+                <span className="flex items-center gap-1.5"><CalendarDays size={14} /> Calendario</span>
+                <span className="text-xs">{showCalendar ? '▼' : '▶'}</span>
+              </button>
+              {showCalendar && (
+                <div className="space-y-2 pt-2">
+                  <CalendarPicker selectedDate={selectedDate} onSelect={handleDateSelect} />
+                  {selectedDate && (
+                    <p className="text-[10px] text-primary font-bold text-center">
+                      {format(selectedDate, "d 'de' MMMM", { locale: es })}
+                    </p>
+                  )}
+                </div>
               )}
             </div>
 
             {/* Tags */}
-            <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant ml-1 flex items-center gap-1.5">
-                # Tags
-              </label>
-              <div className="relative">
-                <input
-                  value={tagInput}
-                  onChange={e => setTagInput(e.target.value)}
-                  onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addTag(tagInput); } }}
-                  placeholder="Escribí un tag y presioná Enter..."
-                  className="w-full h-10 px-4 rounded-xl bg-surface-container-low text-sm text-on-surface outline-none ring-1 ring-outline-variant focus:ring-primary/40 transition-all"
-                />
-                {tagSuggestions.length > 0 && (
-                  <div className="absolute top-full left-0 right-0 mt-1 rounded-xl bg-white border border-outline-variant shadow-xl z-20 max-h-48 overflow-y-auto">
-                    {tagSuggestions.map(tag => (
-                      <button
-                        key={tag}
-                        onClick={() => addTag(tag)}
-                        className="w-full px-4 py-2 text-left text-sm text-on-surface hover:bg-surface-container-low transition-colors flex items-center gap-2 cursor-pointer"
-                      >
-                        <span className="text-primary font-bold">#</span>{tag}
-                      </button>
-                    ))}
+            <div className="space-y-2 border-t border-outline-variant/20 pt-4">
+              <button
+                type="button"
+                onClick={() => setShowTags(!showTags)}
+                className="w-full flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-on-surface-variant hover:text-primary transition-colors cursor-pointer"
+              >
+                <span className="flex items-center gap-1.5"># Tags</span>
+                <span className="text-xs">{showTags ? '▼' : '▶'}</span>
+              </button>
+              {showTags && (
+                <div className="space-y-2 pt-2">
+                  <div className="relative">
+                     <input
+                       value={tagInput}
+                       onChange={e => setTagInput(e.target.value)}
+                       onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addTag(tagInput); } }}
+                       placeholder="Escribí un tag y presioná Enter..."
+                       className="w-full h-10 px-4 rounded-xl bg-surface-container-low text-sm text-on-surface outline-none ring-1 ring-outline-variant focus:ring-primary/40 transition-all"
+                     />
+                     {tagSuggestions.length > 0 && (
+                       <div className="absolute top-full left-0 right-0 mt-1 rounded-xl bg-white border border-outline-variant shadow-xl z-20 max-h-48 overflow-y-auto">
+                         {tagSuggestions.map(tag => (
+                           <button
+                             key={tag}
+                             onClick={() => addTag(tag)}
+                             className="w-full px-4 py-2 text-left text-sm text-on-surface hover:bg-surface-container-low transition-colors flex items-center gap-2 cursor-pointer"
+                           >
+                             <span className="text-primary font-bold">#</span>{tag}
+                           </button>
+                         ))}
+                       </div>
+                     )}
                   </div>
-                )}
-              </div>
-              {selectedTags.length > 0 && (
-                <div className="flex flex-wrap gap-1.5 pt-1">
-                  {selectedTags.map(tag => (
-                    <span
-                      key={tag}
-                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest bg-primary text-white shadow-lg shadow-primary/20"
-                    >
-                      #{tag}
-                      <button onClick={() => removeTag(tag)} className="ml-0.5 hover:text-white/70 transition-colors cursor-pointer">
-                        <X size={12} />
-                      </button>
-                    </span>
-                  ))}
+                  {selectedTags.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 pt-1">
+                      {selectedTags.map(tag => (
+                        <span
+                          key={tag}
+                          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest bg-primary text-white shadow-lg shadow-primary/20"
+                        >
+                          #{tag}
+                          <button onClick={() => removeTag(tag)} className="ml-0.5 hover:text-white/70 transition-colors cursor-pointer">
+                            <X size={12} />
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
 
             {/* Price */}
-            <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant ml-1">Precio</label>
-              <div className="flex p-1 bg-surface-container-low rounded-2xl border border-outline-variant">
-                {[
-                  { id: 'all', label: 'Todos' },
-                  { id: 'free', label: 'Gratis' },
-                  { id: 'paid', label: 'Pagos' }
-                ].map(p => (
-                  <button
-                    key={p.id}
-                    onClick={() => setPriceType(p.id as any)}
-                    className={cn(
-                      "flex-1 py-2 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all",
-                      priceType === p.id ? "bg-white shadow-sm text-primary" : "text-on-surface-variant hover:text-primary"
-                    )}
-                  >
-                    {p.label}
-                  </button>
-                ))}
-              </div>
-            </div>
+            <div className="space-y-2 border-t border-outline-variant/20 pt-4">
+              <button
+                type="button"
+                onClick={() => setShowPrice(!showPrice)}
+                className="w-full flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-on-surface-variant hover:text-primary transition-colors cursor-pointer"
+              >
+                <span className="flex items-center gap-1.5">Precio</span>
+                <span className="text-xs">{showPrice ? '▼' : '▶'}</span>
+              </button>
+              {showPrice && (
+                <div className="space-y-4 pt-2">
+                  <div className="flex p-1 bg-surface-container-low rounded-2xl border border-outline-variant">
+                    {[
+                      { id: 'all', label: 'Todos' },
+                      { id: 'free', label: 'Gratis' },
+                      { id: 'paid', label: 'Pagos' }
+                    ].map(p => (
+                      <button
+                        key={p.id}
+                        onClick={() => setPriceType(p.id as any)}
+                        className={cn(
+                          "flex-1 py-2 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all",
+                          priceType === p.id ? "bg-white shadow-sm text-primary" : "text-on-surface-variant hover:text-primary"
+                        )}
+                      >
+                        {p.label}
+                      </button>
+                    ))}
+                  </div>
 
-            {/* Price Range Sliders (only when paid) */}
-            {priceType === 'paid' && (
-              <div className="space-y-3 animate-fadeIn">
-                <div className="flex justify-between items-center ml-1">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Rango de precio</label>
-                  <span className="text-xs font-black text-primary bg-primary/10 px-2 py-0.5 rounded-lg">
-                    ${priceMin.toLocaleString('es-AR')} - ${priceMax.toLocaleString('es-AR')}
-                  </span>
+                  {/* Price Range Sliders (only when paid) */}
+                  {priceType === 'paid' && (
+                    <div className="space-y-3 animate-fadeIn">
+                      <div className="flex justify-between items-center ml-1">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Rango</label>
+                        <span className="text-xs font-black text-primary bg-primary/10 px-2 py-0.5 rounded-lg">
+                          ${priceMin.toLocaleString('es-AR')} - ${priceMax.toLocaleString('es-AR')}
+                        </span>
+                      </div>
+                      <div className="space-y-3">
+                        <div>
+                          <label className="text-[9px] font-bold text-on-surface-variant uppercase tracking-wider">Mínimo</label>
+                          <input
+                            type="range"
+                            min="0"
+                            max="50000"
+                            step="500"
+                            value={priceMin}
+                            onChange={(e) => {
+                              const val = parseInt(e.target.value);
+                              if (val <= priceMax) setPriceMin(val);
+                            }}
+                            onMouseUp={() => setPriceFilterVersion(v => v + 1)}
+                            onTouchEnd={() => setPriceFilterVersion(v => v + 1)}
+                            className="w-full h-1.5 bg-surface-variant rounded-lg appearance-none cursor-pointer accent-primary"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[9px] font-bold text-on-surface-variant uppercase tracking-wider">Máximo</label>
+                          <input
+                            type="range"
+                            min="0"
+                            max="50000"
+                            step="500"
+                            value={priceMax}
+                            onChange={(e) => {
+                              const val = parseInt(e.target.value);
+                              if (val >= priceMin) setPriceMax(val);
+                            }}
+                            onMouseUp={() => setPriceFilterVersion(v => v + 1)}
+                            onTouchEnd={() => setPriceFilterVersion(v => v + 1)}
+                            className="w-full h-1.5 bg-surface-variant rounded-lg appearance-none cursor-pointer accent-primary"
+                          />
+                        </div>
+                      </div>
+                      <div className="flex justify-between text-[9px] text-on-surface-variant font-black uppercase tracking-widest">
+                        <span>$0</span>
+                        <span>$50k</span>
+                      </div>
+                    </div>
+                  )}
                 </div>
-                <div className="space-y-3">
-                  <div>
-                    <label className="text-[9px] font-bold text-on-surface-variant uppercase tracking-wider">Mínimo</label>
-                    <input
-                      type="range"
-                      min="0"
-                      max="50000"
-                      step="500"
-                      value={priceMin}
-                      onChange={(e) => {
-                        const val = parseInt(e.target.value);
-                        if (val <= priceMax) setPriceMin(val);
-                      }}
-                      onMouseUp={() => setPriceFilterVersion(v => v + 1)}
-                      onTouchEnd={() => setPriceFilterVersion(v => v + 1)}
-                      className="w-full h-1.5 bg-surface-variant rounded-lg appearance-none cursor-pointer accent-primary"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-[9px] font-bold text-on-surface-variant uppercase tracking-wider">Máximo</label>
-                    <input
-                      type="range"
-                      min="0"
-                      max="50000"
-                      step="500"
-                      value={priceMax}
-                      onChange={(e) => {
-                        const val = parseInt(e.target.value);
-                        if (val >= priceMin) setPriceMax(val);
-                      }}
-                      onMouseUp={() => setPriceFilterVersion(v => v + 1)}
-                      onTouchEnd={() => setPriceFilterVersion(v => v + 1)}
-                      className="w-full h-1.5 bg-surface-variant rounded-lg appearance-none cursor-pointer accent-primary"
-                    />
-                  </div>
-                </div>
-                <div className="flex justify-between text-[9px] text-on-surface-variant font-black uppercase tracking-widest">
-                  <span>$0</span>
-                  <span>$50k</span>
-                </div>
-              </div>
-            )}
+              )}
+            </div>
 
             {/* Ad Slot in Discovery Sidebar — hidden for premium users */}
             {!isPremium && (

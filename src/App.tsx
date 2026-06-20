@@ -111,7 +111,7 @@ export default function App() {
       }
     };
     const handleTouchEnd = (e: TouchEvent) => {
-      if (e.changedTouches.length > 0 && startX < 40) {
+      if (e.changedTouches.length > 0 && startX < 80) {
         const diffX = e.changedTouches[0].clientX - startX;
         const diffY = e.changedTouches[0].clientY - startY;
         if (diffX > 80 && Math.abs(diffY) < 60) {

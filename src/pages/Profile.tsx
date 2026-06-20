@@ -143,21 +143,20 @@ const Profile: React.FC<{ usernameFromUrl?: string }> = ({ usernameFromUrl }) =>
     }
   };
 
-  React.useEffect(() => {
+  const fetchPosts = useCallback(async () => {
     if (!profileUser?.id) return;
-
-    const fetchWall = async () => {
-      try {
-        const data: any = await api.getWallPosts('user_profile', profileUser.id, 1, 50);
-        setPosts(data || []);
-      } catch (err) {
-        console.error('Error fetching wall:', err);
-        setPosts([]);
-      }
-    };
-
-    fetchWall();
+    try {
+      const data: any = await api.getWallPosts('user_profile', profileUser.id, 1, 50);
+      setPosts(data || []);
+    } catch (err) {
+      console.error('Error fetching wall:', err);
+      setPosts([]);
+    }
   }, [profileUser?.id]);
+
+  React.useEffect(() => {
+    fetchPosts();
+  }, [fetchPosts]);
 
   React.useEffect(() => {
     if (!isOwnProfile || activeTab !== 'FAVORITES') return;

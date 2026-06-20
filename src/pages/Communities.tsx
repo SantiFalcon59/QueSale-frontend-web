@@ -49,7 +49,7 @@ const Communities: React.FC = () => {
   }, [debouncedQuery]);
 
   return (
-    <div className="max-w-5xl mx-auto px-4 lg:px-0 py-12 space-y-12">
+    <div className="max-w-5xl mx-auto px-6 lg:px-8 py-12 space-y-12">
       <header className="space-y-4">
         <h1 className="text-5xl font-black italic tracking-tighter">Comunidad</h1>
         <p className="text-on-surface-variant text-lg font-medium max-w-xl">

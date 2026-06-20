@@ -95,33 +95,33 @@ const AdminEvents: React.FC = () => {
            <motion.div 
             key={event.id}
             layout
-            className="p-6 rounded-[2rem] bg-surface-container-low border border-outline-variant flex items-center justify-between gap-6 hover:border-primary/30 transition-all group"
+            className="p-5 sm:p-6 rounded-[2rem] bg-surface-container-low border border-outline-variant flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 hover:border-primary/30 transition-all group"
            >
-              <div className="flex items-center gap-6 flex-1 min-w-0">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 flex-1 min-w-0 w-full">
                  <img 
                    src={event.image} 
                    alt={event.title} 
-                   className="w-24 h-24 rounded-2xl object-cover bg-white shadow-sm flex-shrink-0" 
+                   className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl object-cover bg-white shadow-sm flex-shrink-0" 
                    onError={(e) => { (e.target as HTMLImageElement).src = NO_EVENT_IMAGE; }}
                  />
-                 <div className="space-y-1 min-w-0">
-                    <div className="flex items-center gap-3">
+                 <div className="space-y-2 min-w-0 w-full">
+                    <div className="flex items-center gap-2 flex-wrap">
                        <h3 className="text-xl font-bold truncate group-hover:text-primary transition-colors">{event.title}</h3>
-                       <span className="px-2 py-0.5 rounded-lg bg-primary/5 text-primary text-[8px] font-black uppercase tracking-widest border border-primary/20">{event.category}</span>
+                       <span className="px-2 py-0.5 rounded-lg bg-primary/5 text-primary text-[8px] font-black uppercase tracking-widest border border-primary/20 shrink-0">{event.category}</span>
                     </div>
-                    <div className="flex items-center gap-4 text-xs font-bold text-on-surface-variant">
-                       <span className="flex items-center gap-1.5"><Calendar size={14} className="text-primary" /> {event.date ? format(new Date(event.date), "dd MMM, HH:mm", { locale: es }) : 'N/A'}</span>
-                       <span className="flex items-center gap-1.5"><MapPin size={14} className="text-primary" /> {event.location}</span>
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-xs font-bold text-on-surface-variant">
+                       <span className="flex items-center gap-1.5"><Calendar size={14} className="text-primary shrink-0" /> {event.date ? format(new Date(event.date), "dd MMM, HH:mm", { locale: es }) : 'N/A'}</span>
+                       <span className="flex items-center gap-1.5"><MapPin size={14} className="text-primary shrink-0" /> {event.location}</span>
                     </div>
-                    <div className="flex items-center gap-2 pt-2">
+                    <div className="flex items-center gap-2 pt-1">
                        <div className="text-[10px] text-on-surface-variant uppercase font-black tracking-widest flex items-center gap-1">
-                          ID Org: <span className="text-on-surface opacity-60">{event.organizerId}</span>
+                          ID Org: <span className="text-on-surface opacity-60 truncate max-w-[120px]">{event.organizerId}</span>
                        </div>
                     </div>
                  </div>
               </div>
 
-              <div className="flex items-center gap-3 pr-2">
+              <div className="flex items-center gap-3 pr-2 w-full sm:w-auto justify-end border-t sm:border-t-0 border-outline-variant/20 pt-4 sm:pt-0">
                  <Link 
                   to={`/events/${event.id}`} 
                   target="_blank"

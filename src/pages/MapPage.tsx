@@ -166,6 +166,8 @@ const MapPage: React.FC = () => {
             selectedDate={selectedDate}
             activeQuickFilter={activeQuickFilter}
             selectedTags={selectedTags}
+            showFilters={showFilters}
+            setShowFilters={setShowFilters}
           />
         </APIProvider>
       ) : (
@@ -428,7 +430,7 @@ const MapPage: React.FC = () => {
   );
 };
 
-const MapWrapper = ({ userLocation, selectedEventId, onSelectEvent, activeCategory, events, proximity, selectedDate, activeQuickFilter, selectedTags }: any) => {
+const MapWrapper = ({ userLocation, selectedEventId, onSelectEvent, activeCategory, events, proximity, selectedDate, activeQuickFilter, selectedTags, showFilters, setShowFilters }: any) => {
   const map = useMap();
   
   const handleZoomIn = useCallback(() => {

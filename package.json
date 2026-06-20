@@ -29,6 +29,7 @@
     "express-validator": "^7.3.2",
     "firebase": "^12.13.0",
     "firebase-admin": "^13.9.0",
+    "html5-qrcode": "^2.3.8",
     "jsonwebtoken": "^9.0.3",
     "lucide-react": "^0.546.0",
     "mercadopago": "^2.12.0",

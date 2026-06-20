@@ -31,10 +31,10 @@ const AdminPanel: React.FC = () => {
   ].filter(tab => !tab.adminOnly || isAdmin);
 
   return (
-    <div className="min-h-screen pt-4 pb-20">
-      <div className="flex gap-10">
+    <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-10 py-8 min-h-screen">
+      <div className="flex flex-col lg:flex-row gap-6 lg:gap-10">
         {/* Admin Sidebar */}
-        <aside className="w-72 shrink-0">
+        <aside className="w-full lg:w-72 lg:shrink-0">
           <div className="sticky top-24 space-y-8">
             <div className="bg-surface-container-low rounded-[2.5rem] p-8 border border-outline-variant space-y-8 shadow-sm">
               <div className="flex items-center gap-3">

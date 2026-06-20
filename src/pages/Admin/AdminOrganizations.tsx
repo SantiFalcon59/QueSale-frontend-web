@@ -96,25 +96,25 @@ const AdminOrganizations: React.FC = () => {
            <motion.div 
             key={org.id}
             layout
-            className="p-8 rounded-[2.5rem] bg-surface-container-low border border-outline-variant grid grid-cols-12 gap-8 items-center"
+            className="p-5 sm:p-8 rounded-[2rem] sm:rounded-[2.5rem] bg-surface-container-low border border-outline-variant flex flex-col md:grid md:grid-cols-12 gap-6 md:gap-8 items-start md:items-center"
            >
-              <div className="col-span-1 border-r border-outline-variant/30 pr-4">
+              <div className="col-span-12 md:col-span-1 md:border-r border-outline-variant/30 pr-0 md:pr-4 pb-2 md:pb-0 shrink-0">
                  <OrganizerAvatar src={org.logo} alt={org.name} className="w-16 h-16 rounded-2xl bg-white shadow-sm object-cover" size={28} />
               </div>
 
-              <div className="col-span-4 space-y-1">
-                 <div className="flex items-center gap-2">
-                    <h3 className="text-xl font-bold">{org.name}</h3>
-                    {org.verificationLevel >= 2 && <CheckCircle2 className="text-green-500" size={16} />}
+              <div className="col-span-12 md:col-span-4 space-y-1 w-full min-w-0">
+                 <div className="flex items-center gap-2 flex-wrap">
+                    <h3 className="text-xl font-bold truncate">{org.name}</h3>
+                    {org.verificationLevel >= 2 && <CheckCircle2 className="text-green-500 shrink-0" size={16} />}
                  </div>
                  <p className="text-xs text-on-surface-variant font-bold uppercase tracking-widest">@{org.handle}</p>
                  <div className="flex items-center gap-2 text-[10px] text-on-surface-variant font-medium mt-2">
-                    <Building size={12} />
-                    <span>Propiedad de: {org.ownerId}</span>
+                    <Building size={12} className="shrink-0" />
+                    <span className="truncate">Propiedad de: {org.ownerId}</span>
                  </div>
               </div>
 
-              <div className="col-span-3 space-y-3">
+              <div className="col-span-12 md:col-span-3 space-y-3 w-full min-w-0">
                  <div className="space-y-1">
                     <p className="text-[9px] uppercase font-black tracking-widest text-on-surface-variant">Info Real</p>
                     <p className="text-xs font-bold">{org.verificationInfo?.realName || 'N/A'}</p>
@@ -130,8 +130,8 @@ const AdminOrganizations: React.FC = () => {
                   </div>
               </div>
 
-              <div className="col-span-4 flex items-center justify-end gap-3">
-                 <div className="text-right mr-4">
+              <div className="col-span-12 md:col-span-4 flex flex-wrap sm:flex-nowrap items-center justify-between md:justify-end gap-3 w-full pt-4 md:pt-0 border-t md:border-t-0 border-outline-variant/30">
+                 <div className="text-left md:text-right mr-0 md:mr-4 shrink-0">
                     <p className="text-[9px] uppercase font-black tracking-widest text-on-surface-variant">Nivel Actual</p>
                     <p className={cn(
                        "text-xs font-black mt-1",
@@ -144,7 +144,7 @@ const AdminOrganizations: React.FC = () => {
                  {org.verificationLevel < 2 && (
                     <button 
                       onClick={() => handleVerify(org.id, 2)}
-                      className="btn-primary h-12 px-6 text-[10px] font-black tracking-widest uppercase"
+                      className="btn-primary h-12 px-6 text-[10px] font-black tracking-widest uppercase flex-grow sm:flex-grow-0"
                     >
                       Verificar Nivel 2
                     </button>
@@ -152,7 +152,7 @@ const AdminOrganizations: React.FC = () => {
                   {org.verificationLevel >= 2 && (
                      <button 
                        onClick={() => handleVerify(org.id, 1)}
-                       className="btn-secondary h-12 px-6 text-[10px] font-black tracking-widest uppercase"
+                       className="btn-secondary h-12 px-6 text-[10px] font-black tracking-widest uppercase flex-grow sm:flex-grow-0"
                      >
                        Degradar a L1
                      </button>
