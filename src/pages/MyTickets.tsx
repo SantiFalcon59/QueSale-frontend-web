@@ -39,16 +39,19 @@ const MyTickets: React.FC = () => {
     eventTitle: string;
   }>({ isOpen: false, eventTitle: '' });
 
+  // Detect payment return: MP sends collection_status=approved (no status param)
+  const isPurchaseReturn = collectionStatus === 'approved' || status === 'success' || status === 'approved';
+
   const [paymentStatusData, setPaymentStatusData] = useState<{
     isOpen: boolean;
     status: 'success' | 'pending' | 'failure' | null;
     message: string;
     loading: boolean;
   }>({
-    isOpen: !!status,
-    status: status as any,
-    message: status === 'success' ? 'Procesando tu pago... Tu entrada estará lista en unos instantes.' : status === 'pending' ? 'Tu pago está pendiente de aprobación por Mercado Pago.' : status === 'failure' ? 'No se pudo procesar tu pago. Por favor intenta nuevamente.' : '',
-    loading: status === 'success',
+    isOpen: isPurchaseReturn || status === 'failure' || status === 'pending',
+    status: isPurchaseReturn ? null : (status as any),
+    message: isPurchaseReturn ? 'Validando tu compra...' : status === 'pending' ? 'Tu pago está pendiente de aprobación por Mercado Pago.' : status === 'failure' ? 'No se pudo procesar tu pago. Por favor intenta nuevamente.' : '',
+    loading: isPurchaseReturn,
   });
 
   const closePaymentModal = () => {
@@ -92,33 +95,40 @@ const MyTickets: React.FC = () => {
   }, [getSocketToken]);
 
   useEffect(() => {
-    // Determine if we have a successful payment indication
-    const isSuccess = status === 'success' || collectionStatus === 'approved';
-    if (!isSuccess || !initialCountLoaded) return;
+    // Only run when we've confirmed this is a post-purchase redirect
+    if (!isPurchaseReturn || !initialCountLoaded) return;
 
-    // Attempt immediate verification using backend endpoint
     const verify = async () => {
-      const paymentId = paymentIdParam || searchParams.get('payment_id');
-      let eventId = null;
-      // Try to extract eventId from external_reference if present
+      const paymentId = paymentIdParam;
+      let eventId: string | null = null;
+
+      // Primary: parse eventId from external_reference
       if (externalRefParam) {
         try {
           const parsed = JSON.parse(decodeURIComponent(externalRefParam));
-          if (parsed && parsed.eventId) eventId = parsed.eventId;
+          if (parsed?.eventId) eventId = parsed.eventId;
         } catch (e) {
-          console.error('Failed to parse external_reference', e);
+          console.error('[MyTickets] Failed to parse external_reference', e);
         }
       }
-// Fallback to eventId param if provided directly (case-sensitive)
+      // Fallback: eventId query param (MP includes this directly)
       if (!eventId) eventId = searchParams.get('eventId') || searchParams.get('event_id');
 
       if (!paymentId || !eventId) {
-        console.warn('Missing paymentId or eventId for verification');
+        console.warn('[MyTickets] Missing paymentId or eventId, cannot verify', { paymentId, eventId });
+        setPaymentStatusData({
+          isOpen: true,
+          status: 'pending',
+          message: 'Tu pago está en proceso. Revisá tus entradas en unos minutos.',
+          loading: false,
+        });
         return;
       }
+
+      console.log('[MyTickets] Calling verify-purchase', { paymentId, eventId });
       try {
-        await api.post('/tickets/verify-purchase', { paymentId, eventId });
-        // Refresh tickets after successful verification
+        // auth: true is required – sends Firebase token in Authorization header
+        await api.post('/tickets/verify-purchase', { paymentId, eventId }, { auth: true });
         await fetchTickets();
         setPaymentStatusData({
           isOpen: true,
@@ -126,66 +136,28 @@ const MyTickets: React.FC = () => {
           message: '¡Compra Exitosa! Tu entrada ya está disponible.',
           loading: false,
         });
-        // Clean up URL parameters
-        const newParams = new URLSearchParams(searchParams);
-        newParams.delete('status');
-        newParams.delete('collection_status');
-        newParams.delete('payment_id');
-        newParams.delete('external_reference');
-        setSearchParams(newParams);
-      } catch (e) {
-        console.error('Verification error', e);
-      }
-    };
-    verify();
-
-    // If verification does not immediately provide tickets, fall back to polling
-    let attempts = 0;
-    const maxAttempts = 15;
-    const initialCount = tickets.length;
-
-    const interval = setInterval(async () => {
-      attempts++;
-      try {
-        const response = await api.getUserTickets();
-        const rawTickets = Array.isArray(response) ? response : (response as any).tickets || [];
-        if (rawTickets.length > initialCount) {
-          clearInterval(interval);
-          const sorted = [...rawTickets].sort((a, b) => {
-            const aActive = a.state === 1;
-            const bActive = b.state === 1;
-            if (aActive && !bActive) return -1;
-            if (!aActive && bActive) return 1;
-            return new Date(a.date).getTime() - new Date(b.date).getTime();
-          });
-          setTickets(sorted);
-          setPaymentStatusData({
-            isOpen: true,
-            status: 'success',
-            message: '¡Pago Exitoso! Tu entrada ya está disponible en la lista de abajo.',
-            loading: false,
-          });
-          const newParams = new URLSearchParams(searchParams);
-          newParams.delete('status');
-          newParams.delete('collection_status');
-          setSearchParams(newParams);
-        }
-      } catch (err) {
-        console.error('Error polling tickets:', err);
-      }
-      if (attempts >= maxAttempts) {
-        clearInterval(interval);
+      } catch (e: any) {
+        console.error('[MyTickets] Verification failed', e);
+        // Payment might already have been processed (duplicate), try refreshing tickets
+        await fetchTickets();
         setPaymentStatusData({
           isOpen: true,
           status: 'pending',
-          message: 'Tu pago se está procesando. Si no ves tu entrada en unos minutos, por favor refresca la página o vuelve en un momento.',
+          message: e?.message || 'Tu pago está en proceso. Revisá tus entradas en unos minutos.',
           loading: false,
         });
+      } finally {
+        // Clean up URL parameters regardless
+        const newParams = new URLSearchParams(searchParams);
+        ['status', 'collection_status', 'payment_id', 'external_reference',
+         'collection_id', 'eventId', 'merchant_order_id', 'preference_id',
+         'site_id', 'processing_mode', 'merchant_account_id', 'payment_type'].forEach(p => newParams.delete(p));
+        setSearchParams(newParams, { replace: true });
       }
-    }, 2000);
+    };
 
-    return () => clearInterval(interval);
-  }, [status, collectionStatus, initialCountLoaded]);
+    verify();
+  }, [isPurchaseReturn, initialCountLoaded]);
 
   const fetchTickets = async () => {
     try {
