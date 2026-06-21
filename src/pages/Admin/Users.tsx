@@ -41,7 +41,7 @@ const AdminUsers: React.FC = () => {
     const confirmed = await confirmAction(`¿Cambiar rango?`, `¿Estás seguro de que quieres cambiar el rango de este usuario a ${newRole.toUpperCase()}?`);
     if (!confirmed) return;
     try {
-      await api.put(`/api/users/${userId}/role`, { role: newRole });
+      await api.put(`/api/users/${userId}/role`, { role: newRole }, { auth: true });
       setUsers(prev => prev.map(u => u.id === userId ? { ...u, role: newRole } : u));
       toastSuccess(`Rango cambiado a ${newRole.toUpperCase()}`);
     } catch (err) {
