@@ -7,6 +7,7 @@ import { Mail, Lock, UserPlus, AtSign, Loader2, Check, Upload, X, Camera } from 
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../../lib/firebase';
 import { cn } from '../../lib/utils';
+import { translateAuthError } from '../../lib/authErrors';
 
 const Register: React.FC = () => {
   const [step, setStep] = useState<'form' | 'photo'>('form');
@@ -69,7 +70,7 @@ const Register: React.FC = () => {
       await refreshProfile();
       setStep('photo');
     } catch (err: any) {
-      setError(err.message || 'Error al registrarse');
+      setError(translateAuthError(err));
     } finally {
       setLoading(false);
     }
@@ -80,7 +81,7 @@ const Register: React.FC = () => {
       await loginWithGoogle();
       navigate('/');
     } catch (err: any) {
-      setError(err.message || 'Error al iniciar sesión con Google');
+      setError(translateAuthError(err));
     }
   };
 

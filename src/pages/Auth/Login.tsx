@@ -3,6 +3,7 @@ import { motion } from 'motion/react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Mail, Lock, LogIn } from 'lucide-react';
+import { translateAuthError } from '../../lib/authErrors';
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -20,7 +21,7 @@ const Login: React.FC = () => {
       await loginWithEmail(email, password);
       navigate('/');
     } catch (err: any) {
-      setError(err.message || 'Login failed');
+      setError(translateAuthError(err));
     } finally {
       setLoading(false);
     }
@@ -31,7 +32,7 @@ const Login: React.FC = () => {
       await loginWithGoogle();
       navigate('/');
     } catch (err: any) {
-      setError(err.message || 'Google login failed');
+      setError(translateAuthError(err));
     }
   };
 

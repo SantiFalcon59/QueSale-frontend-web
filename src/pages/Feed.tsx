@@ -265,7 +265,7 @@ const Feed: React.FC = () => {
                 <div className="max-w-4xl w-full h-full glass-card rounded-[40px] p-12 border border-white/10 flex flex-col items-center justify-center gap-6">
                   <div className="text-center space-y-2">
                     <p className="text-[10px] font-black uppercase tracking-[0.4em] text-primary">Publicidad Sugerida</p>
-                    <h3 className="text-2xl font-black text-white uppercase italic tracking-tighter">Contenido Patrocinado</h3>
+                    <h3 className="text-2xl font-black text-black uppercase italic tracking-tighter">Contenido Patrocinado</h3>
                   </div>
                   <div className="w-full bg-white/5 rounded-3xl p-4 min-h-[250px] flex items-center justify-center overflow-hidden">
                     <AdBanner 
@@ -275,7 +275,7 @@ const Feed: React.FC = () => {
                       className="w-full" 
                     />
                   </div>
-                  <p className="text-[9px] text-white/20 font-bold uppercase tracking-widest">Gracias por apoyar a QueSale</p>
+                  <p className="text-[9px] text-black/40 font-bold uppercase tracking-widest">Gracias por apoyar a QueSale</p>
                 </div>
               </div>
             )}
