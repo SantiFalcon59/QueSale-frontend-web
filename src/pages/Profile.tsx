@@ -557,14 +557,19 @@ const Profile: React.FC<{ usernameFromUrl?: string }> = ({ usernameFromUrl }) =>
               {profileUser?.description || "Este usuario aún no ha escrito su biografía. ¡Parece que prefiere dejar que sus eventos hablen por él!"}
             </p>
             {profileUser?.instagram && (
-              <div className="flex items-center gap-1.5 mt-3 text-xs text-on-surface-variant">
+              <a
+                href={`https://instagram.com/${profileUser.instagram.replace('@', '')}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 mt-3 text-xs text-on-surface-variant hover:text-primary transition-colors"
+              >
                 <Instagram size={14} />
                 <span className="font-medium">{profileUser.instagramVerified ? (
                   <span className="text-primary font-semibold">@{profileUser.instagram} ✓</span>
                 ) : (
                   `@${profileUser.instagram}`
                 )}</span>
-              </div>
+              </a>
             )}
           </div>
         </div>
