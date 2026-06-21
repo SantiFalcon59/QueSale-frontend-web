@@ -4,6 +4,7 @@ import { auth, onAuthStateChanged, signInWithPopup, googleProvider, signOut } fr
 import { api, resolveAssetUrl } from '../services/apiClient';
 import { Capacitor } from '@capacitor/core';
 import { GoogleAuth } from '@codetrix-studio/capacitor-google-auth';
+import { initPushNotifications, unregisterPushNotifications } from '../services/pushNotificationService';
 
 interface UserProfile {
   uid: string;
@@ -99,8 +100,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             role: 'user', // Default to user if backend fails
           });
         }
+        // Initialize Capacitor Push Notifications for native app
+        initPushNotifications().catch((err) => console.error('Error initializing push notifications:', err));
       } else {
         setProfile(null);
+        // Clean up Capacitor Push Notifications when logged out
+        unregisterPushNotifications().catch((err) => console.error('Error unregistering push notifications:', err));
       }
       setLoading(false);
     });
@@ -135,6 +140,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = async () => {
     try {
       localStorage.removeItem(SOCKET_TOKEN_KEY);
+      await unregisterPushNotifications().catch(() => {});
       await signOut(auth);
     } catch (error) {
       console.error("Logout failed", error);

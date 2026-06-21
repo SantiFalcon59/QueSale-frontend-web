@@ -95,6 +95,20 @@ export const api = {
       auth: true,
     }),
 
+  registerDeviceToken: (token: string) =>
+    apiRequest('/api/notifications/register-token', {
+      method: 'POST',
+      body: { token },
+      auth: true,
+    }),
+
+  unregisterDeviceToken: (token: string) =>
+    apiRequest('/api/notifications/unregister-token', {
+      method: 'POST',
+      body: { token },
+      auth: true,
+    }),
+
   updateProfile: (payload: { username?: string; email?: string; description?: string; instagram?: string; photo_url?: string }) =>
     apiRequest('/api/users/profile', {
       method: 'PUT',

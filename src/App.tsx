@@ -4,8 +4,9 @@
  */
 
 import React, { Suspense, useState } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
+import { setGlobalNavigator } from './services/pushNotificationService';
 import { Sidebar } from './components/layout/Sidebar';
 import { Navbar } from './components/layout/Navbar';
 import { Footer } from './components/layout/Footer';
@@ -101,6 +102,14 @@ const PageWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   </motion.div>
 );
 
+const NavigationSync: React.FC = () => {
+  const navigate = useNavigate();
+  React.useEffect(() => {
+    setGlobalNavigator(navigate);
+  }, [navigate]);
+  return null;
+};
+
 export default function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
@@ -139,6 +148,7 @@ export default function App() {
   return (
     <AuthProvider>
       <Router>
+        <NavigationSync />
         <ScrollToTop />
         <div className="relative flex min-h-screen bg-background overflow-x-hidden font-sans">
           {/* Hyper-Cosmic Ambient Elements */}
