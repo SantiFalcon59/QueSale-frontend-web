@@ -160,7 +160,12 @@ const EditEvent: React.FC = () => {
         const data: any = await api.getMyOrganizers(1, 1);
         const org = data?.[0];
         if (org) {
-          setOrganization({ id: org.id_organizer, name: org.name, verified: org.verified });
+          setOrganization({ 
+            id: org.id_organizer, 
+            name: org.name, 
+            verified: org.verified,
+            has_mercadopago: !!org.mp_access_token
+          });
         }
 
         const catsData: any = await api.getCategories();
@@ -722,12 +727,18 @@ const EditEvent: React.FC = () => {
                   </button>
                   <button
                     type="button"
-                    disabled={organization && !organization.verified}
+                    disabled={organization && (!organization.verified || !organization.has_mercadopago)}
                     onClick={() => setFormData(prev => ({ ...prev, ticketType: 'mercadopago' }))}
-                    title={organization && !organization.verified ? "Requiere verificación nivel 2" : undefined}
+                    title={
+                      organization && !organization.verified 
+                        ? "Requiere verificación nivel 2" 
+                        : organization && !organization.has_mercadopago 
+                          ? "Requiere vincular Mercado Pago" 
+                          : undefined
+                    }
                     className={cn(
                       "p-4 rounded-xl border-2 flex flex-col items-center gap-2 transition-all",
-                      organization && !organization.verified
+                      organization && (!organization.verified || !organization.has_mercadopago)
                         ? "opacity-40 cursor-not-allowed bg-surface-container-low border-outline-variant"
                         : formData.ticketType === 'mercadopago'
                           ? "border-primary bg-primary/5"
@@ -739,6 +750,9 @@ const EditEvent: React.FC = () => {
                       Mercado Pago
                       {organization && !organization.verified && (
                         <span className="block text-[8px] text-red-500 font-bold lowercase mt-0.5">(req. nivel 2)</span>
+                      )}
+                      {organization && organization.verified && !organization.has_mercadopago && (
+                        <span className="block text-[8px] text-red-500 font-bold lowercase mt-0.5">(no vinculado)</span>
                       )}
                     </span>
                   </button>
