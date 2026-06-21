@@ -26,6 +26,9 @@ const MyTickets: React.FC = () => {
   const { getSocketToken } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const status = searchParams.get('status');
+  const collectionStatus = searchParams.get('collection_status');
+  const paymentIdParam = searchParams.get('payment_id');
+  const externalRefParam = searchParams.get('external_reference');
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState(true);
   const [initialCountLoaded, setInitialCountLoaded] = useState(false);
@@ -89,8 +92,54 @@ const MyTickets: React.FC = () => {
   }, [getSocketToken]);
 
   useEffect(() => {
-    if (status !== 'success' || !initialCountLoaded) return;
+    // Determine if we have a successful payment indication
+    const isSuccess = status === 'success' || collectionStatus === 'approved';
+    if (!isSuccess || !initialCountLoaded) return;
 
+    // Attempt immediate verification using backend endpoint
+    const verify = async () => {
+      const paymentId = paymentIdParam || searchParams.get('payment_id');
+      let eventId = null;
+      // Try to extract eventId from external_reference if present
+      if (externalRefParam) {
+        try {
+          const parsed = JSON.parse(decodeURIComponent(externalRefParam));
+          if (parsed && parsed.eventId) eventId = parsed.eventId;
+        } catch (e) {
+          console.error('Failed to parse external_reference', e);
+        }
+      }
+      // Fallback to eventId param if provided directly
+      if (!eventId) eventId = searchParams.get('event_id');
+
+      if (!paymentId || !eventId) {
+        console.warn('Missing paymentId or eventId for verification');
+        return;
+      }
+      try {
+        await api.post('/tickets/verify-purchase', { paymentId, eventId });
+        // Refresh tickets after successful verification
+        await fetchTickets();
+        setPaymentStatusData({
+          isOpen: true,
+          status: 'success',
+          message: '¡Compra Exitosa! Tu entrada ya está disponible.',
+          loading: false,
+        });
+        // Clean up URL parameters
+        const newParams = new URLSearchParams(searchParams);
+        newParams.delete('status');
+        newParams.delete('collection_status');
+        newParams.delete('payment_id');
+        newParams.delete('external_reference');
+        setSearchParams(newParams);
+      } catch (e) {
+        console.error('Verification error', e);
+      }
+    };
+    verify();
+
+    // If verification does not immediately provide tickets, fall back to polling
     let attempts = 0;
     const maxAttempts = 15;
     const initialCount = tickets.length;
@@ -100,10 +149,8 @@ const MyTickets: React.FC = () => {
       try {
         const response = await api.getUserTickets();
         const rawTickets = Array.isArray(response) ? response : (response as any).tickets || [];
-        
         if (rawTickets.length > initialCount) {
           clearInterval(interval);
-          
           const sorted = [...rawTickets].sort((a, b) => {
             const aActive = a.state === 1;
             const bActive = b.state === 1;
@@ -112,23 +159,20 @@ const MyTickets: React.FC = () => {
             return new Date(a.date).getTime() - new Date(b.date).getTime();
           });
           setTickets(sorted);
-
           setPaymentStatusData({
             isOpen: true,
             status: 'success',
             message: '¡Pago Exitoso! Tu entrada ya está disponible en la lista de abajo.',
             loading: false,
           });
-
-          // Clear parameters
           const newParams = new URLSearchParams(searchParams);
           newParams.delete('status');
+          newParams.delete('collection_status');
           setSearchParams(newParams);
         }
       } catch (err) {
         console.error('Error polling tickets:', err);
       }
-
       if (attempts >= maxAttempts) {
         clearInterval(interval);
         setPaymentStatusData({
@@ -141,7 +185,7 @@ const MyTickets: React.FC = () => {
     }, 2000);
 
     return () => clearInterval(interval);
-  }, [status, initialCountLoaded]);
+  }, [status, collectionStatus, initialCountLoaded]);
 
   const fetchTickets = async () => {
     try {

@@ -127,6 +127,7 @@ const EventDetail: React.FC = () => {
   const [organizerEvents, setOrganizerEvents] = useState<any[]>([]);
   const [isModerator, setIsModerator] = useState(false);
   const [isOrganizer, setIsOrganizer] = useState(false);
+  const [isActualStaff, setIsActualStaff] = useState(false);
   const [replyingTo, setReplyingTo] = useState<{ id: string; userId: string; displayName: string; message: string } | null>(null);
   const [qrScannerOpen, setQrScannerOpen] = useState(false);
 
@@ -286,9 +287,11 @@ const EventDetail: React.FC = () => {
             const status: any = await api.getModeratorStatus(id!);
             setIsModerator(status?.isModerator || false);
             setIsOrganizer(status?.isOrganizer || false);
+            setIsActualStaff(status?.isActualStaff || false);
           } catch {
             setIsModerator(false);
             setIsOrganizer(false);
+            setIsActualStaff(false);
           }
 
           try {
@@ -900,7 +903,7 @@ const EventDetail: React.FC = () => {
         </div>
 
         <div className="col-span-12 lg:col-span-4 space-y-6 lg:space-y-8 relative lg:sticky lg:top-28 self-start lg:pl-8">
-          {(isOrganizer || isModerator) && (
+          {isActualStaff && (
             <section className="p-5 sm:p-8 rounded-[2rem] bg-[#1a1a2e] border border-purple-500/30 text-white shadow-xl space-y-4">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-2xl bg-purple-600 flex items-center justify-center text-white shadow-lg shadow-purple-500/20">
