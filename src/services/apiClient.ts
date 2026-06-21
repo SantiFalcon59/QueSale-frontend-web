@@ -300,6 +300,9 @@ export const api = {
   purchaseTicket: (eventId: string) =>
     apiRequest('/api/tickets/purchase', { method: 'POST', body: { eventId }, auth: true }),
 
+  verifyPurchase: (paymentId: string, eventId: string) =>
+    apiRequest('/api/tickets/verify-purchase', { method: 'POST', body: { paymentId, eventId }, auth: true }),
+
   validateTicket: (ticketUuid: string) =>
     apiRequest(`/api/tickets/${encodeURIComponent(ticketUuid)}/validate`, { method: 'POST', auth: true }),
 

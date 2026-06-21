@@ -127,9 +127,8 @@ const MyTickets: React.FC = () => {
 
       console.log('[MyTickets] Calling verify-purchase', { paymentId, eventId });
       try {
-        // auth: true sends Firebase token in Authorization header
         // authLoading=false guarantees auth.currentUser is set
-        await api.post('/tickets/verify-purchase', { paymentId, eventId }, { auth: true });
+        await api.verifyPurchase(paymentId, eventId);
         await fetchTickets();
         setPaymentStatusData({
           isOpen: true,
