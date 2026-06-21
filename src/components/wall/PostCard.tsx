@@ -132,7 +132,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, onReact, onDelete, onComment,
         return (
           <>
             {textContent && (
-              <p className="text-xl lg:text-2xl font-medium text-on-surface leading-tight tracking-tight whitespace-pre-wrap">
+              <p className="text-xl lg:text-2xl font-medium text-on-surface leading-tight tracking-tight whitespace-pre-wrap break-words">
                 {textContent}
               </p>
             )}
@@ -277,7 +277,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, onReact, onDelete, onComment,
                     {format(new Date(comment.created_at), 'HH:mm • d MMM', { locale: es })}
                   </span>
                 </div>
-                <p className="text-sm lg:text-base text-on-surface-variant">{comment.content}</p>
+                <p className="text-sm lg:text-base text-on-surface-variant break-words whitespace-pre-wrap">{comment.content}</p>
               </div>
               {canDeleteComment?.(comment) && (
                 <button

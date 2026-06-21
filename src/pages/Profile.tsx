@@ -576,7 +576,7 @@ const Profile: React.FC<{ usernameFromUrl?: string }> = ({ usernameFromUrl }) =>
       </motion.div>
 
       {/* Profile Content */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-8 lg:gap-12 pt-4 lg:pt-8">
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_300px] gap-8 lg:gap-12 pt-4 lg:pt-8">
          <div className="space-y-12">
             {/* Nav Tabs */}
             <div className="flex gap-6 lg:gap-10 border-b border-outline-variant px-4 lg:px-0 overflow-x-auto no-scrollbar pb-6">
