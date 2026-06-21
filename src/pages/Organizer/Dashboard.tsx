@@ -562,10 +562,6 @@ const OrganizerDashboard: React.FC = () => {
                   tiktok: organization.tiktok || '',
                   twitter: organization.twitter || '',
                   website: organization.website || '',
-                  real_name: organization.real_name || '',
-                  dni: organization.dni || '',
-                  address: organization.address || '',
-                  phone_number: organization.phone_number || '',
                 });
               }
             }}

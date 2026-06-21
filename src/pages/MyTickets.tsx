@@ -7,6 +7,8 @@ import QRCode from 'qrcode';
 import { io } from 'socket.io-client';
 import { useAuth } from '../context/AuthContext';
 import { cn } from '../lib/utils';
+import { useSearchParams } from 'react-router-dom';
+import { Loader2 } from 'lucide-react';
 
 interface Ticket {
   id_ticket: string;
@@ -22,14 +24,36 @@ interface Ticket {
 
 const MyTickets: React.FC = () => {
   const { getSocketToken } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const status = searchParams.get('status');
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState(true);
+  const [initialCountLoaded, setInitialCountLoaded] = useState(false);
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
   const [qrDataUrl, setQrDataUrl] = useState<string>('');
   const [validationSuccessData, setValidationSuccessData] = useState<{
     isOpen: boolean;
     eventTitle: string;
   }>({ isOpen: false, eventTitle: '' });
+
+  const [paymentStatusData, setPaymentStatusData] = useState<{
+    isOpen: boolean;
+    status: 'success' | 'pending' | 'failure' | null;
+    message: string;
+    loading: boolean;
+  }>({
+    isOpen: !!status,
+    status: status as any,
+    message: status === 'success' ? 'Procesando tu pago... Tu entrada estará lista en unos instantes.' : status === 'pending' ? 'Tu pago está pendiente de aprobación por Mercado Pago.' : status === 'failure' ? 'No se pudo procesar tu pago. Por favor intenta nuevamente.' : '',
+    loading: status === 'success',
+  });
+
+  const closePaymentModal = () => {
+    setPaymentStatusData(prev => ({ ...prev, isOpen: false }));
+    const newParams = new URLSearchParams(searchParams);
+    newParams.delete('status');
+    setSearchParams(newParams);
+  };
 
   useEffect(() => {
     fetchTickets();
@@ -64,6 +88,61 @@ const MyTickets: React.FC = () => {
     };
   }, [getSocketToken]);
 
+  useEffect(() => {
+    if (status !== 'success' || !initialCountLoaded) return;
+
+    let attempts = 0;
+    const maxAttempts = 15;
+    const initialCount = tickets.length;
+
+    const interval = setInterval(async () => {
+      attempts++;
+      try {
+        const response = await api.getUserTickets();
+        const rawTickets = Array.isArray(response) ? response : (response as any).tickets || [];
+        
+        if (rawTickets.length > initialCount) {
+          clearInterval(interval);
+          
+          const sorted = [...rawTickets].sort((a, b) => {
+            const aActive = a.state === 1;
+            const bActive = b.state === 1;
+            if (aActive && !bActive) return -1;
+            if (!aActive && bActive) return 1;
+            return new Date(a.date).getTime() - new Date(b.date).getTime();
+          });
+          setTickets(sorted);
+
+          setPaymentStatusData({
+            isOpen: true,
+            status: 'success',
+            message: '¡Pago Exitoso! Tu entrada ya está disponible en la lista de abajo.',
+            loading: false,
+          });
+
+          // Clear parameters
+          const newParams = new URLSearchParams(searchParams);
+          newParams.delete('status');
+          setSearchParams(newParams);
+        }
+      } catch (err) {
+        console.error('Error polling tickets:', err);
+      }
+
+      if (attempts >= maxAttempts) {
+        clearInterval(interval);
+        setPaymentStatusData({
+          isOpen: true,
+          status: 'pending',
+          message: 'Tu pago se está procesando. Si no ves tu entrada en unos minutos, por favor refresca la página o vuelve en un momento.',
+          loading: false,
+        });
+      }
+    }, 2000);
+
+    return () => clearInterval(interval);
+  }, [status, initialCountLoaded]);
+
   const fetchTickets = async () => {
     try {
       const response = await api.getUserTickets();
@@ -79,6 +158,7 @@ const MyTickets: React.FC = () => {
       });
       
       setTickets(sorted);
+      setInitialCountLoaded(true);
     } catch (error) {
       console.error('Error fetching tickets:', error);
     } finally {
@@ -288,6 +368,61 @@ const MyTickets: React.FC = () => {
               >
                 Disfrutar del Evento
               </button>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+      <AnimatePresence>
+        {paymentStatusData.isOpen && (
+          <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={closePaymentModal}
+              className="absolute inset-0 bg-black/60 backdrop-blur-md"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="relative w-full max-w-sm bg-white border border-outline-variant rounded-[2.5rem] p-8 shadow-2xl text-center space-y-6"
+            >
+              {paymentStatusData.loading ? (
+                <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto ring-8 ring-primary/5">
+                  <Loader2 className="w-8 h-8 text-primary animate-spin" />
+                </div>
+              ) : paymentStatusData.status === 'success' ? (
+                <div className="w-16 h-16 bg-green-500/10 text-green-600 rounded-full flex items-center justify-center mx-auto ring-8 ring-green-500/5">
+                  <span className="material-symbols-outlined text-3xl">check_circle</span>
+                </div>
+              ) : paymentStatusData.status === 'pending' ? (
+                <div className="w-16 h-16 bg-amber-500/10 text-amber-600 rounded-full flex items-center justify-center mx-auto ring-8 ring-amber-500/5">
+                  <span className="material-symbols-outlined text-3xl">pending</span>
+                </div>
+              ) : (
+                <div className="w-16 h-16 bg-red-500/10 text-red-600 rounded-full flex items-center justify-center mx-auto ring-8 ring-red-500/5">
+                  <span className="material-symbols-outlined text-3xl">error</span>
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <h3 className="text-2xl font-black text-on-surface uppercase italic tracking-tighter">
+                  {paymentStatusData.loading ? 'Verificando Pago' : paymentStatusData.status === 'success' ? '¡Compra Exitosa!' : paymentStatusData.status === 'pending' ? 'Pago Pendiente' : 'Error de Pago'}
+                </h3>
+                <p className="text-on-surface-variant text-sm font-medium">
+                  {paymentStatusData.message}
+                </p>
+              </div>
+
+              {!paymentStatusData.loading && (
+                <button
+                  onClick={closePaymentModal}
+                  className="btn-primary w-full py-4 uppercase font-black text-[10px] tracking-widest rounded-xl"
+                >
+                  Entendido
+                </button>
+              )}
             </motion.div>
           </div>
         )}

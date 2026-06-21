@@ -979,7 +979,7 @@ const EventDetail: React.FC = () => {
                         className="w-full btn-primary h-14 lg:h-16 text-base lg:text-lg flex items-center justify-center gap-3 shadow-xl shadow-primary/20"
                       >
                         <TicketIcon size={22} className="lg:size-6" />
-                        {event.qr_enabled ? 'OBTENER ENTRADA QR' : (event.price === 0 ? 'OBTENER ENTRADA GRATIS' : 'ADQUIRIR ACCESO')}
+                        {event.price === 0 ? (event.qr_enabled ? 'OBTENER ENTRADA QR' : 'OBTENER ENTRADA GRATIS') : 'COMPRAR ENTRADA'}
                       </button>
                     <p className="text-[9px] lg:text-[10px] text-center text-on-surface-variant font-bold uppercase tracking-widest">
                       {event.qr_enabled || event.price === 0 ? 'Entrada digital vía QueSale' : 'Pago directo al organizador'}
