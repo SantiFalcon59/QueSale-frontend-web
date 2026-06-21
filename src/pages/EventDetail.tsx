@@ -698,7 +698,13 @@ const EventDetail: React.FC = () => {
           <section className="min-h-[400px]">
             <AnimatePresence mode="wait">
               {activeTab === 'info' && (
-                  <div className="grid grid-cols-12 gap-6 lg:gap-12">
+                <motion.div 
+                  key="info"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="grid grid-cols-12 gap-6 lg:gap-12 w-full"
+                >
                     {/* Main Description Column */}
                     <div className="col-span-12 lg:col-span-7 space-y-12">
                       <div className="space-y-4">
@@ -766,14 +772,13 @@ const EventDetail: React.FC = () => {
                                         <Globe size={14} />
                                       </a>
                                     )}
-                                 </div>
-                               </div>
-                            </div>
-                            <p className="text-xs text-amber-800/80 leading-relaxed font-medium relative z-10">
-                              Este evento ha sido indexado por los moderadores de QueSale. La información es de carácter público y externo a nuestra plataforma oficial de gestión.
-                            </p>
-                            <div className="absolute top-0 right-0 w-32 h-32 bg-amber-200/20 blur-3xl rounded-full translate-x-10 -translate-y-10" />
-                          </div>
+                                  </div>
+                                </div>
+                             </div>
+                             <p className="text-xs text-amber-800/80 leading-relaxed font-medium relative z-10">
+                               Este evento ha sido indexado por los moderadores de QueSale. La información es de carácter público y externo a nuestra plataforma oficial de gestión.
+                             </p>
+                           </div>
                         </div>
                       ) : organizer && (
                         <div className="space-y-6">
@@ -872,7 +877,7 @@ const EventDetail: React.FC = () => {
                         </div>
                       </div>
                     )}
-                  </div>
+                </motion.div>
               )}
 
               {activeTab === 'announcements' && (
@@ -976,7 +981,7 @@ const EventDetail: React.FC = () => {
                           if (event.ticket_type === 'mercadopago' || event.qr_enabled || event.price === 0) {
                             handlePurchaseTicket();
                           } else {
-                            window.open(event.ticket_url || 'https://mercadopago.com.ar', '_blank'); 
+                            window.open(event.ticket_url || 'https://paypal.com', '_blank'); 
                           }
                         }}
                         className="w-full btn-primary h-14 lg:h-16 text-base lg:text-lg flex items-center justify-center gap-3 shadow-xl shadow-primary/20"
@@ -1059,7 +1064,7 @@ const EventDetail: React.FC = () => {
               </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-6 no-scrollbar">
+            <div className="flex-1 min-h-0 flex flex-col relative">
               <LiveChat eventId={event.id} isModerator={isModerator} organizerId={event.organizerId} onReply={setReplyingTo} />
             </div>
 
@@ -1458,11 +1463,27 @@ const EventWall: React.FC<{ eventId: string; organizerOwnerId?: string; eventTit
   );
 };
 
+const formatMessageTimestamp = (timestamp: string | Date) => {
+  if (!timestamp) return '';
+  const date = new Date(timestamp);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffHours = diffMs / (1000 * 60 * 60);
+
+  if (diffHours < 24) {
+    return format(date, 'HH:mm');
+  } else {
+    return format(date, "d 'de' MMM, HH:mm", { locale: es });
+  }
+};
+
 const LiveChat: React.FC<{ eventId: string; isModerator: boolean; organizerId: string; onReply: (reply: { id: string; userId: string; displayName: string; message: string } | null) => void }> = ({ eventId, isModerator: propIsModerator, organizerId, onReply }) => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [showBlockMenu, setShowBlockMenu] = useState<string | null>(null);
+  const [showScrollBottom, setShowScrollBottom] = useState(false);
+  const [hasNewMessages, setHasNewMessages] = useState(false);
   const { profile, getSocketToken } = useAuth();
   const socketRef = useRef<Socket | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -1488,23 +1509,46 @@ const LiveChat: React.FC<{ eventId: string; isModerator: boolean; organizerId: s
       setMessages(history);
       setHasMore(history.length >= 20);
       setLoadingHistory(false);
+      requestAnimationFrame(() => {
+        const el = scrollRef.current;
+        if (el) {
+          el.scrollTop = el.scrollHeight;
+          isNearBottomRef.current = true;
+          setShowScrollBottom(false);
+          setHasNewMessages(false);
+        }
+      });
     });
 
     socket.on('new-message', (msg: ChatMessage) => {
       setMessages(prev => [...prev, msg]);
-      // Auto-scroll if user is near bottom
       requestAnimationFrame(() => {
         const el = scrollRef.current;
-        if (el && isNearBottomRef.current) {
-          el.scrollTop = el.scrollHeight;
+        if (el) {
+          if (isNearBottomRef.current) {
+            el.scrollTop = el.scrollHeight;
+          } else {
+            setHasNewMessages(true);
+          }
         }
       });
     });
 
     socket.on('older-messages', (older: ChatMessage[]) => {
+      const el = scrollRef.current;
+      const oldScrollHeight = el ? el.scrollHeight : 0;
+      const oldScrollTop = el ? el.scrollTop : 0;
+
       setMessages(prev => [...older, ...prev]);
       setHasMore(older.length >= 20);
       setLoadingHistory(false);
+
+      if (el) {
+        requestAnimationFrame(() => {
+          const newScrollHeight = el.scrollHeight;
+          el.scrollTop = oldScrollTop + (newScrollHeight - oldScrollHeight);
+        });
+      }
     });
 
     socket.on('message-reactions-updated', (updated: ChatMessage) => {
@@ -1539,7 +1583,13 @@ const LiveChat: React.FC<{ eventId: string; isModerator: boolean; organizerId: s
     const el = scrollRef.current;
     if (!el) return;
     const onScroll = () => {
-      isNearBottomRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < 100;
+      const isAtBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 100;
+      isNearBottomRef.current = isAtBottom;
+      setShowScrollBottom(!isAtBottom);
+      if (isAtBottom) {
+        setHasNewMessages(false);
+      }
+
       if (el.scrollTop < 50 && hasMore && !loadingHistory) {
         loadOlder();
       }
@@ -1558,98 +1608,125 @@ const LiveChat: React.FC<{ eventId: string; isModerator: boolean; organizerId: s
   };
 
   return (
-    <div ref={scrollRef} className="flex flex-col gap-6 pr-2">
-      {loadingHistory && (
-        <div className="text-center py-4">
-          <span className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant/50 animate-pulse">Cargando mensajes anteriores...</span>
-        </div>
-      )}
-      {!hasMore && messages.length > 0 && (
-        <div className="text-center py-2">
-          <span className="text-[8px] font-black uppercase tracking-widest text-on-surface-variant/30">— No hay más mensajes —</span>
-        </div>
-      )}
-      {messages.map(msg => (
-        <div key={msg.id} className="flex gap-4 group">
-          <UserAvatar 
-            src={resolveAssetUrl(msg.photoURL)} 
-            className="w-10 h-10 rounded-xl bg-surface-container-high object-cover" 
-            alt="chat-user"
-            size={18}
-          />
-          <div className="flex-1 space-y-1">
-             <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                   <span className="text-[10px] font-black uppercase tracking-widest text-primary">{msg.displayName || 'Usuario'}</span>
-                   <span className="text-[8px] text-on-surface-variant font-bold">{msg.timestamp ? format(new Date(msg.timestamp), 'HH:mm') : ''}</span>
-                </div>
-                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
-                  {modRoles && (
-                    <>
-                      <button onClick={() => setShowBlockMenu(showBlockMenu === msg.userId ? null : msg.userId)} className="p-1 rounded bg-amber-50 text-amber-600 hover:bg-amber-500 hover:text-white transition-all" title="Bloquear usuario">
-                        <ShieldCheck size={10} />
-                      </button>
-                    </>
+    <div className="flex-1 min-h-0 flex flex-col relative w-full h-full">
+      <div 
+        ref={scrollRef} 
+        className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-6 no-scrollbar flex flex-col"
+      >
+        {loadingHistory && (
+          <div className="text-center py-4">
+            <span className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant/50 animate-pulse">Cargando mensajes anteriores...</span>
+          </div>
+        )}
+        {!hasMore && messages.length > 0 && (
+          <div className="text-center py-2">
+            <span className="text-[8px] font-black uppercase tracking-widest text-on-surface-variant/30">— No hay más mensajes —</span>
+          </div>
+        )}
+        {messages.map(msg => (
+          <div key={msg.id} className="flex gap-4 group">
+            <UserAvatar 
+              src={resolveAssetUrl(msg.photoURL)} 
+              className="w-10 h-10 rounded-xl bg-surface-container-high object-cover" 
+              alt="chat-user"
+              size={18}
+            />
+            <div className="flex-1 space-y-1">
+               <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                     <span className="text-[10px] font-black uppercase tracking-widest text-primary">{msg.displayName || 'Usuario'}</span>
+                     <span className="text-[8px] text-on-surface-variant font-bold">{msg.timestamp ? formatMessageTimestamp(msg.timestamp) : ''}</span>
+                  </div>
+                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                    {modRoles && (
+                      <>
+                        <button onClick={() => setShowBlockMenu(showBlockMenu === msg.userId ? null : msg.userId)} className="p-1 rounded bg-amber-50 text-amber-600 hover:bg-amber-500 hover:text-white transition-all" title="Bloquear usuario">
+                          <ShieldCheck size={10} />
+                        </button>
+                      </>
+                    )}
+                  </div>
+               </div>
+                <div className="p-4 rounded-2xl bg-surface-container-low text-sm text-on-surface-variant leading-relaxed shadow-sm">
+                  {msg.replyTo && (
+                    <div className="mb-2 pl-3 border-l-2 border-primary/30 py-1.5 text-xs text-on-surface-variant/60 space-y-0.5">
+                      <span className="font-bold text-primary/80">{msg.replyTo.displayName}</span>
+                      <p className="truncate">{msg.replyTo.message}</p>
+                    </div>
                   )}
+                  {msg.message}
                 </div>
-             </div>
-              <div className="p-4 rounded-2xl bg-surface-container-low text-sm text-on-surface-variant leading-relaxed shadow-sm">
-                {msg.replyTo && (
-                  <div className="mb-2 pl-3 border-l-2 border-primary/30 py-1.5 text-xs text-on-surface-variant/60 space-y-0.5">
-                    <span className="font-bold text-primary/80">{msg.replyTo.displayName}</span>
-                    <p className="truncate">{msg.replyTo.message}</p>
+                {msg.reactions && Object.keys(msg.reactions).length > 0 && (
+                  <div className="flex flex-wrap gap-1 pt-1">
+                    {Object.entries(msg.reactions).map(([emoji, data]: [string, any]) => (
+                      <button
+                        key={emoji}
+                        onClick={() => socketRef.current?.emit('react-to-message', { eventId, messageId: msg.id, emoji })}
+                        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs border transition-all cursor-pointer ${
+                          data.reacted
+                            ? 'bg-primary/10 border-primary/30 text-primary'
+                            : 'bg-surface-container-high border-outline-variant text-on-surface-variant hover:border-primary/30'
+                        }`}
+                      >
+                        <span className="text-sm leading-none">{emoji}</span>
+                        <span className="text-[10px] font-bold">{data.count}</span>
+                      </button>
+                    ))}
                   </div>
                 )}
-                {msg.message}
-              </div>
-              {msg.reactions && Object.keys(msg.reactions).length > 0 && (
-                <div className="flex flex-wrap gap-1 pt-1">
-                  {Object.entries(msg.reactions).map(([emoji, data]: [string, any]) => (
-                    <button
-                      key={emoji}
-                      onClick={() => socketRef.current?.emit('react-to-message', { eventId, messageId: msg.id, emoji })}
-                      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs border transition-all cursor-pointer ${
-                        data.reacted
-                          ? 'bg-primary/10 border-primary/30 text-primary'
-                          : 'bg-surface-container-high border-outline-variant text-on-surface-variant hover:border-primary/30'
-                      }`}
-                    >
-                      <span className="text-sm leading-none">{emoji}</span>
-                      <span className="text-[10px] font-bold">{data.count}</span>
-                    </button>
-                  ))}
+                <div className="flex items-center gap-2 pt-0.5">
+                  <button
+                    onClick={() => onReply({ id: msg.id, userId: msg.userId, displayName: msg.displayName, message: msg.message })}
+                    className="text-[10px] text-on-surface-variant/40 hover:text-secondary font-bold uppercase tracking-wider transition-colors"
+                  >
+                    Responder
+                  </button>
+                  <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-all">
+                    {['👍', '❤️', '😂', '😮', '😢', '🔥'].map(emoji => (
+                      <button
+                        key={emoji}
+                        onClick={() => socketRef.current?.emit('react-to-message', { eventId, messageId: msg.id, emoji })}
+                        className="w-6 h-6 flex items-center justify-center rounded-md hover:bg-surface-container-high transition-colors text-sm cursor-pointer"
+                        title={`Reaccionar con ${emoji}`}
+                      >
+                        {emoji}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              )}
-              <div className="flex items-center gap-2 pt-0.5">
-                <button
-                  onClick={() => onReply({ id: msg.id, userId: msg.userId, displayName: msg.displayName, message: msg.message })}
-                  className="text-[10px] text-on-surface-variant/40 hover:text-secondary font-bold uppercase tracking-wider transition-colors"
-                >
-                  Responder
-                </button>
-                <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-all">
-                  {['👍', '❤️', '😂', '😮', '😢', '🔥'].map(emoji => (
-                    <button
-                      key={emoji}
-                      onClick={() => socketRef.current?.emit('react-to-message', { eventId, messageId: msg.id, emoji })}
-                      className="w-6 h-6 flex items-center justify-center rounded-md hover:bg-surface-container-high transition-colors text-sm cursor-pointer"
-                      title={`Reaccionar con ${emoji}`}
-                    >
-                      {emoji}
-                    </button>
-                  ))}
-                </div>
-              </div>
-             {showBlockMenu === msg.userId && modRoles && (
-               <div className="mt-2 p-3 rounded-xl bg-white border border-red-200 shadow-lg space-y-2">
-                 <p className="text-[10px] font-black uppercase tracking-widest text-red-600">Bloquear usuario</p>
-                 <button onClick={() => handleBlock(msg.userId)} className="w-full py-2 rounded-lg bg-red-50 text-red-600 text-xs font-bold hover:bg-red-500 hover:text-white transition-all">Bloquear de este evento</button>
-                 <button onClick={() => setShowBlockMenu(null)} className="w-full py-2 rounded-lg bg-surface-container-high text-on-surface-variant text-xs font-bold hover:bg-surface-container transition-all">Cancelar</button>
-               </div>
-             )}
+               {showBlockMenu === msg.userId && modRoles && (
+                 <div className="mt-2 p-3 rounded-xl bg-white border border-red-200 shadow-lg space-y-2">
+                   <p className="text-[10px] font-black uppercase tracking-widest text-red-600">Bloquear usuario</p>
+                   <button onClick={() => handleBlock(msg.userId)} className="w-full py-2 rounded-lg bg-red-50 text-red-600 text-xs font-bold hover:bg-red-500 hover:text-white transition-all">Bloquear de este evento</button>
+                   <button onClick={() => setShowBlockMenu(null)} className="w-full py-2 rounded-lg bg-surface-container-high text-on-surface-variant text-xs font-bold hover:bg-surface-container transition-all">Cancelar</button>
+                 </div>
+               )}
+            </div>
           </div>
-        </div>
-      ))}
+        ))}
+      </div>
+
+      {showScrollBottom && (
+        <button
+          onClick={() => {
+            const el = scrollRef.current;
+            if (el) {
+              el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
+            }
+            setShowScrollBottom(false);
+            setHasNewMessages(false);
+          }}
+          className={cn(
+            "absolute bottom-4 right-4 z-30 px-4 py-2.5 rounded-full shadow-lg hover:scale-105 active:scale-95 transition-all text-[10px] font-black uppercase tracking-widest flex items-center gap-2 border",
+            hasNewMessages 
+              ? "bg-red-500 text-white border-red-400 animate-bounce" 
+              : "bg-primary text-white border-white/20"
+          )}
+        >
+          <span className="material-symbols-outlined text-sm">arrow_downward</span>
+          {hasNewMessages ? 'Nuevos mensajes' : 'Volver al presente'}
+        </button>
+      )}
     </div>
   );
 };

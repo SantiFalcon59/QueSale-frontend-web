@@ -139,7 +139,7 @@ const MapPage: React.FC = () => {
   const selectedEvent = events.find(e => e.id_event === selectedEventId);
 
   return (
-    <div className="h-[calc(100vh-128px)] lg:h-[calc(100vh-64px)] lg:-mt-16 relative overflow-hidden bg-[#0b0e14]">
+    <div className="h-[calc(100vh-128px)] lg:h-screen lg:-mt-16 relative overflow-hidden bg-[#0b0e14]">
       {/* Search Input Injected into Header (Visual Only) */}
       <style>{`
         .navbar-glass input {
@@ -347,6 +347,16 @@ const MapPage: React.FC = () => {
       )}
       </AnimatePresence>
 
+      {/* FAB to show filters when hidden */}
+      {!showFilters && (
+        <button
+          onClick={() => setShowFilters(true)}
+          className="absolute bottom-24 left-4 lg:bottom-10 lg:left-8 z-30 w-12 h-12 rounded-2xl bg-primary text-white shadow-xl hover:shadow-primary/40 transition-all active:scale-95 flex items-center justify-center border border-white/20"
+        >
+          <span className="material-symbols-outlined text-[22px]">tune</span>
+        </button>
+      )}
+
       {/* Selected Event Bottom Card */}
       <AnimatePresence>
         {selectedEvent && (
@@ -529,16 +539,6 @@ const MapWrapper = ({ userLocation, selectedEventId, onSelectEvent, activeCatego
         onZoomOut={handleZoomOut} 
         onRecenter={handleRecenter} 
       />
-
-      {/* FAB to show filters when hidden */}
-      {!showFilters && (
-        <button
-          onClick={() => setShowFilters(true)}
-          className="fixed bottom-24 left-4 z-50 w-12 h-12 rounded-2xl bg-primary text-white shadow-xl hover:shadow-primary/40 transition-all active:scale-95 flex items-center justify-center border border-white/20"
-        >
-          <span className="material-symbols-outlined text-[22px]">tune</span>
-        </button>
-      )}
     </>
   );
 };
