@@ -23,7 +23,7 @@ interface Ticket {
 }
 
 const MyTickets: React.FC = () => {
-  const { getSocketToken } = useAuth();
+  const { getSocketToken, loading: authLoading } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const status = searchParams.get('status');
   const collectionStatus = searchParams.get('collection_status');
@@ -95,8 +95,8 @@ const MyTickets: React.FC = () => {
   }, [getSocketToken]);
 
   useEffect(() => {
-    // Only run when we've confirmed this is a post-purchase redirect
-    if (!isPurchaseReturn || !initialCountLoaded) return;
+    // Only run when we've confirmed this is a post-purchase redirect AND auth is ready
+    if (!isPurchaseReturn || !initialCountLoaded || authLoading) return;
 
     const verify = async () => {
       const paymentId = paymentIdParam;
@@ -127,7 +127,8 @@ const MyTickets: React.FC = () => {
 
       console.log('[MyTickets] Calling verify-purchase', { paymentId, eventId });
       try {
-        // auth: true is required – sends Firebase token in Authorization header
+        // auth: true sends Firebase token in Authorization header
+        // authLoading=false guarantees auth.currentUser is set
         await api.post('/tickets/verify-purchase', { paymentId, eventId }, { auth: true });
         await fetchTickets();
         setPaymentStatusData({
@@ -138,7 +139,6 @@ const MyTickets: React.FC = () => {
         });
       } catch (e: any) {
         console.error('[MyTickets] Verification failed', e);
-        // Payment might already have been processed (duplicate), try refreshing tickets
         await fetchTickets();
         setPaymentStatusData({
           isOpen: true,
@@ -157,7 +157,7 @@ const MyTickets: React.FC = () => {
     };
 
     verify();
-  }, [isPurchaseReturn, initialCountLoaded]);
+  }, [isPurchaseReturn, initialCountLoaded, authLoading]);
 
   const fetchTickets = async () => {
     try {
