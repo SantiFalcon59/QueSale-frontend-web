@@ -109,8 +109,8 @@ const MyTickets: React.FC = () => {
           console.error('Failed to parse external_reference', e);
         }
       }
-      // Fallback to eventId param if provided directly
-      if (!eventId) eventId = searchParams.get('event_id');
+// Fallback to eventId param if provided directly (case-sensitive)
+      if (!eventId) eventId = searchParams.get('eventId') || searchParams.get('event_id');
 
       if (!paymentId || !eventId) {
         console.warn('Missing paymentId or eventId for verification');
