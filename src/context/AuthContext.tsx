@@ -30,6 +30,8 @@ interface AuthContextType {
   logout: () => Promise<void>;
   refreshProfile: () => Promise<void>;
   getSocketToken: () => string | null;
+  savedEvents: Record<string, boolean>;
+  toggleSaveEvent: (eventId: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -41,6 +43,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [isNewUser, setIsNewUser] = useState(false);
+  const [savedEvents, setSavedEvents] = useState<Record<string, boolean>>({});
 
   const mapProfile = (uid: string, backendProfile: any): UserProfile => {
     const username = backendProfile?.username;
@@ -111,11 +114,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             role: 'user', // Default to user if backend fails
           });
         }
+        try {
+          const result: any = await api.getSavedEvents(1, 500);
+          const saved = Array.isArray(result) ? result : [];
+          const map: Record<string, boolean> = {};
+          saved.forEach((e: any) => { map[e.id_event] = true; });
+          setSavedEvents(map);
+        } catch (err) {
+          console.error('Error fetching saved events:', err);
+        }
         // Initialize Capacitor Push Notifications for native app
         initPushNotifications().catch((err) => console.error('Error initializing push notifications:', err));
       } else {
         setProfile(null);
         setIsNewUser(false);
+        setSavedEvents({});
         // Clean up Capacitor Push Notifications when logged out
         unregisterPushNotifications().catch((err) => console.error('Error unregistering push notifications:', err));
       }
@@ -165,6 +178,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (user) await fetchProfile(user.uid);
   };
 
+  const toggleSaveEvent = async (eventId: string) => {
+    if (!user) return;
+    const isCurrentlySaved = !!savedEvents[eventId];
+    setSavedEvents(prev => ({ ...prev, [eventId]: !isCurrentlySaved }));
+    try {
+      if (isCurrentlySaved) {
+        await api.unsaveEvent(eventId);
+      } else {
+        await api.saveEvent(eventId);
+      }
+    } catch (err) {
+      console.error('Error toggling event save:', err);
+      // rollback
+      setSavedEvents(prev => ({ ...prev, [eventId]: isCurrentlySaved }));
+    }
+  };
+
   return (
     <AuthContext.Provider value={{ 
       user, 
@@ -175,7 +205,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       loginWithEmail, 
       logout,
       refreshProfile,
-      getSocketToken
+      getSocketToken,
+      savedEvents,
+      toggleSaveEvent
     }}>
       {children}
     </AuthContext.Provider>

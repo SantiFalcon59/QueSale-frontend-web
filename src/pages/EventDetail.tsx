@@ -108,7 +108,7 @@ interface ChatMessage {
 const EventDetail: React.FC = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user, profile } = useAuth();
+  const { user, profile, savedEvents, toggleSaveEvent } = useAuth() as any;
   const [event, setEvent] = useState<Event | null>(null);
   const [organizer, setOrganizer] = useState<Organizer | null>(null);
   const [activeTab, setActiveTab] = useState<'info' | 'announcements' | 'community'>('info');
@@ -124,7 +124,7 @@ const EventDetail: React.FC = () => {
   const [galleryIdx, setGalleryIdx] = useState<number | null>(null);
   const [activeImageIdx, setActiveImageIdx] = useState(0);
   const galleryImages = event?.media || [];
-  const [isSaved, setIsSaved] = useState(false);
+  const isSaved = !!(id && savedEvents[id]);
   const [organizerEvents, setOrganizerEvents] = useState<any[]>([]);
   const [isModerator, setIsModerator] = useState(false);
   const [isOrganizer, setIsOrganizer] = useState(false);
@@ -267,7 +267,6 @@ const EventDetail: React.FC = () => {
           hasTicket: !!data.hasTicket,
         };
         setEvent(mappedEvent);
-        setIsSaved(!!data.isFavorited);
 
         if (data.id_organizer) {
           const organizerData: any = await api.getOrganizerById(data.id_organizer);
@@ -330,13 +329,7 @@ const EventDetail: React.FC = () => {
     if (!id) return;
 
     try {
-      if (isSaved) {
-        await api.unsaveEvent(id);
-        setIsSaved(false);
-      } else {
-        await api.saveEvent(id);
-        setIsSaved(true);
-      }
+      await toggleSaveEvent(id);
     } catch (err) {
       console.error("Error toggling save:", err);
     }

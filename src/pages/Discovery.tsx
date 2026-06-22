@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { SlidersHorizontal, Grid as GridIcon, List, X, Search, MapPin, CalendarDays, Sparkles, RotateCcw, ChevronLeft, ChevronRight } from 'lucide-react';
+import { SlidersHorizontal, Grid as GridIcon, List, X, Search, MapPin, CalendarDays, Sparkles, RotateCcw, ChevronLeft, ChevronRight, Heart } from 'lucide-react';
 import { cn, formatPrice, NO_EVENT_IMAGE } from '../lib/utils';
 import { api, resolveAssetUrl } from '../services/apiClient';
 import { Link } from 'react-router-dom';
@@ -93,7 +93,7 @@ const CalendarPicker: React.FC<{ selectedDate: Date | null; onSelect: (date: Dat
 };
 
 const Discovery: React.FC = () => {
-  const { profile } = useAuth() as any;
+  const { user, profile, savedEvents, toggleSaveEvent } = useAuth() as any;
   const isPremium = profile?.is_premium || profile?.role === 'admin';
   const [view, setView] = useState<'grid' | 'list'>('grid');
   const [showFilters, setShowFilters] = useState(() => typeof window !== 'undefined' ? window.innerWidth >= 1024 : true);
@@ -707,24 +707,41 @@ const Discovery: React.FC = () => {
                     view === 'list' && "md:flex-row h-auto md:h-64"
                   )}
                 >
-                  <Link to={`/events/${event.id_event}`} className={cn(
-                    "relative overflow-hidden",
-                    view === 'grid' ? "aspect-[4/3]" : "aspect-[16/9] md:w-80 md:h-full shrink-0"
+                  <div className={cn(
+                    "relative overflow-hidden shrink-0",
+                    view === 'grid' ? "aspect-[4/3]" : "aspect-[16/9] md:w-80 md:h-full"
                   )}>
-                    <img
-                       src={resolveAssetUrl(event.thumbnail_url) || NO_EVENT_IMAGE}
-                      alt={event.title}
-                      className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
-                      onError={(e) => { (e.target as HTMLImageElement).src = NO_EVENT_IMAGE; }}
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                    <Link to={`/events/${event.id_event}`} className="absolute inset-0 block">
+                      <img
+                        src={resolveAssetUrl(event.thumbnail_url) || NO_EVENT_IMAGE}
+                        alt={event.title}
+                        className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
+                        onError={(e) => { (e.target as HTMLImageElement).src = NO_EVENT_IMAGE; }}
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                    </Link>
 
                     {isFree(event.price) && (
-                      <div className="absolute top-4 left-4 px-3 py-1.5 rounded-xl bg-green-500 text-white text-[9px] font-black tracking-widest uppercase shadow-lg shadow-green-500/20">
+                      <div className="absolute top-4 left-4 z-10 px-3 py-1.5 rounded-xl bg-green-500 text-white text-[9px] font-black tracking-widest uppercase shadow-lg shadow-green-500/20">
                         Gratis
                       </div>
                     )}
-                  </Link>
+
+                    {user && (
+                      <div className="absolute top-4 right-4 z-10">
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            toggleSaveEvent(event.id_event);
+                          }}
+                          className="w-9 h-9 rounded-full bg-white/90 backdrop-blur flex items-center justify-center text-red-500 shadow-lg hover:scale-110 active:scale-95 transition-all cursor-pointer"
+                        >
+                          <Heart size={16} fill={savedEvents[event.id_event] ? "currentColor" : "none"} />
+                        </button>
+                      </div>
+                    )}
+                  </div>
 
                   <div className="p-8 flex flex-col flex-grow">
                     <div className="flex justify-between items-start mb-3">

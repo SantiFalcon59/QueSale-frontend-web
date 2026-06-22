@@ -9,7 +9,7 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
 const Favorites: React.FC = () => {
-  const { profile } = useAuth();
+  const { profile, savedEvents, toggleSaveEvent } = useAuth() as any;
   const [favorites, setFavorites] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -32,12 +32,13 @@ const Favorites: React.FC = () => {
 
   const handleUnsave = async (eventId: string) => {
     try {
-      await api.unsaveEvent(eventId);
-      setFavorites(prev => prev.filter(e => e.id_event !== eventId));
+      await toggleSaveEvent(eventId);
     } catch (err) {
       console.error("Error unsaving event:", err);
     }
   };
+
+  const visibleFavorites = favorites.filter(e => savedEvents[e.id_event]);
 
   return (
     <div className="space-y-12 pb-20 px-4 lg:px-8 xl:px-12">
@@ -59,9 +60,9 @@ const Favorites: React.FC = () => {
              <div key={i} className="h-80 rounded-[3rem] bg-surface-container-low animate-pulse border border-outline-variant/30" />
            ))}
         </div>
-      ) : favorites.length > 0 ? (
+      ) : visibleFavorites.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {favorites.map((event, index) => (
+          {visibleFavorites.map((event, index) => (
             <motion.div
               key={event.id_event}
               initial={{ opacity: 0, scale: 0.9 }}

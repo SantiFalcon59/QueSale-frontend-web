@@ -11,7 +11,7 @@ import { es } from 'date-fns/locale';
 
 const OrganizerProfile: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const { user } = useAuth();
+  const { user, savedEvents, toggleSaveEvent } = useAuth() as any;
   const [organizer, setOrganizer] = useState<any>(null);
   const [events, setEvents] = useState<any[]>([]);
   const [followers, setFollowers] = useState<any[]>([]);
@@ -181,14 +181,31 @@ const OrganizerProfile: React.FC = () => {
                 transition={{ delay: i * 0.05 }}
                 className="group bg-white rounded-[2.5rem] border border-outline-variant hover:border-primary/50 transition-all overflow-hidden shadow-sm hover:shadow-xl hover:shadow-black/5"
               >
-                <Link to={`/events/${ev.id_event}`} className="block relative h-44 overflow-hidden">
-                  <img
-                    src={resolveAssetUrl(ev.thumbnail_url) || (ev.images?.[0] ? resolveAssetUrl(ev.images[0]) : undefined) || NO_EVENT_IMAGE}
-                    alt={ev.title}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
-                </Link>
+                <div className="relative h-44 overflow-hidden">
+                  <Link to={`/events/${ev.id_event}`} className="absolute inset-0 block">
+                    <img
+                      src={resolveAssetUrl(ev.thumbnail_url) || (ev.images?.[0] ? resolveAssetUrl(ev.images[0]) : undefined) || NO_EVENT_IMAGE}
+                      alt={ev.title}
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
+                  </Link>
+
+                  {user && (
+                    <div className="absolute top-4 right-4 z-10">
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          toggleSaveEvent(ev.id_event);
+                        }}
+                        className="w-9 h-9 rounded-full bg-white/90 backdrop-blur flex items-center justify-center text-red-500 shadow-lg hover:scale-110 active:scale-95 transition-all cursor-pointer"
+                      >
+                        <Heart size={16} fill={savedEvents[ev.id_event] ? "currentColor" : "none"} />
+                      </button>
+                    </div>
+                  )}
+                </div>
                 <div className="p-6 space-y-3">
                   <div className="space-y-1">
                     <span className="text-[9px] font-black uppercase tracking-widest text-primary bg-primary/5 px-2 py-0.5 rounded border border-primary/10">EVENTO</span>

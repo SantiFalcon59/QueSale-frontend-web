@@ -1,20 +1,35 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# QueSale - Frontend Web
 
-# Run and deploy your AI Studio app
+Cliente web de la plataforma QueSale, desarrollado con React y Vite.
 
-This contains everything you need to run your app locally.
+## Stack Tecnológico
 
-View your app in AI Studio: https://ai.studio/apps/226de6ee-50fe-46a6-bbff-02012f0f48a5
+- **Core**: React 19 & Vite
+- **Estilos**: TailwindCSS / Vanilla CSS
+- **Autenticación**: Firebase Client SDK
+- **Mapas**: @vis.gl/react-google-maps (Google Maps Platform)
+- **Iconos**: Lucide React
 
-## Run Locally
+## Requisitos Previos
 
-**Prerequisites:**  Node.js
+- Node.js (v18 o superior)
+- API Key de Google Maps Platform
+- Configuración de Firebase Project
 
+## Configuración y Ejecución
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+1. Instalar dependencias:
+   ```bash
+   npm install
+   ```
+
+2. Configurar variables de entorno (`.env`):
+   ```env
+   VITE_API_URL=http://localhost:3016
+   VITE_GOOGLE_MAPS_PLATFORM_KEY=tu_api_key_aqui
+   ```
+
+3. Iniciar servidor de desarrollo local:
+   ```bash
+   npm run dev
+   ```

@@ -172,7 +172,7 @@ export const api = {
     apiRequest(`/api/users/username/${encodeURIComponent(username)}/profile`),
 
   getEventById: (eventId: string) =>
-    apiRequest(`/api/events/${encodeURIComponent(eventId)}`),
+    apiRequest(`/api/events/${encodeURIComponent(eventId)}`, { auth: true }),
 
   getOrganizerById: (organizerId: string) =>
     apiRequest(`/api/organizers/${encodeURIComponent(organizerId)}`, { auth: true }),
@@ -200,7 +200,7 @@ export const api = {
     }),
 
   getOrganizerEvents: (organizerId: string, page = 1, limit = 50) =>
-    apiRequest(`/api/organizers/${encodeURIComponent(organizerId)}/events?page=${page}&limit=${limit}`),
+    apiRequest(`/api/organizers/${encodeURIComponent(organizerId)}/events?page=${page}&limit=${limit}`, { auth: true }),
 
   updateOrganizer: (organizerId: string, payload: { name?: string; description?: string; logo_url?: string; instagram?: string; tiktok?: string; twitter?: string; website?: string; real_name?: string; dni?: string; address?: string; phone_number?: string }) =>
     apiRequest(`/api/organizers/${encodeURIComponent(organizerId)}`, {
@@ -239,10 +239,10 @@ export const api = {
     }),
 
   getEvents: (page = 1, limit = 50) =>
-    apiRequest(`/api/events?page=${page}&limit=${limit}`),
+    apiRequest(`/api/events?page=${page}&limit=${limit}`, { auth: true }),
 
   getEventsWithFilters: (queryString: string) =>
-    apiRequest(`/api/events?${queryString}`),
+    apiRequest(`/api/events?${queryString}`, { auth: true }),
 
   searchTags: (q: string) =>
     apiRequest(`/api/events/tags/search?q=${encodeURIComponent(q)}`),

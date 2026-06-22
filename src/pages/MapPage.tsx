@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { APIProvider, Map, AdvancedMarker, useAdvancedMarkerRef, useMap } from '@vis.gl/react-google-maps';
 import { motion, AnimatePresence } from 'motion/react';
-import { MapPin, Calendar, Plus, Minus, Target, ChevronRight, X, Share2, Loader2, CalendarDays } from 'lucide-react';
+import { MapPin, Calendar, Plus, Minus, Target, ChevronRight, X, Share2, Loader2, CalendarDays, Heart } from 'lucide-react';
 import { cn, formatPrice, NO_EVENT_IMAGE } from '../lib/utils';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../services/apiClient';
@@ -70,7 +70,7 @@ const getQuickDateRange = (id: string): { from: Date; to: Date } | null => {
 };
 
 const MapPage: React.FC = () => {
-  const { profile } = useAuth() as any;
+  const { user, profile, savedEvents, toggleSaveEvent } = useAuth() as any;
   const isPremium = profile?.is_premium || profile?.role === 'admin';
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [activeCategory, setActiveCategory] = useState('Todos');
@@ -420,6 +420,22 @@ const MapPage: React.FC = () => {
                     <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" />
                   </button>
                   <div className="flex gap-1.5">
+                    {user && (
+                      <button 
+                        onClick={(e) => {
+                          e.preventDefault();
+                          toggleSaveEvent(selectedEvent.id_event);
+                        }}
+                        className={cn(
+                          "w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center transition-all border shrink-0 cursor-pointer",
+                          savedEvents[selectedEvent.id_event] 
+                            ? "bg-red-500 border-red-500 text-white shadow-lg shadow-red-500/20" 
+                            : "bg-surface-container-low text-primary border-primary/10 hover:bg-primary hover:text-white"
+                        )}
+                      >
+                        <Heart size={12} fill={savedEvents[selectedEvent.id_event] ? "currentColor" : "none"} />
+                      </button>
+                    )}
                     <button className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-surface-container-low flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-all border border-primary/10 shrink-0">
                       <Share2 size={12} />
                     </button>

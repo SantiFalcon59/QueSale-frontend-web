@@ -13,12 +13,11 @@ import { AdBanner } from '../components/ui/AdBanner';
 const CYCLE_MS = 4000;
 
 const Feed: React.FC = () => {
-  const { user, profile } = useAuth() as any;
+  const { user, profile, savedEvents, toggleSaveEvent } = useAuth() as any;
   const isPremium = profile?.is_premium || profile?.role === 'admin';
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
   const [events, setEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [savedEvents, setSavedEvents] = useState<Record<string, boolean>>({});
   const [imageIndex, setImageIndex] = useState(0);
   const [fadingMap, setFadingMap] = useState<Record<string, string>>({});
 
@@ -70,16 +69,6 @@ const Feed: React.FC = () => {
     fetchEvents();
   }, []);
 
-  useEffect(() => {
-    if (!user) return;
-    api.getSavedEvents(1, 100).then((result: any) => {
-      const saved = Array.isArray(result) ? result : [];
-      const map: Record<string, boolean> = {};
-      saved.forEach((e: any) => { map[e.id_event] = true; });
-      setSavedEvents(map);
-    }).catch(() => {});
-  }, [user]);
-
   const handleInteraction = (e: React.MouseEvent, action?: string) => {
     if (!user) {
       e.preventDefault();
@@ -92,12 +81,7 @@ const Feed: React.FC = () => {
   const toggleSave = async (e: React.MouseEvent, eventId: string) => {
     if (!handleInteraction(e)) return;
     try {
-      if (savedEvents[eventId]) {
-        await api.unsaveEvent(eventId);
-      } else {
-        await api.saveEvent(eventId);
-      }
-      setSavedEvents(prev => ({ ...prev, [eventId]: !prev[eventId] }));
+      await toggleSaveEvent(eventId);
     } catch (err) {
       console.error('Error saving event:', err);
     }
