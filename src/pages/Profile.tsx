@@ -384,6 +384,8 @@ const Profile: React.FC<{ usernameFromUrl?: string }> = ({ usernameFromUrl }) =>
     if (!editForm.username.trim()) return;
     setSaving(true);
     try {
+      const oldUsername = profileUser?.username;
+      const newUsername = editForm.username.trim();
       let newPhotoURL = profileUser?.photoURL;
 
       if (photoFile && currentUser) {
@@ -393,7 +395,7 @@ const Profile: React.FC<{ usernameFromUrl?: string }> = ({ usernameFromUrl }) =>
       }
 
       await api.updateProfile({
-        username: editForm.username,
+        username: newUsername,
         description: editForm.description,
         instagram: editForm.instagram,
         photo_url: newPhotoURL,
@@ -405,8 +407,8 @@ const Profile: React.FC<{ usernameFromUrl?: string }> = ({ usernameFromUrl }) =>
 
       setProfileUser((prev: any) => ({
         ...prev,
-        username: editForm.username,
-        displayName: editForm.username,
+        username: newUsername,
+        displayName: newUsername,
         description: editForm.description,
         instagram: editForm.instagram,
         photoURL: newPhotoURL || prev.photoURL,
@@ -416,6 +418,10 @@ const Profile: React.FC<{ usernameFromUrl?: string }> = ({ usernameFromUrl }) =>
       setEditModalOpen(false);
       setPhotoFile(null);
       setPhotoPreview(null);
+
+      if (oldUsername && newUsername !== oldUsername) {
+        navigate(`/@${newUsername}`, { replace: true });
+      }
     } catch (err: any) {
       console.error('Error updating profile:', err);
       setUploadingPhoto(false);

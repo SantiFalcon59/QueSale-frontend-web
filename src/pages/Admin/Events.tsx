@@ -24,7 +24,7 @@ const AdminEvents: React.FC = () => {
                location: event.ubication,
                category: event.interests?.[0]?.name || 'General',
                organizerId: event.id_organizer,
-               image: resolveAssetUrl(event.thumbnail_url) || NO_EVENT_IMAGE,
+               image: resolveAssetUrl(event.thumbnail_url || event.images?.[0] || event.media?.[0]) || NO_EVENT_IMAGE,
             }));
             setEvents(mapped);
       } catch (err) {

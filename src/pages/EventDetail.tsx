@@ -56,6 +56,7 @@ interface Event {
   external_instagram?: string;
   external_tiktok?: string;
   external_twitter?: string;
+  hasTicket?: boolean;
 }
 
 interface Organizer {
@@ -263,6 +264,7 @@ const EventDetail: React.FC = () => {
           external_instagram: data.external_instagram,
           external_tiktok: data.external_tiktok,
           external_twitter: data.external_twitter,
+          hasTicket: !!data.hasTicket,
         };
         setEvent(mappedEvent);
         setIsSaved(!!data.isFavorited);
@@ -384,7 +386,7 @@ const EventDetail: React.FC = () => {
         title: '¡Entrada Lista!',
         message: 'Tu acceso ha sido procesado correctamente.'
       });
-      setEvent(prev => prev ? { ...prev, attendeesCount: prev.attendeesCount + 1 } : null);
+      setEvent(prev => prev ? { ...prev, attendeesCount: prev.attendeesCount + 1, hasTicket: true } : null);
     } catch (err: any) {
       const isAlreadyHas = err.message?.toLowerCase().includes('already has') || err.message?.toLowerCase().includes('ya tienes');
       setFeedbackModal({
@@ -1002,7 +1004,21 @@ const EventDetail: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="space-y-4">
+                  {event.hasTicket ? (
+                    <div className="space-y-4">
+                      <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-500 text-center text-xs font-black uppercase tracking-widest">
+                        Ya tienes tu entrada para este evento
+                      </div>
+                      <button
+                        onClick={() => navigate('/my-tickets')}
+                        className="w-full btn-primary bg-emerald-600 hover:bg-emerald-700 text-white h-14 lg:h-16 text-base lg:text-lg flex items-center justify-center gap-3 shadow-xl shadow-emerald-600/20 cursor-pointer"
+                      >
+                        <TicketIcon size={22} className="lg:size-6" />
+                        VER EN MIS ENTRADAS
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
                       <button
                         onClick={() => { 
                           if (handleInteraction()) return; 
@@ -1017,10 +1033,11 @@ const EventDetail: React.FC = () => {
                         <TicketIcon size={22} className="lg:size-6" />
                         {event.price === 0 ? (event.qr_enabled ? 'OBTENER ENTRADA QR' : 'OBTENER ENTRADA GRATIS') : 'COMPRAR ENTRADA'}
                       </button>
-                    <p className="text-[9px] lg:text-[10px] text-center text-on-surface-variant font-bold uppercase tracking-widest">
-                      {event.qr_enabled || event.price === 0 ? 'Entrada digital vía QueSale' : 'Pago directo al organizador'}
-                    </p>
-                  </div>
+                      <p className="text-[9px] lg:text-[10px] text-center text-on-surface-variant font-bold uppercase tracking-widest">
+                        {event.qr_enabled || event.price === 0 ? 'Entrada digital vía QueSale' : 'Pago directo al organizador'}
+                      </p>
+                    </div>
+                  )}
 
                   <div className="space-y-4 lg:space-y-6">
                     <div className="flex items-center justify-between">
@@ -1042,7 +1059,7 @@ const EventDetail: React.FC = () => {
               )}
            </section>
 
-           {!event.is_external && (
+           {!event.is_external && event.price > 0 && (
              <section className="p-6 lg:p-8 rounded-[2rem] lg:rounded-[3rem] bg-orange-50 border border-orange-100 text-on-surface space-y-4 lg:space-y-6 relative overflow-hidden group">
                 <div className="relative z-10 space-y-2">
                    <div className="flex items-center gap-3">
