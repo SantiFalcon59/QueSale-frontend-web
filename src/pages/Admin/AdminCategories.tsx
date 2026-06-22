@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Tag, Plus, Search, Palette, Sparkles } from 'lucide-react';
 import { api } from '../../services/apiClient';
 import { toastSuccess, toastError } from '../../lib/swal';
+import { useAuth } from '../../context/AuthContext';
 
 interface Category {
   id: number;
@@ -13,6 +14,8 @@ interface Category {
 }
 
 const AdminCategories: React.FC = () => {
+  const { profile } = useAuth() as any;
+  const isModerator = profile?.role === 'moderator';
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -90,13 +93,15 @@ const AdminCategories: React.FC = () => {
            </div>
            <p className="text-on-surface-variant font-medium ml-1">Configuración de Categorías de Eventos e Intereses del Usuario</p>
         </div>
-        <button 
-          onClick={() => setShowAddForm(!showAddForm)}
-          className="btn-primary self-start sm:self-center h-12 px-6 rounded-2xl flex items-center gap-2 text-[10px] font-black uppercase tracking-widest"
-        >
-          <Plus size={16} />
-          {showAddForm ? 'Cancelar' : 'Nueva Categoría'}
-        </button>
+        {!isModerator && (
+          <button 
+            onClick={() => setShowAddForm(!showAddForm)}
+            className="btn-primary self-start sm:self-center h-12 px-6 rounded-2xl flex items-center gap-2 text-[10px] font-black uppercase tracking-widest"
+          >
+            <Plus size={16} />
+            {showAddForm ? 'Cancelar' : 'Nueva Categoría'}
+          </button>
+        )}
       </header>
 
       {/* Add Form Drawer/Collapse */}

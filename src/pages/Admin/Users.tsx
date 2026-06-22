@@ -1,14 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { ShieldCheck, User, Search, ShieldAlert, Shield, Gavel } from 'lucide-react';
+import { ShieldCheck, User, Search, ShieldAlert, Shield, Gavel, CheckCircle2 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { api } from '../../services/apiClient';
 import { UserAvatar } from '../../components/ui/UserAvatar';
 import { toastSuccess, toastError, confirmAction } from '../../lib/swal';
+import { useAuth } from '../../context/AuthContext';
 
 const AdminUsers: React.FC = () => {
+  const { profile } = useAuth() as any;
+  const isAdmin = profile?.role === 'admin';
+  const isModerator = profile?.role === 'moderator';
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -106,54 +110,82 @@ const AdminUsers: React.FC = () => {
                           {user.createdAt ? format(new Date(user.createdAt), "dd MMM yyyy", { locale: es }) : 'N/A'}
                        </td>
                        <td className="px-8 py-5">
-                          <span className={cn(
-                             "px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border",
-                             user.role === 'admin' ? "bg-primary/10 border-primary text-primary" : 
-                             user.role === 'moderator' ? "bg-purple-100 border-purple-300 text-purple-700" :
-                             "bg-on-surface-variant/5 border-on-surface-variant/20 text-on-surface-variant"
-                          )}>
-                             {user.role || 'user'}
-                          </span>
-                       </td>
-                       <td className="px-8 py-5">
-                          <div className="flex items-center justify-end gap-2">
-                             {/* User Button */}
-                             <button 
-                               onClick={() => updateRole(user.id, 'user')}
-                               className={cn(
-                                 "w-10 h-10 rounded-xl border flex items-center justify-center transition-all",
-                                 user.role === 'user' ? "bg-on-surface text-surface border-on-surface" : "bg-white border-outline-variant hover:border-on-surface text-on-surface-variant hover:text-on-surface"
-                               )}
-                               title="Usuario Estándar"
-                             >
-                                <User size={16} />
-                             </button>
-   
-                             {/* Moderator Button */}
-                             <button 
-                               onClick={() => updateRole(user.id, 'moderator')}
-                               className={cn(
-                                 "w-10 h-10 rounded-xl border flex items-center justify-center transition-all",
-                                 user.role === 'moderator' ? "bg-purple-600 text-white border-purple-600 shadow-lg shadow-purple-500/20" : "bg-white border-outline-variant hover:border-purple-500 text-on-surface-variant hover:text-purple-500"
-                               )}
-                               title="Moderador de Chat/Muro"
-                             >
-                                <Gavel size={16} />
-                             </button>
-   
-                             {/* Admin Button */}
-                             <button 
-                               onClick={() => updateRole(user.id, 'admin')}
-                               className={cn(
-                                 "w-10 h-10 rounded-xl border flex items-center justify-center transition-all",
-                                 user.role === 'admin' ? "bg-primary text-white border-primary shadow-lg shadow-primary/20" : "bg-white border-outline-variant hover:border-primary text-on-surface-variant hover:text-primary"
-                               )}
-                               title="Administrador Total"
-                             >
-                                <Shield size={16} />
-                             </button>
-                          </div>
-                       </td>
+                           <span className={cn(
+                              "px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border",
+                              user.role === 'admin' ? "bg-primary/10 border-primary text-primary" : 
+                              user.role === 'moderator' ? "bg-purple-100 border-purple-300 text-purple-700" :
+                              user.role === 'banned' ? "bg-red-100 border-red-300 text-red-700" :
+                              "bg-on-surface-variant/5 border-on-surface-variant/20 text-on-surface-variant"
+                           )}>
+                              {user.role || 'user'}
+                           </span>
+                        </td>
+                        <td className="px-8 py-5">
+                           <div className="flex items-center justify-end gap-2">
+                             {isAdmin && (
+                               <>
+                                 {/* User Button */}
+                                 <button 
+                                   onClick={() => updateRole(user.id, 'user')}
+                                   className={cn(
+                                     "w-10 h-10 rounded-xl border flex items-center justify-center transition-all",
+                                     user.role === 'user' ? "bg-on-surface text-surface border-on-surface" : "bg-white border-outline-variant hover:border-on-surface text-on-surface-variant hover:text-on-surface"
+                                   )}
+                                   title="Usuario Estándar"
+                                 >
+                                    <User size={16} />
+                                 </button>
+       
+                                 {/* Moderator Button */}
+                                 <button 
+                                   onClick={() => updateRole(user.id, 'moderator')}
+                                   className={cn(
+                                     "w-10 h-10 rounded-xl border flex items-center justify-center transition-all",
+                                     user.role === 'moderator' ? "bg-purple-600 text-white border-purple-600 shadow-lg shadow-purple-500/20" : "bg-white border-outline-variant hover:border-purple-500 text-on-surface-variant hover:text-purple-500"
+                                   )}
+                                   title="Moderador de Chat/Muro"
+                                 >
+                                    <Gavel size={16} />
+                                 </button>
+       
+                                 {/* Admin Button */}
+                                 <button 
+                                   onClick={() => updateRole(user.id, 'admin')}
+                                   className={cn(
+                                     "w-10 h-10 rounded-xl border flex items-center justify-center transition-all",
+                                     user.role === 'admin' ? "bg-primary text-white border-primary shadow-lg shadow-primary/20" : "bg-white border-outline-variant hover:border-primary text-on-surface-variant hover:text-primary"
+                                   )}
+                                   title="Administrador Total"
+                                 >
+                                    <Shield size={16} />
+                                 </button>
+                               </>
+                             )}
+
+                             {/* Ban/Unban Button */}
+                             {user.role === 'banned' ? (
+                               (isAdmin || isModerator) && (
+                                 <button 
+                                   onClick={() => updateRole(user.id, 'user')}
+                                   className="w-10 h-10 rounded-xl border flex items-center justify-center transition-all bg-green-50 border-green-300 text-green-600 hover:bg-green-100"
+                                   title="Desbanear Usuario"
+                                 >
+                                    <CheckCircle2 size={16} />
+                                 </button>
+                               )
+                             ) : (
+                               (isAdmin || (isModerator && user.role === 'user')) && (
+                                 <button 
+                                   onClick={() => updateRole(user.id, 'banned')}
+                                   className="w-10 h-10 rounded-xl border flex items-center justify-center transition-all bg-red-50 border-red-300 text-red-600 hover:bg-red-100"
+                                   title="Banear Usuario"
+                                 >
+                                    <ShieldAlert size={16} />
+                                 </button>
+                               )
+                             )}
+                           </div>
+                        </td>
                     </tr>
                   ))}
                </tbody>

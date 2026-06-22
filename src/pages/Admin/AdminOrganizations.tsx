@@ -5,8 +5,11 @@ import { cn } from '../../lib/utils';
 import { api } from '../../services/apiClient';
 import { OrganizerAvatar } from '../../components/ui/OrganizerAvatar';
 import { toastSuccess, toastError, confirmAction } from '../../lib/swal';
+import { useAuth } from '../../context/AuthContext';
 
 const AdminOrganizations: React.FC = () => {
+  const { profile } = useAuth() as any;
+  const isModerator = profile?.role === 'moderator';
   const [orgs, setOrgs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -141,22 +144,22 @@ const AdminOrganizations: React.FC = () => {
                     </p>
                  </div>
 
-                 {org.verificationLevel < 2 && (
-                    <button 
-                      onClick={() => handleVerify(org.id, 2)}
-                      className="btn-primary h-12 px-6 text-[10px] font-black tracking-widest uppercase flex-grow sm:flex-grow-0"
-                    >
-                      Verificar Nivel 2
-                    </button>
-                  )}
-                  {org.verificationLevel >= 2 && (
+                  {!isModerator && org.verificationLevel < 2 && (
                      <button 
-                       onClick={() => handleVerify(org.id, 1)}
-                       className="btn-secondary h-12 px-6 text-[10px] font-black tracking-widest uppercase flex-grow sm:flex-grow-0"
+                       onClick={() => handleVerify(org.id, 2)}
+                       className="btn-primary h-12 px-6 text-[10px] font-black tracking-widest uppercase flex-grow sm:flex-grow-0"
                      >
-                       Degradar a L1
+                       Verificar Nivel 2
                      </button>
-                  )}
+                   )}
+                   {!isModerator && org.verificationLevel >= 2 && (
+                      <button 
+                        onClick={() => handleVerify(org.id, 1)}
+                        className="btn-secondary h-12 px-6 text-[10px] font-black tracking-widest uppercase flex-grow sm:flex-grow-0"
+                      >
+                        Degradar a L1
+                      </button>
+                   )}
               </div>
            </motion.div>
          ))}

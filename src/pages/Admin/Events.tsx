@@ -7,8 +7,11 @@ import { es } from 'date-fns/locale';
 import { Link } from 'react-router-dom';
 import { api, resolveAssetUrl } from '../../services/apiClient';
 import { toastSuccess, toastError, confirmAction } from '../../lib/swal';
+import { useAuth } from '../../context/AuthContext';
 
 const AdminEvents: React.FC = () => {
+  const { profile } = useAuth() as any;
+  const isModerator = profile?.role === 'moderator';
   const [events, setEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -127,12 +130,14 @@ const AdminEvents: React.FC = () => {
                  >
                     <ExternalLink size={20} />
                  </Link>
-                 <button 
-                  onClick={() => handleDelete(event.id)}
-                  className="w-12 h-12 rounded-2xl border border-red-100 bg-red-50 text-red-500 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all shadow-sm"
-                 >
-                    <Trash2 size={20} />
-                 </button>
+                 {!isModerator && (
+                   <button 
+                    onClick={() => handleDelete(event.id)}
+                    className="w-12 h-12 rounded-2xl border border-red-100 bg-red-50 text-red-500 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all shadow-sm cursor-pointer"
+                   >
+                      <Trash2 size={20} />
+                   </button>
+                 )}
               </div>
            </motion.div>
          ))}

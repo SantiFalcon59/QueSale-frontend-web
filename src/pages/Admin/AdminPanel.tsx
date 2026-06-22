@@ -26,13 +26,13 @@ const AdminPanel: React.FC = () => {
   }
 
   const tabs = [
-    { id: 'dashboard', label: 'Dashboard', icon: Activity, adminOnly: false },
-    { id: 'locations', label: 'Localizaciones', icon: MapPin, adminOnly: true },
-    { id: 'categories', label: 'Categorías', icon: Tag, adminOnly: true },
-    { id: 'orgs', label: 'Organizaciones', icon: Building, adminOnly: true },
-    { id: 'users', label: 'Usuarios', icon: Users, adminOnly: true },
-    { id: 'events', label: 'Eventos', icon: Calendar, adminOnly: false },
-  ].filter(tab => !tab.adminOnly || isAdmin);
+    { id: 'dashboard', label: 'Dashboard', icon: Activity },
+    { id: 'locations', label: 'Localizaciones', icon: MapPin },
+    { id: 'categories', label: 'Categorías', icon: Tag },
+    { id: 'orgs', label: 'Organizaciones', icon: Building },
+    { id: 'users', label: 'Usuarios', icon: Users },
+    { id: 'events', label: 'Eventos', icon: Calendar },
+  ];
 
   return (
     <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-10 py-8 min-h-screen">
@@ -93,11 +93,11 @@ const AdminPanel: React.FC = () => {
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.3, ease: 'easeOut' }}
             >
-              {activeTab === 'dashboard' && <AdminOverview onSwitchTab={(tab) => setActiveTab(tab)} isAdmin={isAdmin} />}
-              {activeTab === 'locations' && isAdmin && <AdminLocations />}
-              {activeTab === 'categories' && isAdmin && <AdminCategories />}
-              {activeTab === 'orgs' && isAdmin && <AdminOrganizations />}
-              {activeTab === 'users' && isAdmin && <AdminUsers />}
+              {activeTab === 'dashboard' && <AdminOverview onSwitchTab={(tab) => setActiveTab(tab)} isAdmin={isAdmin || isModerator} />}
+              {activeTab === 'locations' && <AdminLocations />}
+              {activeTab === 'categories' && <AdminCategories />}
+              {activeTab === 'orgs' && <AdminOrganizations />}
+              {activeTab === 'users' && <AdminUsers />}
               {activeTab === 'events' && <AdminEvents />}
             </motion.div>
           </AnimatePresence>

@@ -60,6 +60,20 @@ export const apiRequest = async <T>(
   return (payload?.data ?? payload) as T;
 };
 
+const handleUploadError = async (response: Response, defaultMessage: string): Promise<never> => {
+  if (response.status === 413) {
+    throw new Error('El archivo es demasiado grande. El límite permitido es 10MB.');
+  }
+  let payload: any = null;
+  try {
+    payload = await response.json();
+  } catch {
+    payload = null;
+  }
+  const message = payload?.error?.message || payload?.message || response.statusText || defaultMessage;
+  throw new Error(message);
+};
+
 export const api = {
   // Generic HTTP Methods
   get: <T>(path: string, options: { auth?: boolean } = {}) =>
@@ -138,7 +152,7 @@ export const api = {
     });
 
     if (!response.ok) {
-      throw new Error('Failed to upload photo');
+      await handleUploadError(response, 'Failed to upload photo');
     }
 
     const result = await response.json();
@@ -161,7 +175,7 @@ export const api = {
     });
 
     if (!response.ok) {
-      throw new Error('Failed to upload logo');
+      await handleUploadError(response, 'Failed to upload logo');
     }
 
     const result = await response.json();
@@ -373,7 +387,7 @@ export const api = {
     });
 
     if (!response.ok) {
-      throw new Error('Failed to upload post media');
+      await handleUploadError(response, 'Failed to upload post media');
     }
 
     const result = await response.json();
@@ -398,7 +412,7 @@ export const api = {
     });
 
     if (!response.ok) {
-      throw new Error('Failed to upload event media');
+      await handleUploadError(response, 'Failed to upload event media');
     }
 
     const result = await response.json();

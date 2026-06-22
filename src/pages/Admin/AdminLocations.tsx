@@ -4,6 +4,7 @@ import { MapPin, Plus, Search, Trash2, Globe, Building, Navigation, ShieldCheck 
 import { api } from '../../services/apiClient';
 import { toastSuccess, toastError, confirmAction } from '../../lib/swal';
 import { cn } from '../../lib/utils';
+import { useAuth } from '../../context/AuthContext';
 
 interface Location {
   id: number;
@@ -15,6 +16,8 @@ interface Location {
 }
 
 const AdminLocations: React.FC = () => {
+  const { profile } = useAuth() as any;
+  const isModerator = profile?.role === 'moderator';
   const [locations, setLocations] = useState<Location[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -117,13 +120,15 @@ const AdminLocations: React.FC = () => {
            </div>
            <p className="text-on-surface-variant font-medium ml-1">Configuración de Ciudades, Provincias y Regiones Habilitadas</p>
         </div>
-        <button 
-          onClick={() => setShowAddForm(!showAddForm)}
-          className="btn-primary self-start sm:self-center h-12 px-6 rounded-2xl flex items-center gap-2 text-[10px] font-black uppercase tracking-widest"
-        >
-          <Plus size={16} />
-          {showAddForm ? 'Cancelar' : 'Habilitar Ubicación'}
-        </button>
+        {!isModerator && (
+          <button 
+            onClick={() => setShowAddForm(!showAddForm)}
+            className="btn-primary self-start sm:self-center h-12 px-6 rounded-2xl flex items-center gap-2 text-[10px] font-black uppercase tracking-widest"
+          >
+            <Plus size={16} />
+            {showAddForm ? 'Cancelar' : 'Habilitar Ubicación'}
+          </button>
+        )}
       </header>
 
       {/* Add Form Drawer/Collapse */}
@@ -253,31 +258,35 @@ const AdminLocations: React.FC = () => {
                        <td className="px-8 py-5 text-on-surface-variant text-sm font-semibold">
                           {loc.country}
                        </td>
-                       <td className="px-8 py-5">
-                          <button
-                            onClick={() => handleToggleActive(loc)}
-                            className={cn(
-                              "relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none",
-                              loc.active ? "bg-primary" : "bg-outline-variant"
-                            )}
-                          >
-                            <span
-                              className={cn(
-                                "pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out",
-                                loc.active ? "translate-x-5" : "translate-x-0"
-                              )}
-                            />
-                          </button>
-                       </td>
-                       <td className="px-8 py-5 text-right">
-                          <button
-                            onClick={() => handleDelete(loc)}
-                            className="p-2.5 rounded-xl hover:bg-red-500/10 text-on-surface-variant hover:text-red-500 transition-colors"
-                            title="Eliminar Localidad"
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                       </td>
+                        <td className="px-8 py-5">
+                           <button
+                             onClick={() => !isModerator && handleToggleActive(loc)}
+                             disabled={isModerator}
+                             className={cn(
+                               "relative inline-flex h-6 w-11 shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none",
+                               isModerator ? "cursor-not-allowed opacity-60" : "cursor-pointer",
+                               loc.active ? "bg-primary" : "bg-outline-variant"
+                             )}
+                           >
+                             <span
+                               className={cn(
+                                 "pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out",
+                                 loc.active ? "translate-x-5" : "translate-x-0"
+                               )}
+                             />
+                           </button>
+                        </td>
+                        <td className="px-8 py-5 text-right">
+                           {!isModerator && (
+                              <button
+                                onClick={() => handleDelete(loc)}
+                                className="p-2.5 rounded-xl hover:bg-red-500/10 text-on-surface-variant hover:text-red-500 transition-colors"
+                                title="Eliminar Localidad"
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                           )}
+                        </td>
                     </tr>
                   ))}
                </tbody>
