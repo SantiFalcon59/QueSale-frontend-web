@@ -75,7 +75,7 @@ export const api = {
     apiRequest<T>(path, { ...options, method: 'DELETE' }),
 
   loginWithFirebase: (idToken: string, photoURL?: string | null) =>
-    apiRequest<{ user: any; token: string }>('/api/auth/login-firebase', {
+    apiRequest<{ user: any; token: string; isNew?: boolean }>('/api/auth/login-firebase', {
       method: 'POST',
       body: { idToken, photoURL },
     }),

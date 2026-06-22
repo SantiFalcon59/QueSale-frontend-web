@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { api } from '../../services/apiClient';
 import { Mail, Lock, UserPlus, AtSign, Loader2, Check, Upload, X, Camera } from 'lucide-react';
@@ -10,7 +10,9 @@ import { cn } from '../../lib/utils';
 import { translateAuthError } from '../../lib/authErrors';
 
 const Register: React.FC = () => {
-  const [step, setStep] = useState<'form' | 'interests' | 'photo'>('form');
+  const location = useLocation();
+  const initialStep = location.state?.step || 'form';
+  const [step, setStep] = useState<'form' | 'interests' | 'photo'>(initialStep);
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -25,9 +27,19 @@ const Register: React.FC = () => {
   const [isDragOver, setIsDragOver] = useState(false);
   const [availableInterests, setAvailableInterests] = useState<any[]>([]);
   const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
-  const { loginWithGoogle, refreshProfile } = useAuth();
+  const { loginWithGoogle, refreshProfile, isNewUser, user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (user && !authLoading) {
+      if (isNewUser) {
+        setStep('interests');
+      } else {
+        navigate('/');
+      }
+    }
+  }, [user, authLoading, isNewUser, navigate]);
 
   useEffect(() => {
     if (step === 'interests') {
@@ -95,7 +107,6 @@ const Register: React.FC = () => {
   const handleGoogleLogin = async () => {
     try {
       await loginWithGoogle();
-      navigate('/');
     } catch (err: any) {
       setError(translateAuthError(err));
     }

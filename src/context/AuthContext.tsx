@@ -24,6 +24,7 @@ interface AuthContextType {
   user: User | null;
   profile: UserProfile | null;
   loading: boolean;
+  isNewUser: boolean;
   loginWithGoogle: () => Promise<void>;
   loginWithEmail: (email: string, pass: string) => Promise<void>;
   logout: () => Promise<void>;
@@ -39,6 +40,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isNewUser, setIsNewUser] = useState(false);
 
   const mapProfile = (uid: string, backendProfile: any): UserProfile => {
     const username = backendProfile?.username;
@@ -85,6 +87,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           if (result.token) {
             localStorage.setItem(SOCKET_TOKEN_KEY, result.token);
           }
+          if (result.isNew) {
+            setIsNewUser(true);
+          }
         } catch (error) {
           console.error('Backend login failed', error);
         }
@@ -110,6 +115,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         initPushNotifications().catch((err) => console.error('Error initializing push notifications:', err));
       } else {
         setProfile(null);
+        setIsNewUser(false);
         // Clean up Capacitor Push Notifications when logged out
         unregisterPushNotifications().catch((err) => console.error('Error unregistering push notifications:', err));
       }
@@ -164,6 +170,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       user, 
       profile, 
       loading, 
+      isNewUser,
       loginWithGoogle, 
       loginWithEmail, 
       logout,

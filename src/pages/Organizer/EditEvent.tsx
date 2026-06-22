@@ -303,8 +303,8 @@ const EditEvent: React.FC = () => {
         longitude: formData.lng,
         price: formData.price,
         capacity: formData.capacity ? parseInt(formData.capacity) : undefined,
-        ticket_type: formData.isExternal ? 'external' : formData.ticketType,
-        ticket_url: formData.isExternal ? formData.externalOrganizerUrl : (formData.ticketType === 'external' ? formData.ticketUrl : undefined),
+        ticket_type: formData.ticketType,
+        ticket_url: formData.ticketType === 'external' ? formData.ticketUrl : undefined,
         qr_enabled: formData.isExternal ? false : formData.qr_enabled,
         tags: formData.tags,
         is_external: formData.isExternal,
@@ -482,7 +482,15 @@ const EditEvent: React.FC = () => {
                         type="checkbox" 
                         className="sr-only peer" 
                         checked={formData.isExternal}
-                        onChange={e => setFormData({ ...formData, isExternal: e.target.checked })}
+                        onChange={e => {
+                          const isExt = e.target.checked;
+                          setFormData(prev => ({
+                            ...prev,
+                            isExternal: isExt,
+                            ticketType: isExt && prev.ticketType === 'mercadopago' ? 'external' : prev.ticketType,
+                            qr_enabled: isExt ? false : prev.qr_enabled
+                          }));
+                        }}
                       />
                       <div className="w-11 h-6 bg-outline-variant peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
                     </label>
@@ -693,7 +701,7 @@ const EditEvent: React.FC = () => {
 
               <div className="space-y-3">
                 <label className="text-[10px] uppercase font-black tracking-widest text-on-surface-variant ml-2">Tipo de entrada</label>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div className={cn("grid gap-3", formData.isExternal ? "grid-cols-3" : "grid-cols-2 md:grid-cols-4")}>
                   <button
                     type="button"
                     onClick={() => setFormData(prev => ({ ...prev, ticketType: 'free', price: 0 }))}
@@ -727,41 +735,43 @@ const EditEvent: React.FC = () => {
                     <DoorOpen size={20} className={cn(formData.ticketType === 'door' ? "text-primary" : "text-on-surface-variant")} />
                     <span className="text-[10px] font-black uppercase tracking-widest">En puerta</span>
                   </button>
-                  <button
-                    type="button"
-                    disabled={organization && (!organization.verified || !organization.has_mercadopago)}
-                    onClick={() => setFormData(prev => ({ ...prev, ticketType: 'mercadopago' }))}
-                    title={
-                      organization && !organization.verified 
-                        ? "Requiere verificación nivel 2" 
-                        : organization && !organization.has_mercadopago 
-                          ? "Requiere vincular Mercado Pago" 
-                          : undefined
-                    }
-                    className={cn(
-                      "p-4 rounded-xl border-2 flex flex-col items-center gap-2 transition-all",
-                      organization && (!organization.verified || !organization.has_mercadopago)
-                        ? "opacity-40 cursor-not-allowed bg-surface-container-low border-outline-variant"
-                        : formData.ticketType === 'mercadopago'
-                          ? "border-primary bg-primary/5"
-                          : "border-outline-variant hover:border-primary/30"
-                    )}
-                  >
-                    <DollarSign size={20} className={cn(formData.ticketType === 'mercadopago' ? "text-primary" : "text-on-surface-variant")} />
-                    <span className="text-[10px] font-black uppercase tracking-widest text-center">
-                      Mercado Pago
-                      {organization && !organization.verified && (
-                        <span className="block text-[8px] text-red-500 font-bold lowercase mt-0.5">(req. nivel 2)</span>
+                  {!formData.isExternal && (
+                    <button
+                      type="button"
+                      disabled={organization && (!organization.verified || !organization.has_mercadopago)}
+                      onClick={() => setFormData(prev => ({ ...prev, ticketType: 'mercadopago' }))}
+                      title={
+                        organization && !organization.verified 
+                          ? "Requiere verificación nivel 2" 
+                          : organization && !organization.has_mercadopago 
+                            ? "Requiere vincular Mercado Pago" 
+                            : undefined
+                      }
+                      className={cn(
+                        "p-4 rounded-xl border-2 flex flex-col items-center gap-2 transition-all",
+                        organization && (!organization.verified || !organization.has_mercadopago)
+                          ? "opacity-40 cursor-not-allowed bg-surface-container-low border-outline-variant"
+                          : formData.ticketType === 'mercadopago'
+                            ? "border-primary bg-primary/5"
+                            : "border-outline-variant hover:border-primary/30"
                       )}
-                      {organization && organization.verified && !organization.has_mercadopago && (
-                        <span className="block text-[8px] text-red-500 font-bold lowercase mt-0.5">(no vinculado)</span>
-                      )}
-                    </span>
-                  </button>
+                    >
+                      <DollarSign size={20} className={cn(formData.ticketType === 'mercadopago' ? "text-primary" : "text-on-surface-variant")} />
+                      <span className="text-[10px] font-black uppercase tracking-widest text-center">
+                        Mercado Pago
+                        {organization && !organization.verified && (
+                          <span className="block text-[8px] text-red-500 font-bold lowercase mt-0.5">(req. nivel 2)</span>
+                        )}
+                        {organization && organization.verified && !organization.has_mercadopago && (
+                          <span className="block text-[8px] text-red-500 font-bold lowercase mt-0.5">(no vinculado)</span>
+                        )}
+                      </span>
+                    </button>
+                  )}
                 </div>
               </div>
 
-              {formData.ticketType !== 'external' && (
+              {formData.ticketType !== 'external' && !formData.isExternal && (
                 <div className="p-6 rounded-2xl bg-white border border-outline-variant flex items-center justify-between">
                   <div className="space-y-1">
                     <h4 className="text-sm font-black uppercase tracking-tight flex items-center gap-2">

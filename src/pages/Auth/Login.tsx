@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
@@ -10,8 +10,18 @@ const Login: React.FC = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { loginWithEmail, loginWithGoogle } = useAuth();
+  const { loginWithEmail, loginWithGoogle, isNewUser, user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (user && !authLoading) {
+      if (isNewUser) {
+        navigate('/register', { state: { step: 'interests' } });
+      } else {
+        navigate('/');
+      }
+    }
+  }, [user, authLoading, isNewUser, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -19,7 +29,6 @@ const Login: React.FC = () => {
     setLoading(true);
     try {
       await loginWithEmail(email, password);
-      navigate('/');
     } catch (err: any) {
       setError(translateAuthError(err));
     } finally {
@@ -30,7 +39,6 @@ const Login: React.FC = () => {
   const handleGoogleLogin = async () => {
     try {
       await loginWithGoogle();
-      navigate('/');
     } catch (err: any) {
       setError(translateAuthError(err));
     }
