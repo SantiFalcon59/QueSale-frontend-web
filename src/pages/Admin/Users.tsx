@@ -81,35 +81,35 @@ const AdminUsers: React.FC = () => {
          />
       </div>
 
-      <div className="bg-surface-container-low rounded-[2.5rem] border border-outline-variant overflow-hidden shadow-sm">
+      <div className="bg-surface-container-low rounded-2xl sm:rounded-[2.5rem] border border-outline-variant overflow-hidden shadow-sm">
          <div className="overflow-x-auto no-scrollbar">
             <table className="w-full border-collapse">
                <thead>
                   <tr className="border-b border-outline-variant/30 text-left bg-surface/50">
-                     <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Usuario</th>
-                     <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-on-surface-variant">ID / Username</th>
-                     <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Registro</th>
-                     <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Rango</th>
-                     <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-on-surface-variant text-right">Asignar Rango</th>
+                     <th className="px-4 sm:px-6 lg:px-8 py-4 sm:py-6 text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Usuario</th>
+                     <th className="px-4 sm:px-6 lg:px-8 py-4 sm:py-6 text-[10px] font-black uppercase tracking-widest text-on-surface-variant">ID / Username</th>
+                     <th className="px-4 sm:px-6 lg:px-8 py-4 sm:py-6 text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Registro</th>
+                     <th className="px-4 sm:px-6 lg:px-8 py-4 sm:py-6 text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Rango</th>
+                     <th className="px-4 sm:px-6 lg:px-8 py-4 sm:py-6 text-[10px] font-black uppercase tracking-widest text-on-surface-variant text-right">Asignar Rango</th>
                   </tr>
                </thead>
                <tbody>
                   {filteredUsers.map((user) => (
                     <tr key={user.id} className="border-b border-outline-variant/10 hover:bg-surface-container transition-colors group">
-                       <td className="px-8 py-5">
+                       <td className="px-4 sm:px-6 lg:px-8 py-3.5 sm:py-5">
                           <div className="flex items-center gap-4">
                              <UserAvatar src={user.photoURL} className="w-10 h-10 rounded-full bg-white object-cover shadow-sm" alt={user.displayName || 'Anon'} size={18} />
                              <span className="font-bold">{user.displayName || 'Anon'}</span>
                           </div>
                        </td>
-                       <td className="px-8 py-5 text-xs text-on-surface-variant">
+                       <td className="px-4 sm:px-6 lg:px-8 py-3.5 sm:py-5 text-xs text-on-surface-variant">
                           <p className="font-black text-on-surface">@{user.username || 'sin_nick'}</p>
                           <p className="text-[10px] opacity-60 mt-0.5">{user.uid}</p>
                        </td>
-                       <td className="px-8 py-5 text-xs font-bold text-on-surface-variant">
+                       <td className="px-4 sm:px-6 lg:px-8 py-3.5 sm:py-5 text-xs font-bold text-on-surface-variant">
                           {user.createdAt ? format(new Date(user.createdAt), "dd MMM yyyy", { locale: es }) : 'N/A'}
                        </td>
-                       <td className="px-8 py-5">
+                       <td className="px-4 sm:px-6 lg:px-8 py-3.5 sm:py-5">
                            <span className={cn(
                               "px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border",
                               user.role === 'admin' ? "bg-primary/10 border-primary text-primary" : 
@@ -120,7 +120,7 @@ const AdminUsers: React.FC = () => {
                               {user.role || 'user'}
                            </span>
                         </td>
-                        <td className="px-8 py-5">
+                        <td className="px-4 sm:px-6 lg:px-8 py-3.5 sm:py-5">
                            <div className="flex items-center justify-end gap-2">
                              {isAdmin && (
                                <>

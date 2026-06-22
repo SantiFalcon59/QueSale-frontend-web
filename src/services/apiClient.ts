@@ -52,6 +52,15 @@ export const apiRequest = async <T>(
 
   if (!response.ok) {
     const message = payload?.error?.message || response.statusText;
+
+    if (response.status === 403 && message.includes('suspendida')) {
+      localStorage.removeItem('quesale_socket_token');
+      import('firebase/auth').then(({ signOut }) => signOut(auth)).catch(() => {});
+      if (window.location.pathname !== '/login') {
+        window.location.href = '/login';
+      }
+    }
+
     const error: any = new Error(message);
     error.status = response.status;
     throw error;

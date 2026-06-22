@@ -5,6 +5,7 @@ import { api, resolveAssetUrl } from '../services/apiClient';
 import { Capacitor } from '@capacitor/core';
 import { GoogleAuth } from '@codetrix-studio/capacitor-google-auth';
 import { initPushNotifications, unregisterPushNotifications } from '../services/pushNotificationService';
+import { toastError } from '../lib/swal';
 
 interface UserProfile {
   uid: string;
@@ -84,6 +85,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const unsubscribe = onAuthStateChanged(auth, async (newUser) => {
       setUser(newUser);
       if (newUser) {
+        let isBanned = false;
         try {
           const idToken = await newUser.getIdToken();
           const result = await api.loginWithFirebase(idToken, newUser.photoURL);
@@ -93,38 +95,52 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           if (result.isNew) {
             setIsNewUser(true);
           }
-        } catch (error) {
-          console.error('Backend login failed', error);
-        }
-        try {
+
           const backendProfile = await api.getProfile();
           setProfile(mapProfile(newUser.uid, backendProfile));
-        } catch (err) {
-          console.error('Error fetching profile:', err);
-          const firebaseUser = auth.currentUser;
-          const usernameFromDisplayName = firebaseUser?.displayName
-            ? firebaseUser.displayName.toLowerCase().replace(/[^a-z0-9_]/g, '_').replace(/_+/g, '_').slice(0, 20)
-            : undefined;
-          setProfile({
-            uid: newUser.uid,
-            email: firebaseUser?.email || null,
-            displayName: usernameFromDisplayName || null,
-            photoURL: firebaseUser?.photoURL || null,
-            username: usernameFromDisplayName,
-            role: 'user', // Default to user if backend fails
-          });
+        } catch (error: any) {
+          console.error('Backend login failed', error);
+          const isSuspended = error?.status === 403 || error?.message?.includes('suspendida');
+          if (isSuspended) {
+            isBanned = true;
+            try {
+              localStorage.removeItem(SOCKET_TOKEN_KEY);
+              await signOut(auth);
+            } catch (signOutErr) {
+              console.error('Sign out failed', signOutErr);
+            }
+            setProfile(null);
+            setUser(null);
+            toastError("Tu cuenta ha sido suspendida. Se ha cerrado la sesión.");
+          } else {
+            const firebaseUser = auth.currentUser;
+            const usernameFromDisplayName = firebaseUser?.displayName
+              ? firebaseUser.displayName.toLowerCase().replace(/[^a-z0-9_]/g, '_').replace(/_+/g, '_').slice(0, 20)
+              : undefined;
+            setProfile({
+              uid: newUser.uid,
+              email: firebaseUser?.email || null,
+              displayName: usernameFromDisplayName || null,
+              photoURL: firebaseUser?.photoURL || null,
+              username: usernameFromDisplayName,
+              role: 'user', // Default to user if backend fails
+            });
+          }
         }
-        try {
-          const result: any = await api.getSavedEvents(1, 500);
-          const saved = Array.isArray(result) ? result : [];
-          const map: Record<string, boolean> = {};
-          saved.forEach((e: any) => { map[e.id_event] = true; });
-          setSavedEvents(map);
-        } catch (err) {
-          console.error('Error fetching saved events:', err);
+
+        if (!isBanned) {
+          try {
+            const result: any = await api.getSavedEvents(1, 500);
+            const saved = Array.isArray(result) ? result : [];
+            const map: Record<string, boolean> = {};
+            saved.forEach((e: any) => { map[e.id_event] = true; });
+            setSavedEvents(map);
+          } catch (err) {
+            console.error('Error fetching saved events:', err);
+          }
+          // Initialize Capacitor Push Notifications for native app
+          initPushNotifications().catch((err) => console.error('Error initializing push notifications:', err));
         }
-        // Initialize Capacitor Push Notifications for native app
-        initPushNotifications().catch((err) => console.error('Error initializing push notifications:', err));
       } else {
         setProfile(null);
         setIsNewUser(false);
@@ -139,13 +155,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const loginWithGoogle = async () => {
     try {
+      let userCredential;
       if (Capacitor.isNativePlatform()) {
         await GoogleAuth.initialize();
         const result = await GoogleAuth.signIn();
         const credential = GoogleAuthProvider.credential(result.authentication.idToken);
-        await signInWithCredential(auth, credential);
+        userCredential = await signInWithCredential(auth, credential);
       } else {
-        await signInWithPopup(auth, googleProvider);
+        userCredential = await signInWithPopup(auth, googleProvider);
+      }
+      
+      const idToken = await userCredential.user.getIdToken();
+      try {
+        const result = await api.loginWithFirebase(idToken, userCredential.user.photoURL);
+        if (result.token) {
+          localStorage.setItem(SOCKET_TOKEN_KEY, result.token);
+        }
+      } catch (backendError: any) {
+        await signOut(auth);
+        throw backendError;
       }
     } catch (error) {
       console.error("Login failed", error);
@@ -155,7 +183,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const loginWithEmail = async (email: string, pass: string) => {
     try {
-      await signInWithEmailAndPassword(auth, email, pass);
+      const userCredential = await signInWithEmailAndPassword(auth, email, pass);
+      const idToken = await userCredential.user.getIdToken();
+      try {
+        const result = await api.loginWithFirebase(idToken, userCredential.user.photoURL);
+        if (result.token) {
+          localStorage.setItem(SOCKET_TOKEN_KEY, result.token);
+        }
+      } catch (backendError: any) {
+        await signOut(auth);
+        throw backendError;
+      }
     } catch (error) {
       console.error("Email login failed", error);
       throw error;

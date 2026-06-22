@@ -194,21 +194,21 @@ const AdminCategories: React.FC = () => {
           <p className="font-bold italic text-on-surface-variant/80 uppercase">No hay categorías configuradas.</p>
         </div>
       ) : (
-        <div className="bg-surface-container-low rounded-[2.5rem] border border-outline-variant overflow-hidden shadow-sm">
+        <div className="bg-surface-container-low rounded-2xl sm:rounded-[2.5rem] border border-outline-variant overflow-hidden shadow-sm">
           <div className="overflow-x-auto no-scrollbar">
             <table className="w-full border-collapse">
                <thead>
                   <tr className="border-b border-outline-variant/30 text-left bg-surface/50">
-                     <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Vista Previa</th>
-                     <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Nombre</th>
-                     <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Código de Color</th>
-                     <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-on-surface-variant text-center">Eventos Clasificados</th>
+                     <th className="px-4 sm:px-6 lg:px-8 py-4 sm:py-6 text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Vista Previa</th>
+                     <th className="px-4 sm:px-6 lg:px-8 py-4 sm:py-6 text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Nombre</th>
+                     <th className="px-4 sm:px-6 lg:px-8 py-4 sm:py-6 text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Código de Color</th>
+                     <th className="px-4 sm:px-6 lg:px-8 py-4 sm:py-6 text-[10px] font-black uppercase tracking-widest text-on-surface-variant text-center">Eventos Clasificados</th>
                   </tr>
                </thead>
                <tbody>
                   {filteredCategories.map((cat) => (
                     <tr key={cat.id} className="border-b border-outline-variant/10 hover:bg-surface-container transition-colors group">
-                       <td className="px-8 py-5">
+                       <td className="px-4 sm:px-6 lg:px-8 py-3.5 sm:py-5">
                           <span 
                             className="px-3 py-1.5 rounded-full font-bold text-xs uppercase tracking-wider flex items-center gap-1.5 w-fit text-white"
                             style={{ backgroundColor: cat.color || '#732ee4' }}
@@ -217,13 +217,13 @@ const AdminCategories: React.FC = () => {
                             <span>{cat.name}</span>
                           </span>
                        </td>
-                       <td className="px-8 py-5">
+                       <td className="px-4 sm:px-6 lg:px-8 py-3.5 sm:py-5">
                           <span className="font-bold text-sm">{cat.name}</span>
                        </td>
-                       <td className="px-8 py-5 font-mono text-on-surface-variant text-sm font-semibold uppercase">
+                       <td className="px-4 sm:px-6 lg:px-8 py-3.5 sm:py-5 font-mono text-on-surface-variant text-sm font-semibold uppercase">
                           {cat.color || '#732ee4'}
                        </td>
-                       <td className="px-8 py-5 text-center text-sm font-bold">
+                       <td className="px-4 sm:px-6 lg:px-8 py-3.5 sm:py-5 text-center text-sm font-bold">
                           {cat.events_count !== undefined ? cat.events_count : 0}
                        </td>
                     </tr>

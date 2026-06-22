@@ -225,26 +225,26 @@ const AdminLocations: React.FC = () => {
           <p className="text-xs text-on-surface-variant/60 mt-1">El sistema permitirá eventos en cualquier lugar por defecto.</p>
         </div>
       ) : (
-        <div className="bg-surface-container-low rounded-[2.5rem] border border-outline-variant overflow-hidden shadow-sm">
+        <div className="bg-surface-container-low rounded-2xl sm:rounded-[2.5rem] border border-outline-variant overflow-hidden shadow-sm">
           <div className="overflow-x-auto no-scrollbar">
             <table className="w-full border-collapse">
                <thead>
                   <tr className="border-b border-outline-variant/30 text-left bg-surface/50">
-                     <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Nombre / Área</th>
-                     <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Tipo</th>
-                     <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Provincia / Estado</th>
-                     <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-on-surface-variant">País</th>
-                     <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Estado</th>
-                     <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-on-surface-variant text-right">Acciones</th>
+                     <th className="px-4 sm:px-6 lg:px-8 py-4 sm:py-6 text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Nombre / Área</th>
+                     <th className="px-4 sm:px-6 lg:px-8 py-4 sm:py-6 text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Tipo</th>
+                     <th className="px-4 sm:px-6 lg:px-8 py-4 sm:py-6 text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Provincia / Estado</th>
+                     <th className="px-4 sm:px-6 lg:px-8 py-4 sm:py-6 text-[10px] font-black uppercase tracking-widest text-on-surface-variant">País</th>
+                     <th className="px-4 sm:px-6 lg:px-8 py-4 sm:py-6 text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Estado</th>
+                     <th className="px-4 sm:px-6 lg:px-8 py-4 sm:py-6 text-[10px] font-black uppercase tracking-widest text-on-surface-variant text-right">Acciones</th>
                   </tr>
                </thead>
                <tbody>
                   {filteredLocations.map((loc) => (
                     <tr key={loc.id} className="border-b border-outline-variant/10 hover:bg-surface-container transition-colors group">
-                       <td className="px-8 py-5">
+                       <td className="px-4 sm:px-6 lg:px-8 py-3.5 sm:py-5">
                           <span className="font-bold text-sm">{loc.name}</span>
                        </td>
-                       <td className="px-8 py-5">
+                       <td className="px-4 sm:px-6 lg:px-8 py-3.5 sm:py-5">
                           <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-primary/10 text-primary text-[9px] font-black uppercase tracking-widest">
                             {loc.type === 'city' && 'Ciudad'}
                             {loc.type === 'partido' && 'Partido'}
@@ -252,13 +252,13 @@ const AdminLocations: React.FC = () => {
                             {loc.type === 'country' && 'País'}
                           </span>
                        </td>
-                       <td className="px-8 py-5 text-on-surface-variant text-sm font-semibold">
+                       <td className="px-4 sm:px-6 lg:px-8 py-3.5 sm:py-5 text-on-surface-variant text-sm font-semibold">
                           {loc.state || 'N/A'}
                        </td>
-                       <td className="px-8 py-5 text-on-surface-variant text-sm font-semibold">
+                       <td className="px-4 sm:px-6 lg:px-8 py-3.5 sm:py-5 text-on-surface-variant text-sm font-semibold">
                           {loc.country}
                        </td>
-                        <td className="px-8 py-5">
+                        <td className="px-4 sm:px-6 lg:px-8 py-3.5 sm:py-5">
                            <button
                              onClick={() => !isModerator && handleToggleActive(loc)}
                              disabled={isModerator}
@@ -276,7 +276,7 @@ const AdminLocations: React.FC = () => {
                              />
                            </button>
                         </td>
-                        <td className="px-8 py-5 text-right">
+                        <td className="px-4 sm:px-6 lg:px-8 py-3.5 sm:py-5 text-right">
                            {!isModerator && (
                               <button
                                 onClick={() => handleDelete(loc)}
