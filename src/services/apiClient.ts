@@ -116,6 +116,13 @@ export const api = {
       auth: true,
     }),
 
+  updateUserInterests: (interestIds: string[]) =>
+    apiRequest('/api/users/interests', {
+      method: 'POST',
+      body: { interestIds },
+      auth: true,
+    }),
+
   uploadProfilePhoto: async (file: File): Promise<string> => {
     const formData = new FormData();
     formData.append('photo', file);
@@ -422,6 +429,13 @@ export const api = {
 
   getCategories: () =>
     apiRequest('/api/categories'),
+
+  createCategory: (data: { name: string; icon_url?: string; color?: string }) =>
+    apiRequest('/api/categories', {
+      method: 'POST',
+      body: data,
+      auth: true,
+    }),
 
   getModeratorStatus: (eventId: string) =>
     apiRequest(`/api/events/${encodeURIComponent(eventId)}/moderator-status`, { auth: true }),

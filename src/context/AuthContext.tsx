@@ -14,6 +14,10 @@ interface UserProfile {
   username?: string;
   role?: 'admin' | 'user' | 'moderator';
   id_user?: string;
+  is_premium?: boolean;
+  premium_until?: string | null;
+  usernameLastChangedAt?: string | null;
+  interests?: { id: string; name: string }[];
 }
 
 interface AuthContextType {
@@ -56,6 +60,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       role: backendProfile?.global_role || 'user',
       is_premium: !!backendProfile?.is_premium,
       premium_until: backendProfile?.premium_until,
+      usernameLastChangedAt: backendProfile?.usernameLastChangedAt,
+      interests: backendProfile?.interests || [],
     };
   };
 

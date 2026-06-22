@@ -340,6 +340,32 @@ const EventDetail: React.FC = () => {
     }
   };
 
+  const handleShare = async () => {
+    const shareUrl = window.location.href;
+    const shareTitle = event?.title || 'Evento';
+    const shareText = `¡Mirá este evento: ${shareTitle} en QueSale!`;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: shareTitle,
+          text: shareText,
+          url: shareUrl,
+        });
+      } catch (err) {
+        console.error("Error sharing:", err);
+      }
+    } else {
+      try {
+        await navigator.clipboard.writeText(shareUrl);
+        toastSuccess('Enlace copiado al portapapeles');
+      } catch (err) {
+        console.error("Error copying link:", err);
+        toastError('No se pudo copiar el enlace');
+      }
+    }
+  };
+
   const handlePurchaseTicket = async () => {
     if (!id) return;
     try {
@@ -622,7 +648,7 @@ const EventDetail: React.FC = () => {
                   <Heart size={20} fill={isSaved ? "currentColor" : "none"} />
                 </button>
                 <button 
-                  onClick={() => handleInteraction()}
+                  onClick={handleShare}
                   className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-md border border-white/20 flex items-center justify-center text-white hover:bg-primary transition-all cursor-pointer"
                 >
                   <Share2 size={20} />
@@ -659,7 +685,7 @@ const EventDetail: React.FC = () => {
                   <Heart size={18} fill={isSaved ? "currentColor" : "none"} />
                 </button>
                 <button 
-                  onClick={() => handleInteraction()}
+                  onClick={handleShare}
                   className="w-11 h-11 rounded-full bg-surface-container-high border border-outline-variant flex items-center justify-center text-on-surface-variant hover:bg-primary hover:text-white transition-all cursor-pointer"
                 >
                   <Share2 size={18} />
@@ -709,7 +735,7 @@ const EventDetail: React.FC = () => {
                     <div className="col-span-12 lg:col-span-7 space-y-12">
                       <div className="space-y-4">
                         <h3 className="text-xl font-black italic uppercase tracking-tighter text-primary">Sobre el Evento</h3>
-                        <p className="text-base lg:text-lg text-on-surface-variant leading-relaxed font-medium">
+                        <p className="text-base lg:text-lg text-on-surface-variant leading-relaxed font-medium whitespace-pre-wrap">
                           {event.description}
                         </p>
                       </div>
@@ -888,7 +914,7 @@ const EventDetail: React.FC = () => {
                   exit={{ opacity: 0, y: -10 }}
                   className="space-y-8"
                 >
-                  <EventAnnouncements eventId={id!} organizerId={event.organizerId} isOrganizer={isOrganizer} />
+                  <EventAnnouncements eventId={id!} organizerId={event.organizerId} isOrganizer={isModerator} />
                 </motion.div>
               )}
 
@@ -968,9 +994,11 @@ const EventDetail: React.FC = () => {
                     <p className="text-[10px] text-primary uppercase tracking-[0.3em] font-black">ENTRADAS DESDE</p>
                     <div className="flex items-baseline gap-2">
                         <span className="text-4xl lg:text-6xl font-black italic tracking-tighter text-on-surface">{formatPrice(event.price)}</span>
-                        <span className="px-3 py-1 rounded bg-tertiary/10 text-tertiary text-[9px] lg:text-[10px] font-black tracking-widest uppercase whitespace-nowrap">
-                          {Math.round((event.attendeesCount / event.capacity) * 100)}% Vendido
-                        </span>
+                        {event.capacity > 0 && (
+                          <span className="px-3 py-1 rounded bg-tertiary/10 text-tertiary text-[9px] lg:text-[10px] font-black tracking-widest uppercase whitespace-nowrap">
+                            {Math.round((event.attendeesCount / event.capacity) * 100)}% Vendido
+                          </span>
+                        )}
                     </div>
                   </div>
 
@@ -997,14 +1025,18 @@ const EventDetail: React.FC = () => {
                   <div className="space-y-4 lg:space-y-6">
                     <div className="flex items-center justify-between">
                       <span className="text-[10px] lg:text-xs font-bold uppercase tracking-widest opacity-60">Asistentes</span>
-                      <span className="text-[10px] lg:text-xs font-bold text-primary">{event.attendeesCount} / {event.capacity}</span>
+                      <span className="text-[10px] lg:text-xs font-bold text-primary">
+                        {event.capacity > 0 ? `${event.attendeesCount} / ${event.capacity}` : event.attendeesCount}
+                      </span>
                     </div>
-                    <div className="h-1.5 lg:h-2 w-full bg-surface-container-high rounded-full overflow-hidden">
-                      <div 
-                        className="h-full bg-primary transition-all duration-1000" 
-                        style={{ width: `${(event.attendeesCount / event.capacity) * 100}%` }}
-                      />
-                    </div>
+                    {event.capacity > 0 && (
+                      <div className="h-1.5 lg:h-2 w-full bg-surface-container-high rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-primary transition-all duration-1000" 
+                          style={{ width: `${(event.attendeesCount / event.capacity) * 100}%` }}
+                        />
+                      </div>
+                    )}
                   </div>
                 </>
               )}
@@ -1062,6 +1094,13 @@ const EventDetail: React.FC = () => {
                   <p className="text-[10px] text-on-surface-variant font-bold uppercase tracking-widest">Canal Global de {event.title}</p>
                 </div>
               </div>
+              <button 
+                onClick={() => setIsChatOpen(false)}
+                className="w-10 h-10 rounded-xl hover:bg-surface-container-low flex items-center justify-center text-on-surface-variant hover:text-on-surface transition-all cursor-pointer"
+                title="Minimizar chat"
+              >
+                <X size={20} />
+              </button>
             </div>
 
             <div className="flex-1 min-h-0 flex flex-col relative">

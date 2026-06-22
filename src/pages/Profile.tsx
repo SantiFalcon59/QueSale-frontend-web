@@ -63,6 +63,9 @@ const Profile: React.FC<{ usernameFromUrl?: string }> = ({ usernameFromUrl }) =>
   const [copied, setCopied] = React.useState(false);
   const [editModalOpen, setEditModalOpen] = React.useState(false);
   const [editForm, setEditForm] = React.useState({ username: '', description: '', instagram: '' });
+  const [selectedInterests, setSelectedInterests] = React.useState<string[]>([]);
+  const [allInterests, setAllInterests] = React.useState<any[]>([]);
+  const [loadingInterests, setLoadingInterests] = React.useState(false);
   const [saving, setSaving] = React.useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = React.useState(false);
   const [showGifPicker, setShowGifPicker] = React.useState(false);
@@ -78,6 +81,15 @@ const Profile: React.FC<{ usernameFromUrl?: string }> = ({ usernameFromUrl }) =>
   const modalRef = React.useRef<HTMLDivElement>(null);
 
   const isOwnProfile = loggedProfile?.uid === profileUser?.id;
+
+  const lastChanged = loggedProfile?.usernameLastChangedAt ? new Date(loggedProfile.usernameLastChangedAt) : null;
+  let nextAllowedDate: Date | null = null;
+  let isCooldownActive = false;
+  if (lastChanged) {
+    nextAllowedDate = new Date(lastChanged.getTime());
+    nextAllowedDate.setDate(nextAllowedDate.getDate() + 7);
+    isCooldownActive = new Date() < nextAllowedDate;
+  }
 
   React.useEffect(() => {
     const fetchUser = async () => {
@@ -339,7 +351,7 @@ const Profile: React.FC<{ usernameFromUrl?: string }> = ({ usernameFromUrl }) =>
     }
   };
 
-  const openEditModal = () => {
+  const openEditModal = async () => {
     setEditForm({
       username: profileUser?.username || '',
       description: profileUser?.description || '',
@@ -347,7 +359,25 @@ const Profile: React.FC<{ usernameFromUrl?: string }> = ({ usernameFromUrl }) =>
     });
     setPhotoFile(null);
     setPhotoPreview(profileUser?.photoURL || null);
+    
+    // Set initial selected interests
+    const currentInterests = loggedProfile?.interests || [];
+    setSelectedInterests(currentInterests.map((i: any) => i.id));
+    
     setEditModalOpen(true);
+
+    // Fetch all interests if not already fetched
+    if (allInterests.length === 0) {
+      setLoadingInterests(true);
+      try {
+        const cats: any = await api.getCategories();
+        setAllInterests(cats || []);
+      } catch (err) {
+        console.error('Error fetching interests:', err);
+      } finally {
+        setLoadingInterests(false);
+      }
+    }
   };
 
   const handleSaveProfile = async () => {
@@ -369,6 +399,8 @@ const Profile: React.FC<{ usernameFromUrl?: string }> = ({ usernameFromUrl }) =>
         photo_url: newPhotoURL,
       });
 
+      await api.updateUserInterests(selectedInterests);
+
       await refreshProfile();
 
       setProfileUser((prev: any) => ({
@@ -379,12 +411,33 @@ const Profile: React.FC<{ usernameFromUrl?: string }> = ({ usernameFromUrl }) =>
         instagram: editForm.instagram,
         photoURL: newPhotoURL || prev.photoURL,
       }));
+      
+      toastSuccess('Perfil actualizado con éxito');
       setEditModalOpen(false);
       setPhotoFile(null);
       setPhotoPreview(null);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error updating profile:', err);
       setUploadingPhoto(false);
+      
+      let errorMessage = err?.message || 'Error al actualizar el perfil';
+      if (errorMessage.includes('Username can be changed again on')) {
+        const dateStr = errorMessage.split('on ')[1];
+        if (dateStr) {
+          try {
+            const date = new Date(dateStr);
+            errorMessage = `El nombre de usuario se puede cambiar nuevamente el ${format(date, "d 'de' MMMM, yyyy 'a las' HH:mm", { locale: es })}`;
+          } catch {
+            errorMessage = 'El nombre de usuario no se puede cambiar tan seguido (cooldown activo).';
+          }
+        } else {
+          errorMessage = 'El nombre de usuario no se puede cambiar tan seguido (cooldown activo).';
+        }
+      } else if (errorMessage === 'Username already taken') {
+        errorMessage = 'El nombre de usuario ya está en uso.';
+      }
+      
+      toastError(errorMessage);
     } finally {
       setSaving(false);
     }
@@ -914,7 +967,7 @@ const Profile: React.FC<{ usernameFromUrl?: string }> = ({ usernameFromUrl }) =>
                 </button>
               </div>
 
-              <div className="p-6 space-y-5">
+              <div className="p-6 space-y-5 max-h-[60vh] overflow-y-auto no-scrollbar">
                 {/* Photo Upload */}
                 <div>
                   <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant mb-2 block">Foto de perfil</label>
@@ -971,14 +1024,27 @@ const Profile: React.FC<{ usernameFromUrl?: string }> = ({ usernameFromUrl }) =>
                   </div>
                 </div>
 
-                <div>
+                 <div>
                   <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant mb-1.5 block">Username</label>
                   <input
                     value={editForm.username}
                     onChange={(e) => setEditForm(prev => ({ ...prev, username: e.target.value }))}
-                    className="w-full bg-surface-container-low border border-outline-variant rounded-xl px-4 py-3 text-sm outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/10 transition-all font-medium"
+                    disabled={isCooldownActive}
+                    className={cn(
+                      "w-full bg-surface-container-low border border-outline-variant rounded-xl px-4 py-3 text-sm outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/10 transition-all font-medium",
+                      isCooldownActive && "opacity-60 cursor-not-allowed"
+                    )}
                     placeholder="tu-username"
                   />
+                  {isCooldownActive && nextAllowedDate ? (
+                    <p className="text-[11px] text-amber-600 font-semibold mt-1.5 leading-relaxed">
+                      ⚠️ El nombre de usuario se puede cambiar cada 7 días. Próximo cambio disponible: {format(nextAllowedDate, "d 'de' MMMM, yyyy 'a las' HH:mm", { locale: es })}.
+                    </p>
+                  ) : (
+                    <p className="text-[10px] text-on-surface-variant/60 font-medium mt-1.5">
+                      Nota: El nombre de usuario solo se puede cambiar una vez cada 7 días.
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -1002,6 +1068,42 @@ const Profile: React.FC<{ usernameFromUrl?: string }> = ({ usernameFromUrl }) =>
                       placeholder="tu-instagram"
                     />
                   </div>
+                </div>
+
+                <div>
+                  <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant mb-1.5 block">Intereses</label>
+                  {loadingInterests ? (
+                    <div className="flex items-center gap-2 py-2">
+                      <Loader2 size={14} className="animate-spin text-primary" />
+                      <span className="text-xs text-on-surface-variant font-medium">Cargando categorías...</span>
+                    </div>
+                  ) : (
+                    <div className="flex flex-wrap gap-2 pt-1">
+                      {allInterests.map((interest) => {
+                        const isSelected = selectedInterests.includes(interest.id);
+                        return (
+                          <button
+                            key={interest.id}
+                            type="button"
+                            onClick={() => {
+                              setSelectedInterests(prev =>
+                                isSelected ? prev.filter(id => id !== interest.id) : [...prev, interest.id]
+                              );
+                            }}
+                            className={cn(
+                              "flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-bold transition-all border cursor-pointer select-none",
+                              isSelected
+                                ? "bg-primary text-white border-primary shadow-sm"
+                                : "bg-surface-container-low text-on-surface-variant border-outline-variant hover:border-primary/40"
+                            )}
+                          >
+                            {isSelected && <Check size={10} />}
+                            <span>{interest.name}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               </div>
 

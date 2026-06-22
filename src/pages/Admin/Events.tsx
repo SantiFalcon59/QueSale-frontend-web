@@ -1,14 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { ShieldCheck, Calendar, Search, Trash2, MapPin, ExternalLink, AlertTriangle } from 'lucide-react';
-import { cn } from '../../lib/utils';
+import { cn, NO_EVENT_IMAGE } from '../../lib/utils';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Link } from 'react-router-dom';
 import { api, resolveAssetUrl } from '../../services/apiClient';
 import { toastSuccess, toastError, confirmAction } from '../../lib/swal';
-
-const NO_EVENT_IMAGE = 'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?q=80&w=1000&auto=format&fit=crop';
 
 const AdminEvents: React.FC = () => {
   const [events, setEvents] = useState<any[]>([]);

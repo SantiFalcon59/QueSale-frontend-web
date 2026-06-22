@@ -100,6 +100,10 @@ const Discovery: React.FC = () => {
   const [showCalendar, setShowCalendar] = useState(false);
   const [showTags, setShowTags] = useState(false);
   const [showPrice, setShowPrice] = useState(false);
+  const [showDistance, setShowDistance] = useState(false);
+  const [distanceFilterEnabled, setDistanceFilterEnabled] = useState(false);
+  const [proximity, setProximity] = useState(25);
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('ALL');
   const [priceType, setPriceType] = useState<'all' | 'free' | 'paid'>('all');
@@ -115,6 +119,45 @@ const Discovery: React.FC = () => {
   const [categories, setCategories] = useState<{ id: number; name: string; color?: string; icon_url?: string; events_count?: number }[]>([]);
   const [loading, setLoading] = useState(true);
   const [total, setTotal] = useState(0);
+
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setUserLocation({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+          });
+        },
+        () => {}
+      );
+    }
+  }, []);
+
+  const enableDistanceFilter = () => {
+    if (distanceFilterEnabled) {
+      setDistanceFilterEnabled(false);
+      return;
+    }
+
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setUserLocation({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+          });
+          setDistanceFilterEnabled(true);
+        },
+        (error) => {
+          console.error("Error obtaining location:", error);
+          alert("No pudimos obtener tu ubicación. Por favor, habilita los permisos de ubicación en tu navegador.");
+        }
+      );
+    } else {
+      alert("Tu navegador no soporta geolocalización.");
+    }
+  };
 
   const buildQueryString = useCallback(() => {
     const params = new URLSearchParams();
@@ -138,9 +181,14 @@ const Discovery: React.FC = () => {
       params.set('dateTo', end.toISOString());
     }
     if (selectedTags.length > 0) params.set('tags', selectedTags.join(','));
+    if (distanceFilterEnabled && userLocation) {
+      params.set('latitude', String(userLocation.lat));
+      params.set('longitude', String(userLocation.lng));
+      params.set('radius', String(proximity));
+    }
 
     return params.toString();
-  }, [searchQuery, selectedCategory, priceType, priceMin, priceMax, priceFilterVersion, activeQuickFilter, selectedDate, selectedTags]);
+  }, [searchQuery, selectedCategory, priceType, priceMin, priceMax, priceFilterVersion, activeQuickFilter, selectedDate, selectedTags, distanceFilterEnabled, userLocation, proximity]);
 
   const fetchEvents = useCallback(async () => {
     setLoading(true);
@@ -230,9 +278,11 @@ const Discovery: React.FC = () => {
     setSelectedTags([]);
     setTagInput('');
     setTagSuggestions([]);
+    setDistanceFilterEnabled(false);
+    setProximity(25);
   };
 
-  const hasActiveFilters = searchQuery || selectedCategory !== 'ALL' || priceType !== 'all' || activeQuickFilter || selectedDate || selectedTags.length > 0 || priceMin > 0 || priceMax < 50000;
+  const hasActiveFilters = searchQuery || selectedCategory !== 'ALL' || priceType !== 'all' || activeQuickFilter || selectedDate || selectedTags.length > 0 || priceMin > 0 || priceMax < 50000 || distanceFilterEnabled;
 
   const safeDate = (d: string) => { const parsed = new Date(d); return isNaN(parsed.getTime()) ? new Date() : parsed; };
   const isFree = (p: any) => Number(p) === 0 || !p;
@@ -244,7 +294,7 @@ const Discovery: React.FC = () => {
         {/* Filter Sidebar */}
         <aside className={cn(
           "col-span-12 lg:col-span-3 space-y-6 transition-all",
-          showFilters ? "" : "hidden lg:block"
+          showFilters ? "" : "hidden"
         )}>
           <div className="bg-white/70 backdrop-blur-xl border border-outline-variant/50 p-4 sm:p-6 rounded-3xl shadow-sm sticky top-24 space-y-4 sm:space-y-6">
             <div className="flex items-center justify-between">
@@ -497,6 +547,62 @@ const Discovery: React.FC = () => {
                       <div className="flex justify-between text-[9px] text-on-surface-variant font-black uppercase tracking-widest">
                         <span>$0</span>
                         <span>$50k</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Distancia */}
+            <div className="space-y-2 border-t border-outline-variant/20 pt-4">
+              <button
+                type="button"
+                onClick={() => setShowDistance(!showDistance)}
+                className="w-full flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-on-surface-variant hover:text-primary transition-colors cursor-pointer"
+              >
+                <span className="flex items-center gap-1.5"><MapPin size={14} /> Distancia</span>
+                <span className="text-xs">{showDistance ? '▼' : '▶'}</span>
+              </button>
+              {showDistance && (
+                <div className="space-y-4 pt-2">
+                  <div className="flex p-1 bg-surface-container-low rounded-2xl border border-outline-variant items-center justify-between px-3 h-11">
+                    <span className="text-xs font-bold text-on-surface-variant">Filtrar por distancia</span>
+                    <button
+                      type="button"
+                      onClick={enableDistanceFilter}
+                      className={cn(
+                        "w-12 h-6 rounded-full relative transition-all duration-300",
+                        distanceFilterEnabled ? "bg-primary" : "bg-outline-variant"
+                      )}
+                    >
+                      <div className={cn(
+                        "absolute top-1 w-4 h-4 rounded-full bg-white transition-all duration-300",
+                        distanceFilterEnabled ? "right-1" : "left-1"
+                      )} />
+                    </button>
+                  </div>
+
+                  {distanceFilterEnabled && (
+                    <div className="space-y-3 animate-fadeIn">
+                      <div className="flex justify-between items-center ml-1">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Radio</label>
+                        <span className="text-xs font-black text-primary bg-primary/10 px-2 py-0.5 rounded-lg">
+                          {proximity} km
+                        </span>
+                      </div>
+                      <input
+                        type="range"
+                        min="1"
+                        max="100"
+                        step="1"
+                        value={proximity}
+                        onChange={(e) => setProximity(parseInt(e.target.value))}
+                        className="w-full h-1.5 bg-surface-variant rounded-lg appearance-none cursor-pointer accent-primary"
+                      />
+                      <div className="flex justify-between text-[9px] text-on-surface-variant font-black uppercase tracking-widest">
+                        <span>1 km</span>
+                        <span>100 km</span>
                       </div>
                     </div>
                   )}

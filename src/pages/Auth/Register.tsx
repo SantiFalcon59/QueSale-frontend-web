@@ -10,7 +10,7 @@ import { cn } from '../../lib/utils';
 import { translateAuthError } from '../../lib/authErrors';
 
 const Register: React.FC = () => {
-  const [step, setStep] = useState<'form' | 'photo'>('form');
+  const [step, setStep] = useState<'form' | 'interests' | 'photo'>('form');
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -23,9 +23,25 @@ const Register: React.FC = () => {
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
+  const [availableInterests, setAvailableInterests] = useState<any[]>([]);
+  const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
   const { loginWithGoogle, refreshProfile } = useAuth();
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (step === 'interests') {
+      const fetchInterests = async () => {
+        try {
+          const cats: any = await api.getCategories();
+          setAvailableInterests(cats || []);
+        } catch (err) {
+          console.error('Error fetching categories:', err);
+        }
+      };
+      fetchInterests();
+    }
+  }, [step]);
 
   const checkUsername = async (val: string) => {
     if (val.length < 3) {
@@ -68,7 +84,7 @@ const Register: React.FC = () => {
       await api.registerWithEmail(email, password, username.toLowerCase());
       await signInWithEmailAndPassword(auth, email, password);
       await refreshProfile();
-      setStep('photo');
+      setStep('interests');
     } catch (err: any) {
       setError(translateAuthError(err));
     } finally {
@@ -124,7 +140,7 @@ const Register: React.FC = () => {
   return (
     <div className="flex items-center justify-center min-h-[calc(100vh-160px)]">
       <AnimatePresence mode="wait">
-        {step === 'form' ? (
+        {step === 'form' && (
           <motion.div
             key="form"
             initial={{ opacity: 0, scale: 0.95 }}
@@ -257,7 +273,94 @@ const Register: React.FC = () => {
               </Link>
             </p>
           </motion.div>
-        ) : (
+        )}
+
+        {step === 'interests' && (
+          <motion.div
+            key="interests"
+            initial={{ opacity: 0, x: 50 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -50 }}
+            className="w-full max-w-md p-6 sm:p-10 bg-white rounded-[2rem] sm:rounded-[2.5rem] shadow-2xl shadow-black/5 border border-black/5"
+          >
+            <div className="text-center mb-6 sm:mb-8">
+              <h1 className="text-2xl sm:text-3xl font-black tracking-tight mb-2">Tus Intereses</h1>
+              <p className="text-on-surface-variant text-xs sm:text-sm">Selecciona las categorías que te gustan para recomendarte los mejores eventos.</p>
+            </div>
+
+            {error && (
+              <div className="mb-6 p-4 bg-red-50 border border-red-100 text-red-600 text-xs rounded-2xl">
+                {error}
+              </div>
+            )}
+
+            <div className="flex flex-wrap gap-2.5 max-h-[300px] overflow-y-auto no-scrollbar p-1 mb-8">
+              {availableInterests.map((interest) => {
+                const isSelected = selectedInterests.includes(interest.id);
+                return (
+                  <button
+                    key={interest.id}
+                    type="button"
+                    onClick={() => {
+                      setSelectedInterests(prev =>
+                        isSelected ? prev.filter(id => id !== interest.id) : [...prev, interest.id]
+                      );
+                    }}
+                    className={cn(
+                      "flex items-center gap-2 px-4 py-2.5 rounded-full text-xs font-bold transition-all border cursor-pointer select-none",
+                      isSelected
+                        ? "bg-primary text-white border-primary shadow-lg shadow-primary/20 scale-[1.02]"
+                        : "bg-surface-container-low text-on-surface-variant border-outline-variant hover:border-primary/40"
+                    )}
+                  >
+                    {isSelected && <Check size={12} />}
+                    <span>{interest.name}</span>
+                  </button>
+                );
+              })}
+              {availableInterests.length === 0 && (
+                <div className="w-full text-center py-8 text-xs font-bold text-on-surface-variant/40 uppercase tracking-wider">
+                  Cargando categorías...
+                </div>
+              )}
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setStep('photo')}
+                className="btn-secondary flex-1"
+              >
+                SALTAR
+              </button>
+              <button
+                onClick={async () => {
+                  setLoading(true);
+                  setError('');
+                  try {
+                    await api.updateUserInterests(selectedInterests);
+                    await refreshProfile();
+                    setStep('photo');
+                  } catch (err: any) {
+                    setError(err.message || 'Error al guardar intereses');
+                  } finally {
+                    setLoading(false);
+                  }
+                }}
+                disabled={loading}
+                className="btn-primary flex-1 font-black"
+              >
+                {loading ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <Loader2 size={14} className="animate-spin" />
+                    GUARDANDO...
+                  </span>
+                ) : 'CONTINUAR'}
+              </button>
+            </div>
+          </motion.div>
+        )}
+
+        {step === 'photo' && (
           <motion.div
             key="photo"
             initial={{ opacity: 0, x: 50 }}

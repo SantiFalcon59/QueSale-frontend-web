@@ -1,17 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ShieldCheck, Building, Users, Calendar, Activity, MapPin } from 'lucide-react';
+import { ShieldCheck, Building, Users, Calendar, Activity, MapPin, Tag } from 'lucide-react';
 import AdminOrganizations from './AdminOrganizations';
 import AdminUsers from './Users';
 import AdminEvents from './Events';
 import AdminLocations from './AdminLocations';
+import AdminCategories from './AdminCategories';
 import { cn } from '../../lib/utils';
 import { useAuth } from '../../context/AuthContext';
 import { Navigate } from 'react-router-dom';
 import { db } from '../../lib/firebase';
 import { collection, query, getDocs, limit, where } from 'firebase/firestore';
 
-type TabId = 'dashboard' | 'orgs' | 'users' | 'events' | 'locations';
+type TabId = 'dashboard' | 'orgs' | 'users' | 'events' | 'locations' | 'categories';
 
 const AdminPanel: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabId>('dashboard');
@@ -27,6 +28,7 @@ const AdminPanel: React.FC = () => {
   const tabs = [
     { id: 'dashboard', label: 'Dashboard', icon: Activity, adminOnly: false },
     { id: 'locations', label: 'Localizaciones', icon: MapPin, adminOnly: true },
+    { id: 'categories', label: 'Categorías', icon: Tag, adminOnly: true },
     { id: 'orgs', label: 'Organizaciones', icon: Building, adminOnly: true },
     { id: 'users', label: 'Usuarios', icon: Users, adminOnly: true },
     { id: 'events', label: 'Eventos', icon: Calendar, adminOnly: false },
@@ -93,6 +95,7 @@ const AdminPanel: React.FC = () => {
             >
               {activeTab === 'dashboard' && <AdminOverview onSwitchTab={(tab) => setActiveTab(tab)} isAdmin={isAdmin} />}
               {activeTab === 'locations' && isAdmin && <AdminLocations />}
+              {activeTab === 'categories' && isAdmin && <AdminCategories />}
               {activeTab === 'orgs' && isAdmin && <AdminOrganizations />}
               {activeTab === 'users' && isAdmin && <AdminUsers />}
               {activeTab === 'events' && <AdminEvents />}

@@ -177,14 +177,6 @@ export const Navbar: React.FC<{ onMenuClick: () => void }> = ({ onMenuClick }) =
                     ))}
                   </div>
                 )}
-                <div className="p-2 border-t border-white/10">
-                  <button
-                    onClick={() => { setShowSearchResults(false); setSearchQuery(''); navigate(`/community?search=${encodeURIComponent(searchQuery)}`); }}
-                    className="w-full text-center text-xs text-secondary font-semibold py-2 hover:bg-white/5 rounded-xl transition-colors cursor-pointer"
-                  >
-                    Ver todos los resultados
-                  </button>
-                </div>
               </motion.div>
             )}
           </AnimatePresence>

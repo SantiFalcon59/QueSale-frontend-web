@@ -253,6 +253,8 @@ const CreateEvent: React.FC = () => {
     setSubmitting(true);
 
     try {
+      const selectedCat = categories.find(c => c.name === formData.category);
+      const interestIds = selectedCat ? [selectedCat.id] : [];
       const eventDate = new Date(`${formData.date}T${formData.time}`);
 
       const created: any = await api.createEvent({
@@ -261,7 +263,7 @@ const CreateEvent: React.FC = () => {
         date: eventDate.toISOString(),
         location: formData.address,
         organizerId: formData.isExternal ? null : organization.id,
-        interestIds: [],
+        interestIds,
         latitude: formData.lat,
         longitude: formData.lng,
         price: formData.price,
@@ -846,38 +848,35 @@ const CreateEvent: React.FC = () => {
       </AnimatePresence>
 
       {/* Navigation */}
-      <div className="flex items-center justify-between gap-4 pt-6 border-t border-outline-variant/30">
-        <div className="flex items-center gap-2">
+      <div className="flex items-center justify-between pt-6 border-t border-outline-variant/30">
+        <button
+          onClick={() => currentStep > 0 && setCurrentStep(currentStep - 1)}
+          className={cn(
+            "h-14 px-8 rounded-2xl font-black uppercase tracking-widest text-xs transition-all",
+            currentStep === 0 ? "opacity-0 pointer-events-none" : "bg-surface-container-low text-on-surface-variant hover:bg-surface-container border border-outline-variant"
+          )}
+        >
+          Anterior
+        </button>
+
+        {currentStep < STEPS.length - 1 ? (
           <button
-            onClick={() => currentStep > 0 && setCurrentStep(currentStep - 1)}
-            disabled={currentStep === 0}
-            className={cn(
-              "h-14 px-6 rounded-2xl font-black uppercase tracking-widest text-[10px] transition-all border border-outline-variant hover:bg-surface-container-low",
-              currentStep === 0 ? "opacity-30 pointer-events-none" : ""
-            )}
-          >
-            Anterior
-          </button>
-          <button
-            onClick={() => currentStep < STEPS.length - 1 && setCurrentStep(currentStep + 1)}
-            disabled={currentStep === STEPS.length - 1}
-            className={cn(
-              "h-14 px-6 rounded-2xl font-black uppercase tracking-widest text-[10px] transition-all border border-outline-variant hover:bg-surface-container-low",
-              currentStep === STEPS.length - 1 ? "opacity-30 pointer-events-none" : ""
-            )}
+            onClick={() => canProceed() && setCurrentStep(currentStep + 1)}
+            disabled={!canProceed()}
+            className="btn-primary h-14 px-10 text-sm font-black uppercase tracking-widest disabled:opacity-30"
           >
             Siguiente
           </button>
-        </div>
-
-        <button
-          onClick={handleSubmit}
-          disabled={submitting || !canProceed()}
-          className="flex-1 max-w-xs btn-primary h-14 px-10 text-sm font-black uppercase tracking-widest disabled:opacity-30 flex items-center justify-center gap-2"
-        >
-          {submitting ? <Loader2 size={18} className="animate-spin" /> : <Check size={18} />}
-          {submitting ? 'Guardando...' : (isEditing ? 'Guardar Cambios' : 'Publicar Evento')}
-        </button>
+        ) : (
+          <button
+            onClick={handleSubmit}
+            disabled={submitting || !canProceed()}
+            className="flex-1 max-w-xs btn-primary h-14 px-10 text-sm font-black uppercase tracking-widest disabled:opacity-30 flex items-center justify-center gap-2"
+          >
+            {submitting ? <Loader2 size={18} className="animate-spin" /> : <Check size={18} />}
+            {submitting ? 'Guardando...' : (isEditing ? 'Guardar Cambios' : 'Publicar Evento')}
+          </button>
+        )}
       </div>
     </div>
   );

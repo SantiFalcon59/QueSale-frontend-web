@@ -288,6 +288,8 @@ const EditEvent: React.FC = () => {
     setSubmitting(true);
 
     try {
+      const selectedCat = categories.find(c => c.name === formData.category);
+      const interestIds = selectedCat ? [selectedCat.id] : [];
       const eventDate = new Date(`${formData.date}T${formData.time}`);
 
       const eventPayload = {
@@ -296,7 +298,7 @@ const EditEvent: React.FC = () => {
         date: eventDate.toISOString(),
         location: formData.address,
         organizerId: formData.isExternal ? null : organization.id,
-        interestIds: [],
+        interestIds,
         latitude: formData.lat,
         longitude: formData.lng,
         price: formData.price,
