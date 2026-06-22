@@ -7,7 +7,7 @@ import { LoginPromptModal } from '../components/ui/LoginPromptModal';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { api, resolveAssetUrl } from '../services/apiClient';
-import { Calendar, MapPin, Share2, Bookmark } from 'lucide-react';
+import { Calendar, MapPin, Share2, Heart } from 'lucide-react';
 import { AdBanner } from '../components/ui/AdBanner';
 
 const CYCLE_MS = 4000;
@@ -245,8 +245,8 @@ const Feed: React.FC = () => {
 
                   <div className="flex items-center gap-4 pt-8">
                      <Link to={`/events/${event.id_event}`} className="h-16 px-10 rounded-2xl bg-white text-black font-black uppercase tracking-widest text-sm hover:scale-105 transition-all flex items-center justify-center">Ver Detalles</Link>
-                     <button onClick={(e) => toggleSave(e, event.id_event)} className={cn("w-16 h-16 rounded-2xl border flex items-center justify-center transition-all", savedEvents[event.id_event] ? "bg-primary border-primary text-white" : "bg-white/10 border-white/10 text-white hover:bg-white hover:text-black")}>
-                        <Bookmark size={24} fill={savedEvents[event.id_event] ? "currentColor" : "none"} />
+                     <button onClick={(e) => toggleSave(e, event.id_event)} className={cn("w-16 h-16 rounded-2xl border flex items-center justify-center transition-all cursor-pointer", savedEvents[event.id_event] ? "bg-red-500 border-red-500 text-white shadow-lg shadow-red-500/20" : "bg-white/10 border-white/10 text-white hover:bg-white hover:text-black")}>
+                        <Heart size={24} fill={savedEvents[event.id_event] ? "currentColor" : "none"} />
                      </button>
                      <button onClick={(e) => handleShare(e, event)} className="w-16 h-16 rounded-2xl bg-white/10 border border-white/10 text-white flex items-center justify-center hover:bg-white hover:text-black transition-all">
                         <Share2 size={24} />

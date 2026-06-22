@@ -1,7 +1,7 @@
 import React, { useRef, useCallback } from 'react';
 import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { Settings, MapPin, Calendar, Grid, Bookmark, Users, Heart, Pencil, X, Check, Instagram, Image, Smile, Loader2, Upload, Crown, Sparkles, Star, ShieldCheck, Zap } from 'lucide-react';
+import { Settings, MapPin, Calendar, Grid, Users, Heart, Pencil, X, Check, Instagram, Image, Smile, Loader2, Upload, Crown, Sparkles, Star, ShieldCheck, Zap } from 'lucide-react';
 import { cn, NO_EVENT_IMAGE } from '../lib/utils';
 import { useAuth } from '../context/AuthContext';
 import { format } from 'date-fns';
@@ -59,7 +59,6 @@ const Profile: React.FC<{ usernameFromUrl?: string }> = ({ usernameFromUrl }) =>
   const [newPost, setNewPost] = React.useState('');
   const [activeTab, setActiveTab] = React.useState('WALL');
   const [selectedPostForComment, setSelectedPostForComment] = React.useState<string | null>(null);
-  const [savedEvents, setSavedEvents] = React.useState<any[]>([]);
   const [copied, setCopied] = React.useState(false);
   const [editModalOpen, setEditModalOpen] = React.useState(false);
   const [editForm, setEditForm] = React.useState({ username: '', description: '', instagram: '' });
@@ -171,22 +170,6 @@ const Profile: React.FC<{ usernameFromUrl?: string }> = ({ usernameFromUrl }) =>
       fetchPosts();
     }
   }, [profileUser?.id]);
-
-  React.useEffect(() => {
-    if (!isOwnProfile || activeTab !== 'FAVORITES') return;
-
-    const fetchSaved = async () => {
-      try {
-        const result: any = await api.getSavedEvents(1, 50);
-        setSavedEvents(Array.isArray(result) ? result : []);
-      } catch (err) {
-        console.error('Error fetching saved events:', err);
-        setSavedEvents([]);
-      }
-    };
-
-    fetchSaved();
-  }, [isOwnProfile, activeTab]);
 
   React.useEffect(() => {
     if (!editModalOpen) return;
@@ -641,8 +624,7 @@ const Profile: React.FC<{ usernameFromUrl?: string }> = ({ usernameFromUrl }) =>
             <div className="flex gap-6 lg:gap-10 border-b border-outline-variant px-4 lg:px-0 overflow-x-auto no-scrollbar pb-6">
                {[
                  { id: 'WALL', label: 'MURO' },
-                 { id: 'ACTIVITY', label: 'ACTIVIDAD' },
-                 { id: 'FAVORITES', label: 'FAVORITOS' }
+                 { id: 'ACTIVITY', label: 'ACTIVIDAD' }
                ].map(tab => (
                  <button
                   key={tab.id}
@@ -862,53 +844,7 @@ const Profile: React.FC<{ usernameFromUrl?: string }> = ({ usernameFromUrl }) =>
                 </motion.div>
               )}
 
-              {activeTab === 'FAVORITES' && (
-                <motion.div
-                  key="favorites"
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: 20 }}
-                  transition={{ duration: 0.2 }}
-                  className="space-y-6 px-4 lg:px-0"
-                >
-                  {savedEvents.length > 0 ? (
-                    savedEvents.map((event: any, i: number) => (
-                      <motion.div
-                        key={event.id_event}
-                        initial={{ opacity: 0, y: 15 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: i * 0.06 }}
-                        whileHover={{ scale: 1.01, y: -2 }}
-                        className="flex flex-col sm:flex-row gap-4 lg:gap-6 p-4 lg:p-6 bg-surface-container-low rounded-[1.5rem] lg:rounded-[2rem] border border-transparent hover:border-primary/20 hover:shadow-md hover:shadow-primary/5 transition-all duration-300 cursor-pointer"
-                      >
-                          <div className="w-full sm:w-24 h-40 sm:h-24 rounded-2xl overflow-hidden bg-white shrink-0">
-                             <img src={event.images?.[0] || event.thumbnail_url || NO_EVENT_IMAGE} className="w-full h-full object-cover transition-transform hover:scale-110 duration-500" />
-                          </div>
-                         <div className="flex-1 space-y-2">
-                            <h3 className="text-lg lg:text-xl font-bold font-sans">{event.title}</h3>
-                            {event.ubication && <p className="text-xs text-on-surface-variant">{event.ubication}</p>}
-                            {safeDate(event.date) && <p className="text-[10px] text-on-surface-variant font-black uppercase tracking-widest">{format(safeDate(event.date)!, 'd MMM yyyy', { locale: es })}</p>}
-                         </div>
-                      </motion.div>
-                    ))
-                  ) : (
-                    <motion.div
-                      initial={{ opacity: 0, scale: 0.95 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      className="text-center py-20 border-2 border-dashed border-outline-variant rounded-[3rem]"
-                    >
-                      <motion.div
-                        animate={{ y: [0, -5, 0] }}
-                        transition={{ repeat: Infinity, duration: 2 }}
-                        className="w-16 h-16 bg-surface-container-low rounded-full flex items-center justify-center mx-auto mb-4"
-                      >
-                        <Bookmark size={24} className="text-on-surface-variant opacity-40" />
-                      </motion.div>
-                      <p className="text-on-surface-variant font-medium">No hay eventos guardados aún.</p>
-                    </motion.div>
-                  )}
-                </motion.div>
-              )}
+
             </AnimatePresence>
          </div>
 

@@ -41,8 +41,9 @@ export const Navbar: React.FC<{ onMenuClick: () => void }> = ({ onMenuClick }) =
           api.getEventsWithFilters(`search=${encodeURIComponent(trimmed)}&limit=3`),
           api.communitySearch(trimmed),
         ]);
+        const evRes = eventsRes as any;
         setSearchResults({
-          events: Array.isArray(eventsRes) ? eventsRes : (eventsRes?.events || []),
+          events: Array.isArray(evRes) ? evRes : (evRes?.events || []),
           users: communityRes.users || [],
           organizers: communityRes.organizers || [],
         });
@@ -262,8 +263,8 @@ export const Navbar: React.FC<{ onMenuClick: () => void }> = ({ onMenuClick }) =
                       onClick={() => { setDropdownOpen(false); navigate('/favorites'); }}
                       className="w-full px-4 py-2.5 text-left text-sm text-white flex items-center gap-3 transition-colors cursor-pointer"
                     >
-                      <span className="material-symbols-outlined text-[20px] text-white/60">bookmark</span>
-                      Guardados
+                      <span className="material-symbols-outlined text-[20px] text-white/60">favorite</span>
+                      Favoritos
                     </motion.button>
                     <motion.button
                       whileHover={{ x: 4, backgroundColor: 'rgba(255,255,255,0.05)' }}

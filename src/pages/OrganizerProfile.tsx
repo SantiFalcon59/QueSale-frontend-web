@@ -30,7 +30,7 @@ const OrganizerProfile: React.FC = () => {
         setOrganizer(orgData);
         setEvents(Array.isArray(evData) ? evData : []);
         setFollowers(Array.isArray(folData) ? folData : []);
-        setFollowing(orgData.is_following ?? false);
+        setFollowing((orgData as any).is_following ?? false);
       } catch (err) {
         console.error('Error loading organizer profile:', err);
       } finally {

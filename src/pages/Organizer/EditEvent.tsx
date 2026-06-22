@@ -338,7 +338,7 @@ const EditEvent: React.FC = () => {
         }
       }
 
-      navigate('/organizer');
+      navigate(formData.isExternal ? '/admin' : '/organizer');
     } catch (err: any) {
       setError(err.message || "Error al guardar el evento.");
     } finally {

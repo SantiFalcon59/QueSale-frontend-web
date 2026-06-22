@@ -61,7 +61,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, onReact, onDelete, onComment,
 
   const reactions = post.reactions || {};
   const userReaction = post.user_reaction;
-  const totalReactions = Object.values(reactions).reduce((a: any, b: any) => a + b, 0);
+  const totalReactions = Object.values(reactions).reduce((a: number, b: any) => a + (b as number), 0) as number;
   const topReaction = Object.entries(reactions).sort(([, a]: any, [, b]: any) => b - a)[0];
 
   const isAuthorPremium = post.user?.is_premium;

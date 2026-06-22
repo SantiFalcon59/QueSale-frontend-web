@@ -362,7 +362,7 @@ const OrganizerDashboard: React.FC = () => {
     { label: 'Vistas Eventos', value: d.total_event_views || 0, icon: Eye, color: 'text-blue-600' },
     { label: 'Vistas Perfil', value: d.total_profile_views || 0, icon: Eye, color: 'text-purple-600' },
     { label: 'Ingresos', value: d.revenue ? `$${Number(d.revenue).toLocaleString('es-AR')}` : '$0', icon: DollarSign, color: 'text-green-600' },
-    { label: 'Guardados', value: d.total_saves || 0, icon: Heart, color: 'text-red-500' },
+    { label: 'Favoritos', value: d.total_saves || 0, icon: Heart, color: 'text-red-500' },
     { label: 'Engagement', value: (d.total_posts || 0) + (d.total_comments || 0) + (d.total_reactions || 0), icon: MessageCircle, color: 'text-amber-500' },
     { label: 'Mensajes Chat', value: d.total_chat_messages || 0, icon: MessageSquare, color: 'text-cyan-600' },
     { label: 'Ocupación', value: d.capacity_utilization ? `${Math.round(d.capacity_utilization * 100)}%` : '0%', icon: Percent, color: 'text-indigo-500' },
@@ -1175,7 +1175,7 @@ const OrganizerDashboard: React.FC = () => {
                 <p className="text-[10px] text-on-surface-variant mt-1 font-medium">en todos los eventos</p>
               </div>
               <div className="p-5 rounded-2xl bg-white/50 border border-outline-variant/50">
-                <p className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant mb-1">Guardados</p>
+                <p className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant mb-1">Favoritos</p>
                 <p className="text-2xl font-black">{d.total_saves || 0}</p>
                 <p className="text-[10px] text-on-surface-variant mt-1 font-medium">eventos favoritos</p>
               </div>
@@ -1186,7 +1186,7 @@ const OrganizerDashboard: React.FC = () => {
                     ? `${Math.round(((d.total_saves || 0) / d.total_event_views) * 1000) / 10}%`
                     : '0%'}
                 </p>
-                <p className="text-[10px] text-on-surface-variant mt-1 font-medium">guardados / vistas</p>
+                <p className="text-[10px] text-on-surface-variant mt-1 font-medium">favoritos / vistas</p>
               </div>
               <div className="p-5 rounded-2xl bg-white/50 border border-outline-variant/50">
                 <p className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant mb-1">Top por Vistas</p>

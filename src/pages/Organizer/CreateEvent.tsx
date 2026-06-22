@@ -291,7 +291,7 @@ const CreateEvent: React.FC = () => {
         }
       }
 
-      navigate('/organizer');
+      navigate(formData.isExternal ? '/admin' : '/organizer');
     } catch (err: any) {
       setError(err.message || "Error al crear el evento.");
     } finally {

@@ -259,7 +259,7 @@ function FollowingContent() {
   );
 }
 
-function UserCard({ user }: { user: any }) {
+const UserCard: React.FC<{ user: any }> = ({ user }) => {
   const navigate = useNavigate();
   return (
     <div className="flex items-center gap-4 bg-surface-container-low rounded-2xl p-4 border border-outline-variant/50 hover:border-primary/30 transition-all cursor-pointer"
@@ -286,7 +286,7 @@ function UserCard({ user }: { user: any }) {
   );
 }
 
-function OrganizerCard({ organizer }: { organizer: any }) {
+const OrganizerCard: React.FC<{ organizer: any }> = ({ organizer }) => {
   const navigate = useNavigate();
   return (
     <div className="flex items-center gap-4 bg-surface-container-low rounded-2xl p-4 border border-outline-variant/50 hover:border-primary/30 transition-all cursor-pointer"

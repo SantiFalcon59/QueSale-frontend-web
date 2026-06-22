@@ -163,8 +163,8 @@ export const Sidebar: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ is
                     onClick={onClose}
                     className="flex items-center gap-4 px-4 py-3 rounded-2xl text-white/70 hover:text-white hover:bg-white/5 transition-all"
                   >
-                    <span className="material-symbols-outlined text-[24px]">bookmark</span>
-                    <span className="font-display text-xs uppercase tracking-wider font-black">Guardados</span>
+                    <span className="material-symbols-outlined text-[24px]">favorite</span>
+                    <span className="font-display text-xs uppercase tracking-wider font-black">Favoritos</span>
                   </NavLink>
 
                   <NavLink

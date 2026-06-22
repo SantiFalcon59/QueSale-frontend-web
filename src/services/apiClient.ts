@@ -517,7 +517,7 @@ export const api = {
       apiRequest(`/api/community/search?q=${encodeURIComponent(q)}&type=users`),
       apiRequest(`/api/community/search?q=${encodeURIComponent(q)}&type=organizers`),
       apiRequest(`/api/community/search?q=${encodeURIComponent(q)}&type=events`),
-    ]);
+    ]) as [any, any, any];
     return {
       users: users?.users || [],
       organizers: organizers?.organizers || [],
