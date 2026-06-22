@@ -86,7 +86,7 @@ const AdminGuard: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { profile, loading } = useAuth();
 
   if (loading) return null;
-  if (profile?.role !== 'admin') return <Navigate to="/" replace />;
+  if (profile?.role !== 'admin' && profile?.role !== 'moderator') return <Navigate to="/" replace />;
 
   return <>{children}</>;
 };
